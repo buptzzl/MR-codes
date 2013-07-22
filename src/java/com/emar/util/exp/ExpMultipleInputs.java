@@ -59,7 +59,6 @@ public class ExpMultipleInputs {
 	        return "MyGenericWritable [getTypes()=" + Arrays.toString(getTypes()) + "]";
 	    }
 	}
-	*/
 
 	public static class FirstMap extends Mapper<Text, FirstClass, Text, Text> {
 //	public static class FirstMap extends Mapper<Text, FirstClass, Text, MyGenericWritable> {
@@ -99,11 +98,9 @@ public class ExpMultipleInputs {
 		}
 	}
 
-	/**
-first mapclass's input example:
-1	Chun
-2	Tina
-	 */
+//first mapclass's input example:
+//1	Chun
+//2	Tina
 	public static class FirstClass implements Writable {
 		private String value;
 
@@ -140,11 +137,9 @@ first mapclass's input example:
 
 	}
 
-	/**
-second mapclass's input example:
-1	Time	87
-2	Date	19
-	 */
+//second mapclass's input example:
+//1	Time	87
+//2	Date	19
 	public static class SecondClass implements Writable {
 
 		private String value;
@@ -336,12 +331,6 @@ second mapclass's input example:
 		}
 	}
 
-	/**
-	 * @throws ClassNotFoundException
-	 * @throws InterruptedException
-	 * @param args
-	 * @throws
-	 */
 	public static void main(String[] args) throws IOException,
 			InterruptedException, ClassNotFoundException {
 		Path firstPath = new Path(args[0]);
@@ -373,5 +362,6 @@ second mapclass's input example:
 		job.waitForCompletion(true);
 
 	}
-
+*/
+	
 }

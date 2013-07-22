@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/test"/>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/commodityclassify.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbcp-1.4-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbcp-1.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbcp-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.6-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.6-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.6.jar"/>
+	<classpathentry kind="lib" path="lib/mmseg4j-core-1.9.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/ojdbc6.jar"/>
+	<classpathentry kind="lib" path="lib/UserAgentUtils-1.6.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-ant-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-client-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-core-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-examples-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-minicluster-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-test-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-tools-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/lib/commons-cli-1.2.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/lib/junit-4.5.jar"/>
+	<classpathentry kind="lib" path="D:/Data/MR-codes/lib/jcseg-core-1.8.8.jar"/>
+	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/hamcrest-core-1.1.jar"/>
+	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/junit-4.10.jar"/>
+	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/mockito-all-1.8.5.jar"/>
+	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/mrunit-1.0.0-hadoop1.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>

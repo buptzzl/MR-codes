@@ -27,11 +27,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.emar.recsys.user.MClickYiqifa;
 import com.emar.recsys.user.util.UtilStr;
-import com.emar.recsys.user.util.itemclassify.Iclassify;
-import com.emar.recsys.user.util.itemclassify.IclassifyMapper;
-import com.emar.recsys.user.util.itemclassify.IclassifyReducer;
 import com.emar.util.Ip2AreaUDF;
 import com.emar.util.exp.UrlPair;
 
@@ -50,17 +46,17 @@ public class GClickOrderIP extends Configured implements Tool {
 
 	// Reduce &MO setting info.
 	public static final String moIp = "ip", IpDir = "ip/", moZone = "zone",
-			ZoneDir = "zone/";
+			ZoneDir = "zone/", moUid = "uid", UidDir = "uid/";
 
 	public static class MapClick extends
 			Mapper<LongWritable, Text, PriorPair, Text> {
-		private static final int LenClc = 11;
+		private static final int LenClc = 10;
 		private static final int IdxIP = 2, IdxPUid = 3, IdxDate = 4,
 				IdxCamp = 5;
 		private static final int IpLen = 5;
 		private static final String[] IpDef = new String[] { "-1", "-1", "-1",
 				"-1", "-1" };
-		private static final String PCamp = "uCampRank", PUser = "uUserRank";
+		private static final String PCamp = "uCampRank", PUser = "uClassRank";
 
 		private static Calendar c = Calendar.getInstance();
 		private static Ip2AreaUDF iparea = Ip2AreaUDF.getInstance();
@@ -89,6 +85,8 @@ public class GClickOrderIP extends Configured implements Tool {
 		}
 
 		public void map(LongWritable key, Text val, Context context) {
+			context.getCounter(Counters.InC).increment(1);
+			
 			String inpath = ((FileSplit) context.getInputSplit()).getPath()
 					.toString();
 			String[] rankinfo;
@@ -99,12 +97,10 @@ public class GClickOrderIP extends Configured implements Tool {
 				okey.setFirst(rankinfo[0]);  // campid or userid.
 				okey.setFlag(false); // 升序时， Reduce端先到达
 				oval.set(rankinfo[1]);  // rank-info.
-				context.getCounter(Counters.InC).increment(1);
 				try {
 					context.write(okey, oval);
 					context.getCounter(Counters.OC).increment(1);
 				} catch (Exception e) {
-					System.err.print("[ERROR1]\n");
 					e.printStackTrace();
 					context.getCounter(Counters.OCBad).increment(1);
 				}
@@ -120,7 +116,7 @@ public class GClickOrderIP extends Configured implements Tool {
 				String line = val.toString();
 				line = line.replace("\u0001", "\u0001 ");
 				String[] atom = line.split("\u0001");
-				if (atom.length != LenClc) {
+				if (atom.length < LenClc) {
 					context.getCounter(Counters.Useless).increment(1);
 				} else {
 					String ip = atom[IdxIP].trim();
@@ -128,7 +124,7 @@ public class GClickOrderIP extends Configured implements Tool {
 
 					List<String> ipzone;
 					if (ipinfo == null || ipinfo.length != IpLen) {
-						System.err.println("[Error] map()" + ip + "\t" + ipinfo);
+//						System.err.println("[Error] map()" + ip + "\t" + ipinfo);
 						ipzone = Arrays.asList(IpDef);
 						context.getCounter(Counters.UnIP).increment(1);
 					} else {
@@ -137,15 +133,15 @@ public class GClickOrderIP extends Configured implements Tool {
 //					String platuser = atom[IdxPUid].trim();
 //					String campid = atom[IdxCamp].trim();
 					String outkey = atom[keyIdx].trim();
+					String uid = atom[IdxPUid].trim();
 
 					try {
 						okey.setFirst(outkey);
 						okey.setFlag(true);
-						oval.set(ip + MR_sepa + ipzone.toString());
+						oval.set(ip + MR_sepa + ipzone.toString() + MR_sepa + uid);
 						context.write(okey, oval);
 						context.getCounter(Counters.OIP).increment(1);
 					} catch (Exception e) {
-						System.err.print("[ERROR1]\n");
 						e.printStackTrace();
 						context.getCounter(Counters.UMout).increment(1);
 					}
@@ -156,7 +152,30 @@ public class GClickOrderIP extends Configured implements Tool {
 		public void cleanup(Context context) {
 		}
 	}
-
+	
+	public static class FPairPartition extends Partitioner<PriorPair, Text> {
+		@Override
+		public int getPartition(PriorPair key, Text value,
+				int numPartitions) {
+			return Math.abs(key.getFirst().hashCode()) % numPartitions;
+		}
+	}
+	
+	public static class SortComparator extends WritableComparator {
+		private PriorPair first, second;
+		
+		protected SortComparator() {
+			super(PriorPair.class, true);
+		}
+		
+		public int compare(WritableComparable a, WritableComparable b) {
+			first = (PriorPair)a;
+			second = (PriorPair)b;
+			return first.compareTo(second);
+		}
+		
+	}
+	
 	/**
 	 * 按 first 字段归并 value-list
 	 */
@@ -178,7 +197,8 @@ public class GClickOrderIP extends Configured implements Tool {
 	public static class ReduceClick extends Reducer<PriorPair, Text, Text, Text> {
 
 		private static enum Counters {
-			ReduceIn, UnRout, MultiRank, Ip, IpErr, UnROIp, IpzoneErr, OrderErr
+			ReduceIn, MinRank, MultiRank, Ip, IpErr, IpzoneErr, OrderErr, 
+			ROIP, UnROIp, ROZone, UnROZone, ROUid, UnROUid
 		};
 
 		private MultipleOutputs<Text, Text> mos = null;
@@ -196,17 +216,41 @@ public class GClickOrderIP extends Configured implements Tool {
 			String rank = null;
 			String tmp;
 			String[] arrTmp;
-			StringBuffer testBuf = new StringBuffer();  //@Test
+//			StringBuffer testBuf = new StringBuffer();  //@Test
 			
 			context.getCounter(Counters.ReduceIn).increment(1);
 			for (Text t : values) {
-				testBuf.append("\n" + t.toString());
+//				testBuf.append("\n" + t.toString());
 				tmp = t.toString();
 				if (tmp.startsWith("[")) {
 					if (rank == null) {
 						// 对 Rank-out 添加对应的来源字段
-						rank = tmp;
+//						rank = tmp;
+						String[] atoms = UtilStr.str2arr(rank);
+						if(atoms.length > 1000) {  // 裁剪rank信息
+							int idxval = atoms[0].indexOf('=');
+							float val = Float.parseFloat(atoms[0].substring(idxval).trim());
+							int maxlen = 1000;
+							float minscore = 10;
+							if(val < 10) {
+								maxlen = 10;  // 长度裁剪
+								minscore = 1;
+							}
+							StringBuffer sbuf = new StringBuffer("[");
+							for(int i = 0; i < maxlen; ++i){
+								idxval = atoms[i].indexOf('=');
+								val = Float.parseFloat(atoms[i].substring(idxval).trim());
+								if(minscore < val) {
+									sbuf.append(atoms[i]);
+									sbuf.append(", ");
+								}
+							}
+							sbuf.append("]");
+							rank = sbuf.toString().replace(", ]", "");
+						}
+						
 						oval.set(rank);
+						context.getCounter(Counters.MinRank).increment(1);
 					} else {
 						context.getCounter(Counters.MultiRank).increment(1);
 						System.out
@@ -215,11 +259,13 @@ public class GClickOrderIP extends Configured implements Tool {
 					}
 				} else {
 					context.getCounter(Counters.Ip).increment(1);
-					if (rank == null) {  // key对应的value中 Rank信息没有最先到达
+					// 	key对应的value中没有Rank信息  或  Rank信息没有最先到达, 直接跳出
+					if (rank == null) {  
 						context.getCounter(Counters.OrderErr).increment(1);
+						return;  
 					}
 					arrTmp = tmp.split(MR_sepa);
-					if (arrTmp.length != 2) {
+					if (arrTmp.length < 3) {  // Map-out 结果不正常
 						context.getCounter(Counters.IpErr).increment(1);
 						System.out
 								.print("[ERROR] GClcOrdIP::Reduce() map-out IPinfo:\t"
@@ -227,7 +273,8 @@ public class GClickOrderIP extends Configured implements Tool {
 					} else {
 						okey.set(arrTmp[0]);
 						try {
-							mos.write(moIp, okey, oval, IpDir);  //IP rankinfo
+							mos.write(moIp, okey, oval, IpDir);  // key=ip
+							context.getCounter(Counters.ROIP).increment(1);
 						} catch (Exception e) {
 							e.printStackTrace();
 							context.getCounter(Counters.UnROIp).increment(1);
@@ -240,19 +287,29 @@ public class GClickOrderIP extends Configured implements Tool {
 							for (String s : arrTmp) {
 								okey.set(s);
 								try {
-									mos.write(moZone, okey, oval, ZoneDir);  //zone
+									mos.write(moZone, okey, oval, ZoneDir);  // key=zone
+									context.getCounter(Counters.ROZone).increment(1);
 								} catch (Exception e) {
 									e.printStackTrace();
-									context.getCounter(Counters.UnRout)
-											.increment(1);
+									context.getCounter(Counters.UnROZone).increment(1);
 								}
 							}
 						}
 					}
+					
+					try{  
+						okey.set(arrTmp[2]);  // KEY=uid
+						mos.write(moUid, okey, oval, UidDir);
+						context.getCounter(Counters.ROUid).increment(1);
+					} catch (Exception e) {
+						e.printStackTrace();
+						context.getCounter(Counters.UnROUid).increment(1);
+					}
 				}
 			}
-			System.out.print("[Test] GClickOrderIP::Reduce all values=\n"
-					+ testBuf);
+//			if(rank != null)
+//				System.out.print("[Test] GClickOrderIP::Reduce all values=\n"
+//						+ testBuf);
 		}
 
 		public void cleanup(Context context) {
@@ -284,10 +341,17 @@ public class GClickOrderIP extends Configured implements Tool {
 		Job job = new Job(conf, "[user and camp itemclassify rank]");
 		job.setJarByClass(GClickOrderIP.class);
 		job.setMapperClass(MapClick.class);
-		// job.setCombinerClass(IclassifyReducer.class);
-		job.setGroupingComparatorClass(KeyGrouping.class);
+		job.setMapOutputKeyClass(PriorPair.class);
+		job.setMapOutputValueClass(Text.class);
 		job.setReducerClass(ReduceClick.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
 		job.setNumReduceTasks(16);
+		
+		job.setPartitionerClass(FPairPartition.class);
+		job.setSortComparatorClass(SortComparator.class);
+		// job.setCombinerClass(.class);
+		job.setGroupingComparatorClass(KeyGrouping.class);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileInputFormat.addInputPath(job, new Path(args[1]));
@@ -310,11 +374,8 @@ public class GClickOrderIP extends Configured implements Tool {
 				Text.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, moZone, TextOutputFormat.class,
 				Text.class, Text.class);
-		
-		job.setMapOutputKeyClass(PriorPair.class);
-		job.setMapOutputValueClass(Text.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		MultipleOutputs.addNamedOutput(job, moUid, TextOutputFormat.class,
+				Text.class, Text.class);
 
 		Date startTime = new Date();
 		job.waitForCompletion(true);

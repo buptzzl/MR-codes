@@ -2,7 +2,9 @@ package com.emar.recsys.user.item;
 
 import java.text.ParseException;
 import java.util.*;
+import java.util.regex.Pattern;
 
+import com.emar.recsys.user.feature.FeatureType;
 import com.emar.recsys.user.util.IUserException;
 import com.emar.recsys.user.util.UtilStr;
 
@@ -12,6 +14,11 @@ import com.emar.recsys.user.util.UtilStr;
  * TODO
  */
 public class ItemAttribute {
+	private static final Pattern cpatt = Pattern.compile("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|？|,|;|!");
+	private static final String FPrefix = String.format("%s%s%s", FeatureType.AD, FeatureType.SEG,FeatureType.TITLE);
+	
+//	private final List<String> wseg = new ArrayList<String>(10);
+	private List<String> sword = new ArrayList<String>(100);
 	private String item;
 	private List<String> attributes;
 	
@@ -38,17 +45,38 @@ public class ItemAttribute {
 		//TODO 商品标题粗切分, 并分词
 		// 分隔符为： 空格、成对的 括号、非数字与英文  
 		// 两个字、 三个字中末尾为 装 等不再分词，
+		String[] atom = cpatt.split(this.item);
+//		wseg.clear();
 		
+		if(atom != null) {
+			this.attributes.add(FeatureType.concat(FPrefix, FeatureType.SEG, FeatureType.BRACKET));
+			this.attributes.add(FeatureType.concat(FPrefix, FeatureType.SEG, FeatureType.BRACKET, FeatureType.SEG, atom.length/2));
+			for(String s: atom) {
+				if(s.length() > 2) {
+					// 1个汉字后缀 or 无汉字
+					char c;
+					int i = 0;
+					while(i < s.length() - 1) {
+						c = s.charAt(i++);
+						if(UtilStr.isChinese(c)) {
+							break;
+						}
+					}
+//					if(i != (s.length() - 1))
+//						wseg.add(s);  // 待分词
+				}
+			}
+		}
 	}
 	
 	private boolean ItemCategory() {
 		// TODO 产品类目  根据商品分类器识别  
-		// 书名： 出版、标准|手册|书|著|词|考|、修订、最新版、第*版、全*册、编、阅读、人文、教、辅
+		// BOOK 书名： 出版、标准|手册|书|著|词|考|、修订、最新版、N版、N册、编、阅读、人文、教、辅
 		return true;
 	}
 	
 	private boolean ItemProducer() {
-		// TODO 厂家， 品牌 根据商品分类器识别  
+		// TODO 厂家， 品牌PINPAI 根据商品分类器识别  
 		// 空格分隔开的全英文 为品牌
 		return true;
 	}

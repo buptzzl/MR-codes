@@ -113,8 +113,27 @@ public class UtilStr {
 		} 
 		str = str.substring(1, str.length()-1);
 		return str.split(", ");  // 使用默认的分割方式
+	}  // faster than str2arr(str, "[|]", ", ");
+	/**
+	 * 通用的字符串转换为数组方法
+	 * @param unuse 无效的先后缀，中间字符
+	 * @param sepa 数组元素之间的分割符
+	 */
+	public static String[] str2arr(String str, String unuse, String sepa) {
+		if(str == null) {
+			return null;
+		}
+		String[] res;
+		
+		String mstr = str.replace(unuse, "");
+		if(mstr.length() == 0) {
+			res = new String[]{""};
+		} else {
+			res = mstr.split(sepa);
+		}
+		return res;
 	}
-
+	
 	public static void testStr2arr() {
 		String[] in = new String[]{"", "[]", "[a, b, c]"};
 		String[][] out = new String[in.length][];
@@ -124,6 +143,10 @@ public class UtilStr {
 		Assert.assertArrayEquals(out[0], UtilStr.str2arr(in[0]));
 		Assert.assertArrayEquals(out[1], UtilStr.str2arr(in[1]));
 		Assert.assertArrayEquals(out[2], UtilStr.str2arr(in[2]));
+		
+		Assert.assertArrayEquals(out[0], UtilStr.str2arr(in[0], "\\[|\\]", ", "));
+		Assert.assertArrayEquals(out[1], UtilStr.str2arr(in[1], "\\[|\\]", ", "));
+		Assert.assertArrayEquals(out[2], UtilStr.str2arr(in[2], "\\[|\\]", ", "));
 	}
 	
 	public static void main(String[] args) {

@@ -32,6 +32,12 @@ public class PriorPair implements WritableComparable<PriorPair> {
 	public PriorPair(Text t) {
 		this.setKV(t, new BooleanWritable(false));
 	}
+	public PriorPair(String s) {
+		this.setKV(new Text(s), new BooleanWritable(false));
+	}
+	public PriorPair(String s, boolean b) {
+		this.setKV(new Text(s), new BooleanWritable(b));
+	}
 	
 	public Text getFirst() {
 		return this.key;
@@ -75,7 +81,17 @@ public class PriorPair implements WritableComparable<PriorPair> {
 	public int compareTo(PriorPair obj) {  
 		// GroupingComparator SortComparator 默认调用， 默认为 this-that, 排序为ASC
 //		return this.key.compareTo(obj.key);
-//		/*
+		int c = this.key.compareTo(obj.key);
+		if(c == 0) {
+			if(this.flag.get() == false) {  // false是为较小，排在前面到达
+				c = -1;
+			}
+			if(obj.flag.get() == false) {
+				c = 1;
+			}
+		}
+		return c;
+		/*
 		if(this.flag.get()) {
 			if(obj.flag.get()) {  // 两者都为高优先级
 				return this.key.compareTo(obj.key);

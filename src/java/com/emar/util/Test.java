@@ -6,12 +6,12 @@ import java.net.URLDecoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
 import com.emar.classify.GoodsMark;
-import com.ibm.icu.util.Calendar;
 
 
 public class Test {
@@ -39,10 +39,9 @@ public class Test {
 		String urls = "http://fanxian.egou.com/oauthcallback.do?from=qq&bind=1&source=http%3A%2F%2Fwww.egou.com%2Fghs%2Fshop4529292.htm%3Fchn%3Dgdt%26tag%3Dghs%26utm_source%3Dgdt%26etc_n%3Ddirectad%26etc_m%3Dgdt%26etc_c%3Dkyp%26etc_g%3Dkyp%26etc_t%3Dqianxi%26tanceng%3D1%26qz_gdt%3Dc96WvF8aQioKViSxLas_gOI0vGv1Ns6T4cZWH6sw26kNu5p3jItqSKec_I0lhFxPkcPuUbG50aU&code=926191221712AC8B33DF7D8E53B7B75D";
 		String durl = URLDecoder.decode(urls, "utf8");
 		String tmptest = "shangchangdazhe/";
-		
-		Calendar c = Calendar.getInstance();
+		String[] testa = "【两盒 包邮】仅18.7元，享我买价,49元	的海南妃子笑荔枝;盒装（1000克）！核小、肉厚".split("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|,|;|!");
 		System.out.println("\n[test]"
-				+ "\n" + (4096>>12) + "\t" + (8192>>14)
+				+ Arrays.asList(testa)
 				+ "\n" + durl.contains("fanxian")
 				+ "\n" + null
 				+ "\n" + smap.toString()

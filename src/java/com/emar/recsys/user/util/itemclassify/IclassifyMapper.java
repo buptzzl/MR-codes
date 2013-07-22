@@ -38,7 +38,7 @@ public class IclassifyMapper extends Mapper<LongWritable, Text, Text, Text> {
 	
 	private static final String VDefPCnt="1", VDefPPrice="0.0", 
 			VDefPTime="20130101000000", VDefHost = "emar.com";
-	private static final int LenLog = 14;
+	private static final int LenLog = 13;
 	private static final int IdxPName = 4, IdxPPrice = 5, IdxCamp = 10, IdxHost = 12,
 			IdxDate = 11, IdxPCnt = 6, IdxPUid = 1;
 
@@ -58,7 +58,7 @@ public class IclassifyMapper extends Mapper<LongWritable, Text, Text, Text> {
 		String[] atom = line.split("\u0001");
 		if (atom.length < LenLog) {
 			context.getCounter(Counters.Useless).increment(1);
-			System.out.print("LEN of log split: " + atom.length + "\ncontent: " + line);
+//			System.out.print("LEN of log split: " + atom.length + "\ncontent: " + line);
 		} else {
 			String platuser = atom[IdxPUid].trim();
 			String campid = atom[IdxCamp].trim();

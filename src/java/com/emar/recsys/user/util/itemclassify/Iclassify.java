@@ -98,7 +98,7 @@ public class Iclassify {
 		job.setMapperClass(IclassifyMapper.class);
 		// job.setCombinerClass(IclassifyReducer.class);
 		job.setReducerClass(IclassifyReducer.class);
-		// job.setNumReduceTasks(1);
+		 job.setNumReduceTasks(64);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));

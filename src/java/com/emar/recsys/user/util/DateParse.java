@@ -2,8 +2,12 @@ package com.emar.recsys.user.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -68,6 +72,39 @@ public class DateParse {
 		}
 	};
 
+	
+	/**
+	 * 将按下划线 _ 分割的时间 yyyyMMddHH_yyyyMMddHH 按小时叠加转换为按规范的格式表示的日期字符串序列
+	 * @param ofmt 输出格式
+	 */
+	public static String[] getRange(String time, String ofmt) {
+		if(time == null || time.length() != 21 || ofmt == null) {
+			return null;
+		}
+		Set<String> res = new HashSet<String>();
+		
+		String[] times = time.split("_");
+		Calendar cend = Calendar.getInstance(), cbeg = Calendar.getInstance();
+		SimpleDateFormat dateformat = new SimpleDateFormat("yyyyMMddHH"),
+				outfmt = new SimpleDateFormat(ofmt); 
+		Date dbeg, dend;
+		try {
+			dbeg = dateformat.parse(times[0]);
+			cbeg.setTime(dbeg);
+			dend = dateformat.parse(times[1]);
+			cend.setTime(dend);
+			// TODO 输出时间区间字符串
+			while(cbeg.before(cend)) {
+				res.add(outfmt.format(cbeg.getTime()));
+				cbeg.add(Calendar.HOUR_OF_DAY, 1);
+			}
+			
+		} catch (ParseException e) {
+		} // DateTime
+		String[] resarr = res.toArray(new String[0]);
+		return resarr;
+	}
+	
 	/**
 	 * 返回时间的 {week,hour} 
 	 */
@@ -87,7 +124,7 @@ public class DateParse {
 			week = c.get(Calendar.DAY_OF_WEEK);
 			hour = c.get(Calendar.HOUR_OF_DAY);
 			// hour = TimeSlice.getTimeSlice(c.get(Calendar.HOUR_OF_DAY));
-
+			
 			res = new int[] { week, hour };
 		} catch (ParseException e) {
 		} // DateTime
@@ -118,12 +155,19 @@ public class DateParse {
 		weekdayHour[1] = TimeSlice.getTimeSlice(weekdayHour[1]);
 		return weekdayHour;
 	}
+	
+
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		String trange = "2013061800_2013061823";
+		String[] res = DateParse.getRange(trange, "yyyyMMdd/1/*_HH");
+		System.out.println("[Info] getRange()\n"
+				+ res
+				);
+		
 		String[] t = { "20130616 17:12:12", "yyyyMMdd HH:mm:ss" };
 		String[] t2 = { "20130616", "yyyyMMdd" };
 		int[] wd_info = DateParse.getWeekHour(t2[0], t2[1]);

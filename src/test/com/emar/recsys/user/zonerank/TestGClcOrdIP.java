@@ -20,35 +20,36 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.emar.recsys.user.zonerank.GClickOrderIP.MapClick;
+import com.emar.recsys.user.zonerank.GClickOrderIP.ReduceClick;
 
 //import com.emar.recsys.user.*;
 public class TestGClcOrdIP {
 
 //	MapDriver<Text, Text, Text, Text> mapOrder;
-	MapDriver<LongWritable, Text, Text, Text> mapDriver;
-	ReduceDriver<Text, Text, Text, Text> reduceDriver;
-	MapReduceDriver<LongWritable, Text, Text, Text, Text, Text> mapReduceDriver;
-//	MapReduceDriver<Text, Text, Text, Text, Text, Text> mapOrderDriver;
+	MapDriver<LongWritable, Text, PriorPair, Text> mapDriver;
+	ReduceDriver<PriorPair, Text, Text, Text> reduceDriver;
+	MapReduceDriver<LongWritable, Text, PriorPair, Text, Text, Text> mapReduceDriver;
 
 	Configuration conf = new Configuration();
 
 	private Pair<LongWritable, Text> inorder;
 	private Pair<LongWritable, Text> indata;
 	// shuffled and sorted data
-	private static List<Pair<Text, List<Text>>> shuffledData;
+	private static List<Pair<PriorPair, List<Text>>> shuffledData;
 
 	private void initData() {
 		Text value = new Text("add69c2f2fd282210bbbeaf076d2b8d9\u0001\u0001112.236.22.25\u00016bdd89e9-14c3-31ea-8e8f-658929b69911\u000120130522210018\u000182510\u0001115736\u00011\u0001141985\u0001Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1");
 		LongWritable key = new LongWritable(1);
 		indata = new Pair<LongWritable, Text>(key, value);
 		
-		Text valord = new Text("6621\t[50011884=2.0]");
+		Text valord = new Text("6621\t[50022688=48.0, 50011980=47.0, 50010815=38.0, 50011978=33.0, 50011986=32.0, 50011977=27.0, 50011979=23.0, 50026439=16.0, 50008599=14.0, 50026441=13.0, 50010794=13.0, 50010797=10.0, 50013794=10.0, 50022677=10.0, 50011982=10.0, 50011990=9.0, 50016885=8.0, 50010808=7.0, 50016231=5.0, 50014259=5.0, 50022682=5.0, 50010798=4.0, 50010790=4.0, 50010810=3.0, 50019771=3.0, 50014763=3.0, 50010807=3.0, 50015193=3.0, 50006584=3.0, 1801=3.0, 50010789=3.0, 50014253=3.0, 50010788=3.0, 50010793=3.0, 50009845=2.0, 50023728=2.0, 50050431=2.0, 50026443=2.0, 50022689=2.0, 50010792=2.0, 50026957=2.0, 50024999=1.0, 50005774=1.0, 50023292=1.0, 50010817=1.0, 50009838=1.0, 50011998=1.0, 50012004=1.0, 50010805=1.0, 50011868=1.0, 50012392=1.0, 213202=1.0, 50022681=1.0, 50011983=1.0]");
 		LongWritable keyord = new LongWritable(100);
 		inorder = new Pair<LongWritable, Text>(keyord, valord);
 		
 		List<Text> vallist = new ArrayList<Text>(2);
 		vallist.add(value);
 		vallist.add(valord);
+		PriorPair ppair = new PriorPair("6621", false);
 		
 	}
 
@@ -56,18 +57,19 @@ public class TestGClcOrdIP {
 	public void setUp() {
 		initData();
 		conf.set(
-				"io.serializations",
+				"io.serializations", 
 				"org.apache.hadoop.io.serializer.JavaSerialization,"
 						+ "org.apache.hadoop.io.serializer.WritableSerialization");
+		conf.set("user");
 		// mapDriver.setConfiguration(conf);
 
 		MapClick mapClick = new MapClick();
-//		mapDriver = MapDriver.newMapDriver(mapper);
-		mapOrder = MapDriver.newMapDriver(mapClick);
-
+		mapDriver = MapDriver.newMapDriver(mapClick);
+		
+		ReduceClick reducer = new ReduceClick();
 		reduceDriver = ReduceDriver.newReduceDriver(reducer);
 		// reduceDriver.setConfiguration(conf);
-		mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
+		mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapClick, reducer);
 	}
 
 	@Test
@@ -77,7 +79,6 @@ public class TestGClcOrdIP {
 		// expected output result
 		mapDriver.withOutput(new Text("6"), new IntWritable(1));
 		mapDriver.runTest(); // ִ�в��Եķ���һ
-		// assert ʧ�ܺ��²����벻ִ��
 		// assertEquals("Expected 1 counter increment", 1,
 		// mapDriver.getCounters().findCounter(CDRCounter.NoSMSCDR).getValue());
 

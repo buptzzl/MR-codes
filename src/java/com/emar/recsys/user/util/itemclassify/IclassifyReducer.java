@@ -62,8 +62,9 @@ public class IclassifyReducer extends Reducer<Text, Text, Text, Text> {
 			Integer icnt = Integer.parseInt(atom[MIdxCnt]);
 			icnt = icnt <= 0 ? 1: icnt;
 			// TODO 插入类别ID到 crank, 进行基于时间、 购买数量的衰减			
-			crank.put(atom[MIdxClass], (float) (crank.containsKey(atom[MIdxClass]) ? 
-					crank.get(atom[MIdxClass])+1.0/icnt: 1.0/icnt));
+			crank.put(atom[MIdxClass], (float) (crank.containsKey(atom[MIdxClass]) ?
+					crank.get(atom[MIdxClass]) + 1: 1));  // 不衰减
+//					crank.get(atom[MIdxClass])+1.0/icnt: 1.0/icnt));
 		}
 		Collections.sort(info);  // 主要按时间排序
 		List<Entry<String, Float>> lrank = UtilObj.entrySortFloat(crank, true);

@@ -1,6 +1,10 @@
 package com.emar.recsys.user.model;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -20,7 +24,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
-import org.eclipse.core.internal.resources.FileState;
 
 import com.emar.recsys.user.feature.FeatureDriver;
 
@@ -40,7 +43,7 @@ public class DateTrain {
 	private static final String SEPA = "\u0001";
 	private int idxPvUid, idxCamp, idxTime;
 	private int N;
-	private int CntClick, CntClcBad, CntClcEmp, CntClcBadCase, 
+	private int CntClick, CntClcBad, CntClcEmp, CntClcBadCase, CntClcTotal,
 		CntPV, CntPVBad, CntPVEmp, CntPVBadCase, 
 		CntOrder, CntOrdBad, CntOrdEmp;
 	
@@ -65,6 +68,7 @@ public class DateTrain {
 		CntOrdEmp = 0;
 		CntClcBadCase = 0;
 		CntPVBadCase = 0;
+		CntClcTotal = 0;
 	}
 	
 	public void printJob() {
@@ -116,9 +120,12 @@ public class DateTrain {
 		String line;
 		String[] atom;
 		
-		FSDataOutputStream out = null;
+//		FSDataOutputStream out = null;
+//		out = ofs.create(new Path(outpath));
+		FileWriter out = new FileWriter(new File(outpath));
+		
 		FileSystem ofs = FileSystem.get(URI.create(outpath), conf);
-		out = ofs.create(new Path(outpath));
+		
 		for(String path: clickpath) {
 			try {
 				fs = FileSystem.get(URI.create(path), conf);
@@ -134,27 +141,29 @@ public class DateTrain {
 							continue;
 						}
 						clickad.add(atom[FeatureDriver.idxAd]);
-						content = "1, " + flist + "\n";
-						out.write(content.getBytes());
+//						out.write("1, " + flist + "\n".getBytes());
+						out.write("1, " + flist + "\n");
 //						IOUtils.copyBytes(in, out, conf)
 						this.clickid.put(atom[idxPvUid], atom[idxTime]);
 						CntClick += 1;
 //						if((CntClick % 128) == 0) {
 //							System.out.println("[Info] DateTrain::getClickData() flush&sync data, size=" + CntClick);
-							out.flush();
-							out.sync();
+//							out.flush();
+//							out.sync();
 //						}
 					} catch (ParseException e) {
 						CntClcBad += 1;
 					}
 				}
 			} catch (IOException e1) {
-				e1.printStackTrace();
+//				e1.printStackTrace();
 			} finally {
 				IOUtils.closeStream(in);
-				IOUtils.closeStream(out);
 			}
 		}
+//	IOUtils.closeStream(out);
+		out.close();
+		
 		this.printJob();
 	}
 	// 对展示日志生成向量
@@ -172,9 +181,11 @@ public class DateTrain {
 		String line, time;
 		String[] atom;
 		
-		FSDataOutputStream out = null;
+//		FSDataOutputStream out = null;
+//		out = ofs.create(new Path(outpath));
+		FileWriter out = new FileWriter(new File(outpath));
 		FileSystem ofs = FileSystem.get(URI.create(outpath), conf);
-		out = ofs.create(new Path(outpath));
+		
 		for(String path: pvpath) {
 			try {
 				fs = FileSystem.get(URI.create(path), conf);
@@ -205,12 +216,13 @@ public class DateTrain {
 							CntPVEmp += 1;
 							continue;
 						}
-						out.writeBytes("0, " + flist + "\n");
+//						out.writeBytes("0, " + flist + "\n");
+						out.write("0, " + flist + "\n");
 						CntPV += 1;
 //						if((CntPV % 4096) == 0) {
 //							System.out.println("[Info] DateTrain::getPVData() flush&sync data, size=" + CntPV);
-							out.flush();
-							out.sync();
+//							out.flush();
+//							out.sync();
 //						}
 					} catch (ParseException e) {
 						CntPVBad += 1;
@@ -220,9 +232,12 @@ public class DateTrain {
 				e1.printStackTrace();
 			} finally {
 				IOUtils.closeStream(in);
-				IOUtils.closeStream(out);
 			}
 		}
+		
+//	IOUtils.closeStream(out);
+	out.close();
+	
 		this.printJob();
 	}
 	// 对订单日志得到向量
