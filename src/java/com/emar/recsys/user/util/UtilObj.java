@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.junit.Assert;
+
 /**
  * 对JAVA的基本对象（非str）进行相关操作
  * 
@@ -17,18 +19,18 @@ import java.util.Map.Entry;
  */
 public class UtilObj {
 	
-	public static <T, CT extends Comparable> List<Entry<T, CT>> sortMap(HashMap<T, CT> min) {
+	public static <T, CT extends Comparable> List<Entry<T, CT>> sortMap(Map<T, CT> min) {
 		if(min == null) {
 			return null;
 		}
 		List<Entry<T, CT>> res = new ArrayList<Entry<T, CT>>(min.entrySet());
-		/*
+		
 		Collections.sort(res, new Comparator<Entry<T, CT>>() {
 			public int compare(Entry<T, CT> e1, Entry<T, CT> e2) {
 				return e1.getValue().compareTo(e2.getValue());
 			}
 		});
-		*/
+		
 		return res;
 	}
 	
@@ -103,9 +105,17 @@ public class UtilObj {
 	/**
 	 * @param args
 	 */
+	public static void testSortMap() {
+		Map<String, Integer> tmap = new HashMap<String, Integer>();
+		tmap.put("a", 1); tmap.put("b", -1); tmap.put("c", 2);
+		List<Entry<String, Integer>> tres = UtilObj.sortMap(tmap);
+		Entry<String, Integer>[] ares = tres.toArray();
+		Assert.assertArrayEquals(expecteds, actuals)
+		System.out.println("[Test] UtilObj::sortMap res=" + tres);
+	}
+	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		UtilObj.sortMap();
 	}
 
 }

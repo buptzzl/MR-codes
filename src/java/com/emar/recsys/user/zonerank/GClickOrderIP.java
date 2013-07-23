@@ -397,6 +397,7 @@ public class GClickOrderIP extends Configured implements Tool {
 			System.exit(res);
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 

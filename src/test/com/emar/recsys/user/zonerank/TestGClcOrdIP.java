@@ -60,7 +60,7 @@ public class TestGClcOrdIP {
 				"io.serializations", 
 				"org.apache.hadoop.io.serializer.JavaSerialization,"
 						+ "org.apache.hadoop.io.serializer.WritableSerialization");
-		conf.set("user");
+		conf.setBoolean("isuid", true);
 		// mapDriver.setConfiguration(conf);
 
 		MapClick mapClick = new MapClick();

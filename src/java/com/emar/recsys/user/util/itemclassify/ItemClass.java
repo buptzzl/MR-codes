@@ -14,17 +14,17 @@ import com.emar.util.HdfsIO;
 public class ItemClass {
 	
 	private static final String[] classLPath = new String[] {
-		"/resources/classifyType/TB_level1.txt",
-		"/resources/classifyType/TB_level2.txt",
-		"/resources/classifyType/TB_level3.txt",
-		"/resources/classifyType/TB_level4.txt"
+		"/com/emar/util/resource/classify/firstcate",
+		"/com/emar/util/resource/classify/secondcate",
+		"/com/emar/util/resource/classify/thirdcate",
+		"/com/emar/util/resource/classify/fourthcate"
 	};
 	// HDFS上的文件路径 类别顺序遵循 LPath
 	private static final String[] classGPath = new String[] {
-		"/",
-		"/",
-		"/",
-		""
+		"/user/zhouliaoming/data/classify/firstcate",
+		"/user/zhouliaoming/data/classify/secondcate",
+		"/user/zhouliaoming/data/classify/thirdcate",
+		"/user/zhouliaoming/data/classify/fourthcate"
 	};  
 	// 多层词典，每层为{cid: pid}， 支持基于 cid 向上&向下查找 
 	private List<HashMap<String, StrPair>> classID;
@@ -35,10 +35,10 @@ public class ItemClass {
 	private static final int COL = 4;  // 列数
 	
 	public static class StrPair {
-		private String cid = null;
-		private String desc = null;
+		private String cid;
+		private String desc;
 		
-		public StrPair() { }
+//		public StrPair() { }
 		public StrPair(String id, String desc) {
 			this.cid = id;
 			this.desc = desc;
@@ -79,16 +79,22 @@ public class ItemClass {
 	}
 
 	private void defaultLoad() {
+		if(this.classID == null) {
+			this.classID = new ArrayList<HashMap<String, StrPair>>();
+		}
+		this.classID.clear();
+		
 		for(int i = 0; i < ItemClass.classGPath.length; ++i) {
 			this.classID.add(new HashMap<String, StrPair>());
 		}
+		
 		if(!this.fileLoad(ItemClass.classLPath)){
 			// 必须有一个成功才可用
 			assert this.fileLoad(ItemClass.classGPath);
 		}
 	}
 	private boolean fileLoad(String[] inputs){
-		// TODO read local or global file
+		// 调用HdfsIO中的通用方法
 		for(int i = 0; i < inputs.length; ++i) {
 			List<String> lines = HdfsIO.readFile(this.getClass(), inputs[i]);
 			if(lines == null) {
@@ -103,7 +109,6 @@ public class ItemClass {
 	}
 	// 用每行类型数据 建立 类别
 	private void data2class(String line, int level) {
-		// TODO
 		if(line == null) {
 			return;
 		}
@@ -117,8 +122,9 @@ public class ItemClass {
 	}
 	
 	/**
+	 * 判断当前classid是否存在
 	 * @param cid 
-	 * @return the leve exist cid.
+	 * 
 	 */
 	public boolean isexistCID(String cid, int level) {
 		if(cid == null || level < 0 || this.classID.size() <= level) {
@@ -137,11 +143,12 @@ public class ItemClass {
 	}
 	
 	/**
+	 * 在整个Map中查找 cid
 	 * @param cid
 	 * @param rinfo 存储查找到的value
-	 * @return 
+	 * @return -1指不存在, >=0 为存在
 	 */
-	public int searchCID(String cid, StrPair rinfo) {
+	public int searchCID(String cid) {
 		if(cid == null) {
 			return -1;
 		}
@@ -151,7 +158,6 @@ public class ItemClass {
 		for(int i = 0; i < this.classID.size(); ++i) {
 			tmpMap = classID.get(i);
 			if(tmpMap.containsKey(cid)) {
-				rinfo = tmpMap.get(cid);
 				level = i;
 				break;
 			}
@@ -161,6 +167,7 @@ public class ItemClass {
 	}
 	
 	/**
+	 * 
 	 * @param cid
 	 * @return list: (cid, desc)pair; maybe list==[]
 	 */
@@ -169,25 +176,51 @@ public class ItemClass {
 			return null;
 		}
 		
-		StrPair rinfo = null;
-		int level = this.searchCID(cid, rinfo);
-		ArrayList<StrPair> res = new ArrayList<StrPair>(level + 1);
-		while(level != -1) {
-			res.add(new StrPair(cid, rinfo.desc));
-			cid = rinfo.cid;
-			rinfo = this.searchCID(cid, level - 1);
+		List<StrPair> res = null;
+		StrPair rinfo;
+		int level = this.searchCID(cid);
+		if(level != -1) {
+			res = new ArrayList<StrPair>(level + 1);
+			while(level != -1) {
+				rinfo = this.searchCID(cid, level);
+				res.add(new StrPair(cid, rinfo.desc));
+				cid = rinfo.cid;
+				level -= 1;
+			}
 		}
+		
 		return res;
 	}
 	
-	
+	private static ItemClass instance;
+	private ItemClass() {
+		defaultLoad();
+		int cnt = 0;
+		for(HashMap<String, StrPair> tmap: this.classID) {
+			cnt += tmap.size();
+		}
+		System.out.println("[Info] ItemClass::init load-classify, data-level-size=" 
+				+ this.classID.size() 
+				+ "\ndata-total-size=" + cnt);
+		
+	}
+	public static ItemClass getInstance() {
+		if(ItemClass.instance == null) {
+			instance = new ItemClass();
+		}
+		
+		return ItemClass.instance;
+	}
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO 补充单元测试代码
-
+		//  补充单元测试代码
+		ItemClass itc = ItemClass.getInstance();
+		System.out.println("[Info] " + itc.searchParCid("50026555")
+				+ "\n" + itc.searchParCid("50018699"));
+		
 	}
 
 }

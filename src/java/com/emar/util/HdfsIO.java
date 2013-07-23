@@ -77,12 +77,13 @@ public class HdfsIO {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		List<String> lines = HdfsIO.readFile(HdfsIO.class, "resourse/TB_level1.txt");
+		String s = "resource/classify/firstcate";
+		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);
 		System.out.println("[test] \n" 
 				+ "size: " + lines.size()
-				+ "\nclass-load: " + HdfsIO.class.getResource("resourse/TB_level1.txt")
-				+ "\ncload2： " + HdfsIO.class.getResource("/com/emar/util/resourse/TB_level1.txt")
-				+ "\ncload3: " + Ip2AreaUDF.class.getResource("resourse/ip_dstc_ne.dat")
+				+ "\nclass-load: " + HdfsIO.class.getResource(s)
+				+ "\ncload2： " + HdfsIO.class.getResource("/com/emar/util/" + s)
+				+ "\ncload3: " + Ip2AreaUDF.class.getResource("resource/ip_dstc_ne.dat")
 				);
 	}
 
