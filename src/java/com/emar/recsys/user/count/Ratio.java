@@ -21,7 +21,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.emar.recsys.user.count.Frequence.Map.Cnts;
+import com.emar.recsys.user.count.Frequence.MapFreq.Cnts;
 
 /**
  * 统计 两个目录下的相同key之间的比率， 支持对value中存在 组合键进行与主键组合的比率统计

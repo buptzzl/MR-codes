@@ -17,6 +17,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 public class ExpHadoopIO {
 	
@@ -143,7 +145,7 @@ public class ExpHadoopIO {
 	}
 	
 	//Get the locations of a file in the HDFS cluster
-	public List<String []> GetFileBolckHost(Configuration conf, String FileName){
+	public static List<String []> GetFileBolckHost(String FileName){
 		try{
 			  List<String []> list = new ArrayList<String []>();
 			  Configuration config = new Configuration();
@@ -182,9 +184,39 @@ public class ExpHadoopIO {
 		}
 		return null;
 	}
+
+	public static void testdir(String line) throws IOException {
+		Job job = new Job();
+		FileInputFormat.addInputPath(job, new Path(line));
+		Configuration conf = new Configuration();
+		Path[] input_tot = FileInputFormat.getInputPaths(job);
+		for (Path p : input_tot) {
+			FileSystem fsystem = p.getFileSystem(conf);
+			// FileStatus pstat = fsystem.getFileStatus(p); // For test.
+			if (fsystem.isFile(p)) {
+				System.out.println("[Info] inPath:" + p.toString());
+			} else {
+				FileStatus[] input_fs = fsystem.globStatus(p);
+				for (FileStatus ps : input_fs) {
+					System.out.println("[Info] inPath:" + ps.getPath());
+				}
+			}
+		}
+//		job.killJob();
+	}
 	
 	public static void main(String[] args) {
-		ExpHadoopIO.CreateFile("/hive/warehouse/t_user/t_output");
+		String si = "/hive/warehouse/t_user/t_output";
+		ExpHadoopIO.CreateFile(si);
+		
+		String s2 = "/hive/warehouse/t";
+		List<String[]> res = ExpHadoopIO.GetFileBolckHost(s2);
+		System.out.println("[Info]: " + res.size());
+		try {
+			ExpHadoopIO.testdir(args[0]);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

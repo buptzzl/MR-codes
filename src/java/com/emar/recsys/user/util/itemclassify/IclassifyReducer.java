@@ -26,7 +26,7 @@ public class IclassifyReducer extends Reducer<Text, Text, Text, Text> {
 	private static final String MR_sepa = "\u0001";
 	private static final String MR_kcpre = "c_", MR_kupre = "u_";
 	
-	private static final int MIdxTime=0, MIdxClass=1, Midx_CInfo = 2,
+	private static final int MIdxTime=0, MIdxClass=1,
 			MIdxName=3, MIdxPri=4, MIdxCnt=5;
 	private static enum Counters {
 		UnRout
@@ -60,21 +60,22 @@ public class IclassifyReducer extends Reducer<Text, Text, Text, Text> {
 			info.add(sval);  // 直接写出原始分类数据
 			String[] atom = sval.split(MR_sepa);
 			Integer icnt = Integer.parseInt(atom[MIdxCnt]);
-			icnt = icnt <= 0 ? 1: icnt;
-			// TODO 插入类别ID到 crank, 进行基于时间、 购买数量的衰减			
+			icnt = icnt <= 0 ? 1: icnt;// 下单数量
+			
 			crank.put(atom[MIdxClass], (float) (crank.containsKey(atom[MIdxClass]) ?
 					crank.get(atom[MIdxClass]) + 1: 1));  // 不衰减
 //					crank.get(atom[MIdxClass])+1.0/icnt: 1.0/icnt));
 		}
 		Collections.sort(info);  // 主要按时间排序
 		List<Entry<String, Float>> lrank = UtilObj.entrySortFloat(crank, true);
+		
 		okey.set(skey);
 		try {
 			String orank, oinfo, ordir, orinfo;
 			if (isUser) {
 				orank = "userClassrank"; // 多输出的类目类型1
 				oinfo = "userInfo";
-				ordir = "uClassRank/";
+				ordir = "uUserRank/";
 				orinfo = "userInfo/";
 			} else {
 				orank = "campClassrank";

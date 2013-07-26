@@ -1,6 +1,7 @@
 package com.emar.util;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.text.ParseException;
@@ -11,10 +12,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.emar.classify.GoodsMark;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.file.tfile.RandomDistribution.Flat;
 
+//import com.emar.classify.GoodsMark;
 
 public class Test {
+	
+	public static <T extends Comparable, Objects> void compare(T a, T b) {
+		T c = b;
+		if(a.compareTo(b) < 0) {
+			c = a;
+		}
+		System.out.println("min-obj=" + c);
+	}
 
 	/**
 	 * ���﷨����
@@ -22,7 +33,7 @@ public class Test {
 	 * @throws ParseException 
 	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws ParseException, IOException {
+	public static void main(String[] args) throws ParseException, IOException  {
 		
 		HashMap<String, Integer> smap = new HashMap<String, Integer>();
 		smap.put("aa", 1);
@@ -30,9 +41,7 @@ public class Test {
 		List<Entry<String, Integer>> sinfo = 
 				new ArrayList<Entry<String, Integer>>(smap.entrySet());
 		String s = "5\u00016\u00017";
-		System.out.print(GoodsMark.getInstance().ClassifyGoods("葡萄酒100ml")
-				+ "\narr:\n" + sinfo
-				+ "\n" + smap.entrySet());
+//		System.out.print(GoodsMark.getInstance().ClassifyGoods("葡萄酒100ml"));
 		
 		String s1 = "add69c2f2fd282210bbbeaf076d2b8d9\u0001\u0001112.236.22.25\u00016bdd89e9-14c3-31ea-8e8f-658929b69911\u000120130522210018\u000182510\u0001115736\u00011\u0001141985\u0001";
 		
@@ -40,6 +49,8 @@ public class Test {
 		String durl = URLDecoder.decode(urls, "utf8");
 		String tmptest = "shangchangdazhe/";
 		String[] testa = "【两盒 包邮】仅18.7元，享我买价,49元	的海南妃子笑荔枝;盒装（1000克）！核小、肉厚".split("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|,|;|!");
+		
+		
 		System.out.println("\n[test]"
 				+ Arrays.asList(testa)
 				+ "\n" + durl.contains("fanxian")
@@ -48,10 +59,11 @@ public class Test {
 				+ "\n--\\a--"
 				+ "5\t\t".split("\t").length
 				+ "\t" + s.split("\u0001").length
+				+ "\n" + Float.valueOf("123.02")
 				);
 		
 		URL aURL = new URL("http://www.doubn.com/group/echofans"); 
-
+		Test.compare(new Text("abc"), new Text("ced"));
 	}
 
 }

@@ -7,6 +7,8 @@ import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -17,6 +19,9 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+
+import com.emar.recsys.user.util.DateParse;
+import com.emar.util.HdfsIO;
 
 public class Iclassify {
 
@@ -89,19 +94,19 @@ public class Iclassify {
 
 		String[] otherArgs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
-		if (otherArgs.length != 2) {
-			System.out.println("Usage: <in> <out>");
+		if (otherArgs.length != 4) {
+			System.out.println("Usage: <in-data-range> <time-fmt-in-path> <path-fmt> <out>");
+//			System.out.println("Usage: <in> <out>");
 			System.exit(2);
 		}
+		
 		Job job = new Job(conf, "[user and camp itemclassify rank]");
 		job.setJarByClass(Iclassify.class);
 		job.setMapperClass(IclassifyMapper.class);
 		// job.setCombinerClass(IclassifyReducer.class);
 		job.setReducerClass(IclassifyReducer.class);
-		 job.setNumReduceTasks(64);
-
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+		job.setNumReduceTasks(64);
+		HdfsIO.setInput(args[0], args[1], args[2], job);
 
 		MultipleOutputs.addNamedOutput(job, "userClassrank",
 				TextOutputFormat.class, Text.class, Text.class);

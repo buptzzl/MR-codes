@@ -92,7 +92,7 @@ public class MIp2Rank extends Configured implements Tool {
 				if (kvpair.length != 2) {
 					context.getCounter(Counters.ErrKV).increment(1);
 				} else {
-					tmpv = Float.parseFloat(kvpair[0]);  // 按权重合并
+					tmpv = Float.parseFloat(kvpair[1]);  // 按权重合并
 					oval.put(new Text(kvpair[0]), new FloatWritable(tmpv));
 				}
 			}
@@ -124,8 +124,8 @@ public class MIp2Rank extends Configured implements Tool {
 		}
 		
 		public void reduce(Text key, Iterable<MapWritable> values, Context context) {
-			HashMap<String, Float> tmap, mval = new HashMap<String, Float>();
-			HashMap<String, Float> vcamp = new HashMap<String, Float>(),
+			HashMap<String, Float> tmap, mval = new HashMap<String, Float>(100, 0.95f);
+			HashMap<String, Float> vcamp = new HashMap<String, Float>(100, 0.95f),
 					vuser = new HashMap<String, Float>();
 			float fval, vval;
 			String skey;
@@ -167,12 +167,13 @@ public class MIp2Rank extends Configured implements Tool {
 				mval.clear();
 			}
 			
+			skey = key.toString();
 			try {
 				if(vuser.size() != 0) {
-					oval.set(MIp2Rank.MR_kufmt + vuser.entrySet().toString());
+					oval.set(vuser.entrySet().toString() + "\t[source=plat_user_id]");
 					context.write(key, oval);
 				} else if(vcamp.size() != 0) {
-					oval.set(MIp2Rank.MR_kcfmt + vcamp.entrySet().toString());
+					oval.set(vcamp.entrySet().toString() + "\t[source=camp_id]");
 					context.write(key, oval);
 				} else {
 					context.getCounter(Counters.UnRout).increment(1);

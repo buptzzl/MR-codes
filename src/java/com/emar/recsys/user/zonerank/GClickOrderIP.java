@@ -8,7 +8,11 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -27,6 +31,8 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import com.emar.recsys.user.util.PriorPair;
+import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 import com.emar.util.Ip2AreaUDF;
 import com.emar.util.exp.UrlPair;
@@ -40,7 +46,7 @@ import com.emar.util.exp.UrlPair;
  */
 public class GClickOrderIP extends Configured implements Tool {
 	// 定义Map & Reduce 中通用的对象
-	private static final String MR_sepa = "\u0001";
+	private static final String MR_sepa = "\u0001", SComb = "@@@";
 	private static final SimpleDateFormat datefmt = new SimpleDateFormat(
 			"yyyyMMddHHmmss");
 
@@ -51,8 +57,9 @@ public class GClickOrderIP extends Configured implements Tool {
 	public static class MapClick extends
 			Mapper<LongWritable, Text, PriorPair, Text> {
 		private static final int LenClc = 10;
-		private static final int IdxIP = 2, IdxPUid = 3, IdxDate = 4,
-				IdxCamp = 5;
+//		private static final int IdxIP = 2, IdxPUid = 3, IdxDate = 4, IdxCamp = 5;
+		// chuchuang
+		private static final int IdxIP = 6, IdxPUid = 2, IdxDate = 7, IdxCamp = 10;
 		private static final int IpLen = 5;
 		private static final String[] IpDef = new String[] { "-1", "-1", "-1",
 				"-1", "-1" };
@@ -78,15 +85,14 @@ public class GClickOrderIP extends Configured implements Tool {
 				PType = PCamp;
 				keyIdx = IdxCamp;
 			}
-			System.out
-					.println("[Info] GClickOrderIP::MapClick::setup(1) para:isuid="
-							+ conf.getBoolean("isuid", false)
-							+ "\tPType=" + PType + "\tlog-key-index=" + keyIdx);
+			System.out.println("[Info] GClickOrderIP::MapClick::setup(1) para:isuid="
+					+ conf.getBoolean("isuid", false) + "\tPType=" + PType
+					+ "\tlog-key-index=" + keyIdx);
 		}
 
 		public void map(LongWritable key, Text val, Context context) {
 			context.getCounter(Counters.InC).increment(1);
-			
+
 			String inpath = ((FileSplit) context.getInputSplit()).getPath()
 					.toString();
 			String[] rankinfo;
@@ -94,9 +100,9 @@ public class GClickOrderIP extends Configured implements Tool {
 				rankinfo = val.toString().split("\t");
 				// okey.set(String.format(MR_kcfmt + "%s" + MR_sub,
 				// rankinfo[0]));
-				okey.setFirst(rankinfo[0]);  // campid or userid.
+				okey.setFirst(rankinfo[0]); // campid or userid.
 				okey.setFlag(false); // 升序时， Reduce端先到达
-				oval.set(rankinfo[1]);  // rank-info.
+				oval.set(rankinfo[1]); // rank-info.
 				try {
 					context.write(okey, oval);
 					context.getCounter(Counters.OC).increment(1);
@@ -105,14 +111,14 @@ public class GClickOrderIP extends Configured implements Tool {
 					context.getCounter(Counters.OCBad).increment(1);
 				}
 			} /*
-			 * else if(inpath.indexOf(PUser) >= 0) { rankinfo =
-			 * val.toString().split("\t"); okey.set(String.format(MR_kufmt +
-			 * "%s" + MR_sub, rankinfo[0])); oval.set(rankinfo[1]);
-			 * context.getCounter(Counters.InU).increment(1); try {
-			 * context.write(okey, oval);
-			 * context.getCounter(Counters.OU).increment(1); } catch (Exception
-			 * e) { context.getCounter(Counters.OUBad).increment(1); } }
-			 */else {
+				 * else if(inpath.indexOf(PUser) >= 0) { rankinfo =
+				 * val.toString().split("\t"); okey.set(String.format(MR_kufmt + "%s" +
+				 * MR_sub, rankinfo[0])); oval.set(rankinfo[1]);
+				 * context.getCounter(Counters.InU).increment(1); try {
+				 * context.write(okey, oval);
+				 * context.getCounter(Counters.OU).increment(1); } catch (Exception e) {
+				 * context.getCounter(Counters.OUBad).increment(1); } }
+				 */else {
 				String line = val.toString();
 				line = line.replace("\u0001", "\u0001 ");
 				String[] atom = line.split("\u0001");
@@ -124,22 +130,37 @@ public class GClickOrderIP extends Configured implements Tool {
 
 					List<String> ipzone;
 					if (ipinfo == null || ipinfo.length != IpLen) {
-//						System.err.println("[Error] map()" + ip + "\t" + ipinfo);
+						// System.err.println("[Error] map()" + ip + "\t" + ipinfo);
 						ipzone = Arrays.asList(IpDef);
 						context.getCounter(Counters.UnIP).increment(1);
 					} else {
 						ipzone = Arrays.asList(ipinfo);
 					}
-//					String platuser = atom[IdxPUid].trim();
-//					String campid = atom[IdxCamp].trim();
+					// String platuser = atom[IdxPUid].trim();
+					// String campid = atom[IdxCamp].trim();
 					String outkey = atom[keyIdx].trim();
+					//@for chuchuang
+					Set<String> keyset = new HashSet<String>();
+					for(String s: outkey.split(",")) {
+						if(s.length() != 0) 
+							keyset.add(s);
+					}
+					
 					String uid = atom[IdxPUid].trim();
-
+//					inpath = inpath.substring(0, inpath.lastIndexOf('/'));
+//					String platid = inpath.substring(inpath.lastIndexOf('/'));//末尾两个//间值为platid
+					String plat = inpath.substring(inpath.lastIndexOf('/')).split("_")[1];
+					
 					try {
 						okey.setFirst(outkey);
 						okey.setFlag(true);
-						oval.set(ip + MR_sepa + ipzone.toString() + MR_sepa + uid);
-						context.write(okey, oval);
+						oval.set(ip + MR_sepa + ipzone.toString() + MR_sepa + uid + SComb + plat);
+//						context.write(okey, oval);
+						//@for chuchuang
+						for(String s: keyset) {
+							okey.setFirst(s);
+							context.write(okey, oval);
+						}
 						context.getCounter(Counters.OIP).increment(1);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -152,30 +173,29 @@ public class GClickOrderIP extends Configured implements Tool {
 		public void cleanup(Context context) {
 		}
 	}
-	
+
 	public static class FPairPartition extends Partitioner<PriorPair, Text> {
 		@Override
-		public int getPartition(PriorPair key, Text value,
-				int numPartitions) {
+		public int getPartition(PriorPair key, Text value, int numPartitions) {
 			return Math.abs(key.getFirst().hashCode()) % numPartitions;
 		}
 	}
-	
+
 	public static class SortComparator extends WritableComparator {
 		private PriorPair first, second;
-		
+
 		protected SortComparator() {
 			super(PriorPair.class, true);
 		}
-		
+
 		public int compare(WritableComparable a, WritableComparable b) {
-			first = (PriorPair)a;
-			second = (PriorPair)b;
+			first = (PriorPair) a;
+			second = (PriorPair) b;
 			return first.compareTo(second);
 		}
-		
+
 	}
-	
+
 	/**
 	 * 按 first 字段归并 value-list
 	 */
@@ -197,15 +217,13 @@ public class GClickOrderIP extends Configured implements Tool {
 	public static class ReduceClick extends Reducer<PriorPair, Text, Text, Text> {
 
 		private static enum Counters {
-			ReduceIn, MinRank, MultiRank, Ip, IpErr, IpzoneErr, OrderErr, 
-			ROIP, UnROIp, ROZone, UnROZone, ROUid, UnROUid
+			ReduceIn, MinRank, MultiRank, Ip, IpErr, IpzoneErr, OrderErr, ROIP, UnROIp, ROZone, UnROZone, ROUid, UnROUid
 		};
 
 		private MultipleOutputs<Text, Text> mos = null;
 		private Text okey = new Text(), oval = new Text();
 
-		public void setup(Context context) throws IOException,
-				InterruptedException {
+		public void setup(Context context) throws IOException, InterruptedException {
 			mos = new MultipleOutputs(context);
 			super.setup(context);
 		}
@@ -216,39 +234,49 @@ public class GClickOrderIP extends Configured implements Tool {
 			String rank = null;
 			String tmp;
 			String[] arrTmp;
-//			StringBuffer testBuf = new StringBuffer();  //@Test
-			
+			Set<String> ipSet = new HashSet<String>(), 
+					zoneSet = new HashSet<String>(), 
+					uidSet = new HashSet<String>();
+			// StringBuffer testBuf = new StringBuffer(); //@Test
+
 			context.getCounter(Counters.ReduceIn).increment(1);
 			for (Text t : values) {
-//				testBuf.append("\n" + t.toString());
+				// testBuf.append("\n" + t.toString());
 				tmp = t.toString();
 				if (tmp.startsWith("[")) {
 					if (rank == null) {
+						Map<String, Float> mrank = UtilObj.Str2Map(tmp, "[]", ", ");
+						if(mrank.size() > 1000) {
+							List<Entry<String, Float>> slist = UtilObj.entrySortFloat(mrank, true);
+							slist = slist.subList(0, 1000);  // 裁剪
+							if(slist.get(0).getValue() < 10) 
+								slist = slist.subList(0, 10);
+							rank = slist.toString();
+						} else {
+							rank = tmp;
+						}
+						/*
 						// 对 Rank-out 添加对应的来源字段
-//						rank = tmp;
+						// rank = tmp;
 						String[] atoms = UtilStr.str2arr(rank);
-						if(atoms.length > 1000) {  // 裁剪rank信息
+						if (atoms.length > 1000) { // 裁剪rank信息
 							int idxval = atoms[0].indexOf('=');
 							float val = Float.parseFloat(atoms[0].substring(idxval).trim());
 							int maxlen = 1000;
-							float minscore = 10;
-							if(val < 10) {
-								maxlen = 10;  // 长度裁剪
-								minscore = 1;
+							if (val < 10) {
+								maxlen = 10; // 长度裁剪
 							}
 							StringBuffer sbuf = new StringBuffer("[");
-							for(int i = 0; i < maxlen; ++i){
+							for (int i = 0; i < maxlen; ++i) {
 								idxval = atoms[i].indexOf('=');
-								val = Float.parseFloat(atoms[i].substring(idxval).trim());
-								if(minscore < val) {
-									sbuf.append(atoms[i]);
-									sbuf.append(", ");
-								}
+								sbuf.append(atoms[i]);
+								sbuf.append(", ");
 							}
 							sbuf.append("]");
 							rank = sbuf.toString().replace(", ]", "");
 						}
-						
+						*/
+
 						oval.set(rank);
 						context.getCounter(Counters.MinRank).increment(1);
 					} else {
@@ -259,57 +287,65 @@ public class GClickOrderIP extends Configured implements Tool {
 					}
 				} else {
 					context.getCounter(Counters.Ip).increment(1);
-					// 	key对应的value中没有Rank信息  或  Rank信息没有最先到达, 直接跳出
-					if (rank == null) {  
+					// key对应的value中没有Rank信息 或 Rank信息没有最先到达, 直接跳出
+					if (rank == null) {
 						context.getCounter(Counters.OrderErr).increment(1);
-						return;  
+						return;
 					}
 					arrTmp = tmp.split(MR_sepa);
-					if (arrTmp.length < 3) {  // Map-out 结果不正常
+					if (arrTmp.length < 3) { // Map-out 结果不正常
 						context.getCounter(Counters.IpErr).increment(1);
-						System.out
-								.print("[ERROR] GClcOrdIP::Reduce() map-out IPinfo:\t"
-										+ tmp);
+						System.out.print("[ERROR] GClcOrdIP::Reduce() map-out IPinfo:\t"
+								+ tmp);
 					} else {
-						okey.set(arrTmp[0]);
-						try {
-							mos.write(moIp, okey, oval, IpDir);  // key=ip
-							context.getCounter(Counters.ROIP).increment(1);
-						} catch (Exception e) {
-							e.printStackTrace();
-							context.getCounter(Counters.UnROIp).increment(1);
-						}
-						
+						ipSet.add(arrTmp[0]);
+
 						arrTmp = UtilStr.str2arr(arrTmp[1]); // 字符串转换
 						if (arrTmp.length != 5) {
 							context.getCounter(Counters.IpzoneErr).increment(1);
 						} else {
 							for (String s : arrTmp) {
-								okey.set(s);
-								try {
-									mos.write(moZone, okey, oval, ZoneDir);  // key=zone
-									context.getCounter(Counters.ROZone).increment(1);
-								} catch (Exception e) {
-									e.printStackTrace();
-									context.getCounter(Counters.UnROZone).increment(1);
-								}
+								zoneSet.add(s);
 							}
 						}
-					}
-					
-					try{  
-						okey.set(arrTmp[2]);  // KEY=uid
-						mos.write(moUid, okey, oval, UidDir);
-						context.getCounter(Counters.ROUid).increment(1);
-					} catch (Exception e) {
-						e.printStackTrace();
-						context.getCounter(Counters.UnROUid).increment(1);
+
+						uidSet.add(arrTmp[2]);
 					}
 				}
 			}
-//			if(rank != null)
-//				System.out.print("[Test] GClickOrderIP::Reduce all values=\n"
-//						+ testBuf);
+			
+			for(String s: ipSet) {
+				okey.set(s);
+				try {
+					mos.write(moIp, okey, oval, IpDir); // key=ip
+					context.getCounter(Counters.ROIP).increment(1);
+				} catch (Exception e) {
+					e.printStackTrace();
+					context.getCounter(Counters.UnROIp).increment(1);
+				}
+			}
+			
+			for(String s: zoneSet) {
+				okey.set(s);
+				try {
+					mos.write(moZone, okey, oval, ZoneDir); // key=zone
+					context.getCounter(Counters.ROZone).increment(1);
+				} catch (Exception e) {
+					e.printStackTrace();
+					context.getCounter(Counters.UnROZone).increment(1);
+				}
+			}
+			
+			for(String s: uidSet) {
+				okey.set(s);
+				try {
+					mos.write(moUid, okey, oval, UidDir);
+					context.getCounter(Counters.ROUid).increment(1);
+				} catch (Exception e) {
+					e.printStackTrace();
+					context.getCounter(Counters.UnROUid).increment(1);
+				}
+			}
 		}
 
 		public void cleanup(Context context) {
@@ -336,7 +372,7 @@ public class GClickOrderIP extends Configured implements Tool {
 			System.out.println("Usage: <in1> <in2> <out> isuid ");
 			System.exit(2);
 		}
-		
+
 		conf.setBoolean("isuid", otherArgs[3].equals("user"));
 		Job job = new Job(conf, "[user and camp itemclassify rank]");
 		job.setJarByClass(GClickOrderIP.class);
@@ -347,7 +383,7 @@ public class GClickOrderIP extends Configured implements Tool {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 		job.setNumReduceTasks(16);
-		
+
 		job.setPartitionerClass(FPairPartition.class);
 		job.setSortComparatorClass(SortComparator.class);
 		// job.setCombinerClass(.class);
@@ -359,7 +395,7 @@ public class GClickOrderIP extends Configured implements Tool {
 		Path[] input_tot = FileInputFormat.getInputPaths(job);
 		for (Path p : input_tot) {
 			FileSystem fsystem = p.getFileSystem(job.getConfiguration());
-//			FileStatus pstat = fsystem.getFileStatus(p);  // For test.
+			// FileStatus pstat = fsystem.getFileStatus(p); // For test.
 			if (fsystem.isFile(p)) {
 				System.out.println("[Info] inPath:" + p.toString());
 			} else {
@@ -381,8 +417,7 @@ public class GClickOrderIP extends Configured implements Tool {
 		job.waitForCompletion(true);
 		Date end_time = new Date();
 		System.out.println("The job took "
-				+ (end_time.getTime() - startTime.getTime()) / 1000
-				+ " seconds.");
+				+ (end_time.getTime() - startTime.getTime()) / 1000 + " seconds.");
 		return 0;
 	}
 
@@ -392,8 +427,7 @@ public class GClickOrderIP extends Configured implements Tool {
 	public static void main(String[] args) {
 		int res;
 		try {
-			res = ToolRunner
-					.run(new Configuration(), new GClickOrderIP(), args);
+			res = ToolRunner.run(new Configuration(), new GClickOrderIP(), args);
 			System.exit(res);
 		} catch (Exception e) {
 			e.printStackTrace();

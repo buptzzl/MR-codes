@@ -13,4 +13,7 @@ public interface IUserException {
 	public static final int ErrUserNull = 1000;
 	public static final int ErrUserIndex = 1001;
 	
+	// LOG parse
+	public static final int ErrLogNull = 10000;
+	
 }
