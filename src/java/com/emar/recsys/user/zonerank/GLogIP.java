@@ -32,15 +32,12 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.PriorPair;
 import com.emar.recsys.user.util.UtilObj;
-import com.emar.recsys.user.util.UtilStr;
-import com.emar.util.Ip2AreaUDF;
-import com.emar.util.exp.UrlPair;
 
 /**
- * 聚会各个地域的IP， zone 对应的 不同Rank（相同时保留1个）.
- * 
+ * 聚合各个地域的IP， zone 对应的 不同Rank（相同时保留1个，不同类别间按用户数统计）.
+ * @in ip-rank-list, zone-rank-list
+ * @out ip-merge-rank, zone-merge-rank
  * @after GLogOrder
  * @author zhoulm
  * 
@@ -67,6 +64,7 @@ public class GLogIP extends Configured implements Tool {
 			String[] s = val.toString().split(SEPA_MR);
 			okey.set(s[0]);
 			oval.set(s[1]);
+			
 			try {
 				context.write(okey, oval);
 			} catch (Exception e) {
@@ -81,6 +79,7 @@ public class GLogIP extends Configured implements Tool {
 	public static class ReduceFilter extends Reducer<Text, Text, Text, Text> {
 
 		private static enum Counters {
+			RoIP, RoZone, 
 			ErrRo
 		};
 
@@ -93,12 +92,13 @@ public class GLogIP extends Configured implements Tool {
 			super.setup(context);
 			Configuration conf = context.getConfiguration();
 			THRELD = conf.getInt("minfreq", 1);
+//			System.out.print();
 		}
 
 		public void reduce(Text key, Iterable<Text> values, Context context) {
 			String tmp;
 			// String[] arrTmp;
-			Map<String, Integer> rankcnt = new HashMap<String, Integer>();
+			Map<String, Integer> rankcnt = new HashMap<String, Integer>(100, 0.9f);
 			int tot = 0;
 
 			for (Text t : values) {
@@ -110,23 +110,28 @@ public class GLogIP extends Configured implements Tool {
 				return;
 			}
 
-			Map<String, Float> mrank = new HashMap<String, Float>();
+			Map<String, Float> mrank = new HashMap<String, Float>(100, 0.9f);
 			for (String s : rankcnt.keySet()) {
-				Map<String, Float> mtmp = UtilObj.Str2Map(s, "[]", ", "); // 数组转MAP
+				// 归并所有key(str: rank) 信息， 丢弃value(Float)部分。
+				Map<String, Float> mtmp = UtilObj.Str2Map(s, "[]", ", "); // 
 				for (Entry<String, Float> kv : mtmp.entrySet()) {
+					// 按用户数
 					mrank.put(
 							kv.getKey(),
-							mrank.containsKey(kv.getKey()) ? (mrank.get(kv.getKey()) + kv
-									.getValue()) : kv.getValue());
+							mrank.containsKey(kv.getKey()) ? mrank.get(kv.getKey())+1 : 1);
+//									(mrank.get(kv.getKey()) + kv
+//									.getValue()) : kv.getValue());
 				}
 			}
 			List<Entry<String, Float>> rlist = UtilObj.entrySortFloat(mrank, true);
 			oval.set(rlist.toString());
 			try {
-				if (key.toString().indexOf('.') != -1) {
+				if (key.toString().indexOf('.') != -1) {  
 					mos.write(moIp, key, oval, IpDir);
+					context.getCounter(Counters.RoIP).increment(1);
 				} else {
 					mos.write(moZone, key, oval, ZoneDir);
+					context.getCounter(Counters.RoZone).increment(1);
 				}
 			} catch (Exception e) {
 				context.getCounter(Counters.ErrRo).increment(1);
@@ -154,11 +159,11 @@ public class GLogIP extends Configured implements Tool {
 		List<String> arr = Arrays.asList(args);
 		System.out.println("[Info] input-args: " + arr);
 		if (otherArgs.length < 3) {
-			System.out.println("Usage: <in> <out> minFreq ");
+			System.out.println("Usage: <out> <in1> <in2> [minFreq] ");
 			System.exit(3);
 		}
-
-		conf.setInt("minfreq", Integer.parseInt(otherArgs[2]));
+		if(otherArgs.length == 4) 
+			conf.setInt("minfreq", Integer.parseInt(otherArgs[3]));
 
 		Job job = new Job(conf, "[filter ip&zone rankinfo]");
 		job.setJarByClass(GLogIP.class);
@@ -168,9 +173,9 @@ public class GLogIP extends Configured implements Tool {
 		job.setOutputValueClass(Text.class);
 		job.setNumReduceTasks(16);
 
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-//		FileInputFormat.addInputPath(job, new Path(args[1]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+		FileInputFormat.addInputPath(job, new Path(args[1]));
+		FileInputFormat.addInputPath(job, new Path(args[2]));
+		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 		Path[] input_tot = FileInputFormat.getInputPaths(job);
 		for (Path p : input_tot) {
 			FileSystem fsystem = p.getFileSystem(job.getConfiguration());
@@ -204,7 +209,7 @@ public class GLogIP extends Configured implements Tool {
 	public static void main(String[] args) {
 		int res;
 		try {
-			res = ToolRunner.run(new Configuration(), new GClickOrderIP(), args);
+			res = ToolRunner.run(new Configuration(), new GLogIP(), args);
 			System.exit(res);
 		} catch (Exception e) {
 			e.printStackTrace();

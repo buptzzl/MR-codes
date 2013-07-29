@@ -38,8 +38,8 @@ import com.emar.util.Ip2AreaUDF;
 import com.emar.util.exp.UrlPair;
 
 /**
- * TODO UnitTest 从点击日志中收集 campid, userid, prod-info; 合并订单数据。 采用类似二次排序策略，优先分发
- * Rank 对应的Mapper
+ * TODO UnitTest 从点击日志中收集 campid, userid, prod-info; 合并订单数据。 采用类似二次排序策略，
+ * 优先分发Rank 对应的Mapper
  * 
  * @author zhoulm
  * 

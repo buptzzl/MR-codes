@@ -1,9 +1,10 @@
 package com.emar.recsys.user.zonerank;
 
 /**
- * 合并两种以 uid 为key的键为value  
+ * 合并两种以 uid 为key 的 map-value 列表（gUser, gCamp）  
  * @author zhoulm
  *
+ * @discasde
  */
 
 import java.io.IOException;

@@ -32,15 +32,11 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.MRPair;
 import com.emar.recsys.user.util.PriorPair;
-import com.emar.recsys.user.util.UtilObj;
-import com.emar.recsys.user.util.UtilStr;
-import com.emar.util.HdfsIO;
 
 /**
- * 基于 相同的key链接两部分，不同的内容分别单独输出
- * 
+ * 将两个文件中 相同的key（比如： uid）， 按自定义方法合并交集部分， 差集分开保存。
+ * 比如： 可用于增量合并前后两次 uid-rank 数据。
  * @author zhoulm
  * 
  */
@@ -75,6 +71,9 @@ public class Merge extends Configured implements Tool {
 		public void map(LongWritable key, Text val, Context context) {
 			String[] rankinfo = val.toString().split(SEPA_MR);
 			oval.setFirst(rankinfo[1]); // campid or userid.
+			if(rankinfo[0].indexOf("chuchuang") != -1) {
+				rankinfo[0].replace("chuchuang", "yiqifa");
+			}
 			okey.set(rankinfo[0]); // rank-info.
 			String path = ((FileSplit) context.getInputSplit()).getPath()
 					.toString();
@@ -108,19 +107,21 @@ public class Merge extends Configured implements Tool {
 			Reducer<Text, PriorPair, Text, Text> {
 
 		private static enum Counters {
-			ErrRo, ErrEmp, ErrMoIP, ErrRoIP, ErrRoZone, ErrMROIP, ErrRoBoth, MoRank, MoRankMul, MoIP, RoIP, RoZone, RoUnrank
+			ErrRo, ErrEmp, ErrMoIP, ErrRoIP, ErrRoZone, ErrMROIP, ErrRoBoth, MoRank, MoRankMul, MoIP, 
+			RoBoth, RoIP, RoZone, RoUnrank
 		};
 
 		private MultipleOutputs<Text, Text> mos = null;
 		private Text okey = new Text(), oval = new Text();
-
+		@Override
 		public void setup(Context context) throws IOException,
 				InterruptedException {
 			mos = new MultipleOutputs(context);
 			super.setup(context);
 		}
 
-		public void reduce(PriorPair key, Iterable<PriorPair> values,
+		@Override
+		public void reduce(Text key, Iterable<PriorPair> values,
 				Context context) {
 			String tmp;
 			Set<String> set1 = new HashSet<String>();
@@ -166,6 +167,7 @@ public class Merge extends Configured implements Tool {
 					okey.set(s);
 					try {
 						mos.write(both, okey, oval, bothDir);
+						context.getCounter(Counters.RoBoth).increment(1);
 					} catch (Exception e) {
 						e.printStackTrace();
 						context.getCounter(Counters.ErrRoBoth).increment(1);

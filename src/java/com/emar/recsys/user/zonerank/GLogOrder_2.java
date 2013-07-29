@@ -32,21 +32,17 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.PriorPair;
-import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 import com.emar.util.HdfsIO;
 import com.emar.util.Ip2AreaUDF;
 
 /**
- * 基于 Uid 链接 itemclass&IPinfo； 将无法链接的uid单独输出，为下一步处理
- * @after Iclassify2
- * @discard 基于订单的用户UID，归并出点击(表达了用户的兴趣)中的地域排行。
+ * @desc 修改 GLogOrder的中间数据分发方式，其他不变
  * 
  * @author zhoulm
  * 
  */
-public class GLogOrder extends Configured implements Tool {
+public class GLogOrder_2 extends Configured implements Tool {
 	// 定义Map & Reduce 中通用的对象
 	private static final String SEPA = LogParse.SEPA, SEPA_MR = LogParse.SEPA_MR,
 			PLAT = LogParse.PLAT, EMAR = LogParse.EMAR, MAGIC = LogParse.MAGIC;
@@ -56,11 +52,10 @@ public class GLogOrder extends Configured implements Tool {
 			ZoneDir = "zoneRank/", moUidIp = "uidip", moUidIpDir = "uid2IP/";
 
 	public static class MapCombine extends
-			Mapper<LongWritable, Text, PriorPair, Text> {
+			Mapper<LongWritable, Text, Text, Text> {
 		private static final String PUser = "uUserRank";
 
-		private Text oval = new Text();
-		private PriorPair okey = new PriorPair();
+		private Text okey, oval;
 
 		private static Ip2AreaUDF iparea;
 		private LogParse logparse;
@@ -72,6 +67,9 @@ public class GLogOrder extends Configured implements Tool {
 		};
 
 		public void setup(Context context) {
+			oval = new Text();
+			okey = new Text();
+			
 			iparea = Ip2AreaUDF.getInstance();
 			// 日志解析初始化
 			try {
@@ -91,8 +89,7 @@ public class GLogOrder extends Configured implements Tool {
 			String path = ((FileSplit) context.getInputSplit()).getPath().toString();
 			if (path.indexOf(PType) >= 0) {
 				String[] rankinfo = val.toString().split(SEPA_MR);
-				okey.setFirst(rankinfo[0]); // campid or userid.
-				okey.setFlag(false); // 升序时， Reduce端先到达
+				okey.set(rankinfo[0]);
 				oval.set(rankinfo[1]); // rank-info.
 				try {
 					context.write(okey, oval);
@@ -122,8 +119,7 @@ public class GLogOrder extends Configured implements Tool {
 				if (skey == null) {
 					return;
 				}
-				okey.setFirst(skey); // uidkey
-				okey.setFlag(true);
+				okey.set(skey); // uidkey
 				List<String> ipzone = Arrays.asList(ipinfo);
 				oval.set(this.logparse.base.ip + SEPA + ipzone.toString());
 				try {
@@ -141,48 +137,8 @@ public class GLogOrder extends Configured implements Tool {
 
 	}
 
-	public static class FPairPartition extends Partitioner<PriorPair, Text> {
-		@Override
-		public int getPartition(PriorPair key, Text value, int numPartitions) {
-			return Math.abs(key.getFirst().hashCode()) % numPartitions;
-		}
-	}
-
-	public static class SortComparator extends WritableComparator {
-		private PriorPair first, second;
-
-		protected SortComparator() {
-			super(PriorPair.class, true);
-		}
-
-		public int compare(WritableComparable a, WritableComparable b) {
-			first = (PriorPair) a;
-			second = (PriorPair) b;
-			return first.compareTo(second);
-		}
-
-	}
-
-	/**
-	 * 按 first 字段归并 value-list
-	 */
-	public static class KeyGrouping extends WritableComparator {
-		private PriorPair k1, k2;
-
-		protected KeyGrouping() {
-			super(PriorPair.class, true);
-		}
-
-		@Override
-		public int compare(WritableComparable a, WritableComparable b) {
-			k1 = (PriorPair) a;
-			k2 = (PriorPair) b;
-			return k1.getFirst().compareTo(k2.getFirst());
-		}
-	}
-
 	public static class ReduceCombine extends
-			Reducer<PriorPair, Text, Text, Text> {
+			Reducer<Text, Text, Text, Text> {
 
 		private static enum Counters {
 			ErrRo, ErrEmp, ErrMoIP, ErrRoIP, ErrRoZone, ErrMROIP, 
@@ -198,9 +154,9 @@ public class GLogOrder extends Configured implements Tool {
 			super.setup(context);
 		}
 
-		public void reduce(PriorPair key, Iterable<Text> values, Context context) {
-			String rkey = key.getFirst().toString();
-			String rank = null, tmp;
+		public void reduce(Text key, Iterable<Text> values, Context context) {
+			String rkey = key.toString();
+			String rank = null, tmp = null;
 			String[] arrTmp;
 
 			Set<String> ipset = new HashSet<String>();
@@ -209,7 +165,7 @@ public class GLogOrder extends Configured implements Tool {
 			for (Text t : values) {
 				tmp = t.toString();
 
-				if (tmp.startsWith("[")) {
+				if (tmp.indexOf('=') != -1) {
 					if (rank == null) {
 						rank = tmp;
 
@@ -219,8 +175,14 @@ public class GLogOrder extends Configured implements Tool {
 						context.getCounter(Counters.MoRankMul).increment(1);
 					}
 				} else {
+					arrTmp = tmp.split(SEPA);
 					context.getCounter(Counters.MoIP).increment(1);
-					
+					ipset.add(arrTmp[0]);
+					arrTmp = UtilStr.str2arr(arrTmp[1]); // 字符串转换
+					for (String s : arrTmp) {
+						zoneset.add(s);
+					}
+					/*
 					// key对应的value中没有Rank信息 或 Rank信息没有最先到达, 直接写出IP信息，不进行ip-rank 操作
 					if (rank == null) {
 						context.getCounter(Counters.ErrEmp).increment(1);
@@ -244,10 +206,12 @@ public class GLogOrder extends Configured implements Tool {
 								zoneset.add(s);
 							}
 					}
-					
+					*/
 				}
 			}
-
+			String motype, modir;
+			if(rank != null) {
+				
 			for (String s : ipset) {
 				okey.set(s);
 				try {
@@ -258,7 +222,6 @@ public class GLogOrder extends Configured implements Tool {
 					context.getCounter(Counters.ErrRoIP).increment(1);
 				}
 			}
-
 			for (String s : zoneset) {
 				okey.set(s);
 				try {
@@ -269,7 +232,16 @@ public class GLogOrder extends Configured implements Tool {
 					context.getCounter(Counters.ErrRoZone).increment(1);
 				}
 			}
-
+			} else {
+				oval.set(tmp);
+				try {
+					mos.write(moUidIp, key, oval, moUidIpDir);
+					context.getCounter(Counters.RoUnrank).increment(1);
+				} catch (Exception e) {
+					context.getCounter(Counters.ErrRo).increment(1);
+				}
+			}
+			
 		}
 
 		public void cleanup(Context context) {
@@ -298,19 +270,12 @@ public class GLogOrder extends Configured implements Tool {
 		}
 
 		Job job = new Job(conf, "[combine ip and rankinfo]");
-		job.setJarByClass(GLogOrder.class);
+		job.setJarByClass(GLogOrder_2.class);
 		job.setMapperClass(MapCombine.class);
-		job.setMapOutputKeyClass(PriorPair.class);
-		job.setMapOutputValueClass(Text.class);
 		job.setReducerClass(ReduceCombine.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 		job.setNumReduceTasks(32);
-
-		job.setPartitionerClass(FPairPartition.class);
-		job.setSortComparatorClass(SortComparator.class);
-		// job.setCombinerClass(.class);
-		job.setGroupingComparatorClass(KeyGrouping.class);
 
 		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 		FileInputFormat.addInputPaths(job, args[1]);
@@ -341,7 +306,7 @@ public class GLogOrder extends Configured implements Tool {
 	public static void main(String[] args) {
 		int res;
 		try {
-			res = ToolRunner.run(new Configuration(), new GLogOrder(), args);
+			res = ToolRunner.run(new Configuration(), new GLogOrder_2(), args);
 			System.exit(res);
 		} catch (Exception e) {
 			e.printStackTrace();

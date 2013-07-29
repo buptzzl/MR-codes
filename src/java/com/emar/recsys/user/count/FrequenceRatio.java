@@ -30,7 +30,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.BaseLog;
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.MRPair;
+import com.emar.recsys.user.util.PairFloatInt;
 import com.emar.util.HdfsIO;
 
 /**
@@ -47,7 +47,7 @@ public class FrequenceRatio extends Configured implements Tool {
 
 	public static class MapFreq
 			extends
-			Mapper<LongWritable, Text, Text, MRPair<VIntWritable, BooleanWritable>> {
+			Mapper<LongWritable, Text, Text, PairFloatInt> {
 
 		private String[] idx;
 		private String kidx;
@@ -60,7 +60,7 @@ public class FrequenceRatio extends Configured implements Tool {
 		private LogParse lparse;
 		private Text okey;
 		// private IntWritable oval = new IntWritable();
-		private MRPair<VIntWritable, BooleanWritable> oval;
+		private PairFloatInt oval;
 
 		private static enum Cnts {
 			ErrMo, ErrParse, ErrRefKeyNull, ErrReflect
@@ -87,8 +87,7 @@ public class FrequenceRatio extends Configured implements Tool {
 						.println("[ERROR] FrequenceRatio::MAP::setup init failed.");
 			}
 			okey = new Text();
-			oval = new MRPair<VIntWritable, BooleanWritable>(
-					new VIntWritable(0), new BooleanWritable());
+			oval = new PairFloatInt();
 		}
 
 		public void map(LongWritable key, Text val, Context context) {
@@ -157,7 +156,7 @@ public class FrequenceRatio extends Configured implements Tool {
 			for (Entry<String, Integer> ei : stripe.entrySet()) {
 				okey.set(ei.getKey());
 				oval.getFirst().set(ei.getValue());
-				oval.getSecond().set(false);// 分子部分
+				oval.getSecond().set(0);// 分子部分
 				try {
 					context.write(okey, oval);
 				} catch (Exception e) {
@@ -168,7 +167,7 @@ public class FrequenceRatio extends Configured implements Tool {
 			for (Entry<String, Integer> ei : stripeDenom.entrySet()) {
 				okey.set(ei.getKey());
 				oval.getFirst().set(ei.getValue());
-				oval.getSecond().set(true);// 分母部分
+				oval.getSecond().set(1);// 分母部分
 				try {
 					context.write(okey, oval);
 				} catch (Exception e) {
@@ -180,9 +179,7 @@ public class FrequenceRatio extends Configured implements Tool {
 
 	}
 
-	public static class ReduceFreq
-			extends
-			Reducer<Text, MRPair<IntWritable, BooleanWritable>, Text, FloatWritable> {
+	public static class ReduceFreq extends Reducer<Text, PairFloatInt, Text, Text> {
 		public static enum Cnts {
 			RO, ROErr
 		}
@@ -190,21 +187,20 @@ public class FrequenceRatio extends Configured implements Tool {
 		public void setup(Context context) {
 		}
 
-		public void reduce(Text key,
-				Iterable<MRPair<IntWritable, BooleanWritable>> values,
-				Context context) {
+		public void reduce(Text key, Iterable<PairFloatInt> values, Context context) {
 			float cnt = 0, cntDenom = 0;
 
-			for (MRPair<IntWritable, BooleanWritable> iwbl : values) {
-				if (iwbl.getSecond().get() == true) {
+			for (PairFloatInt iwbl : values) {
+				if (iwbl.getSecond().get() == 0) {
 					cnt += iwbl.getFirst().get();
 				} else {
 					cntDenom += iwbl.getFirst().get();
 				}
 			}
-
+			
+			String scores = String.format("%f\u0001%f\u0001%f", cnt/cntDenom, cnt, cntDenom);
 			try {
-				context.write(key, new FloatWritable(cnt / cntDenom));
+				context.write(key, new Text(scores));
 			} catch (Exception e) {
 				context.getCounter(Cnts.ROErr).increment(1);
 			}
@@ -251,9 +247,9 @@ public class FrequenceRatio extends Configured implements Tool {
 		}
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(MRPair.class);
+		job.setMapOutputValueClass(PairFloatInt.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(FloatWritable.class);
+		job.setOutputValueClass(Text.class);
 
 		Date startTime = new Date();
 		job.waitForCompletion(true);
@@ -270,7 +266,6 @@ public class FrequenceRatio extends Configured implements Tool {
 		try {
 			res = ToolRunner.run(new Configuration(), new FrequenceRatio(), args);
 			System.exit(res);
-//			System.out.println("[test] FrequenceRatio");
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);

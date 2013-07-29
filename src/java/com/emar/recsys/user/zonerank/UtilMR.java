@@ -27,13 +27,13 @@ public class UtilMR {
 		for (String s : ip) {
 			s = s.replace('[', ' ');
 			s = s.replace(']', ' ');
-			atom = s.split("\u0001|, ");
+			atom = s.split("\u0001|, ");  // 抽取ip^A[zone]的所有原子
 			if (atom.length < 6) {
 				continue;
 			}
 			for (String ri : rank) 
-				for (String ai : atom)
-					mout.add(String.format("%s%s%s", ai.trim(), SEPA, ri.trim()));// ipinfo->rank
+				for (String ai : atom)  // ipinfo->rank
+					mout.add(String.format("%s%s%s", ai.trim(), SEPA, ri.trim()));
 		}
 		return true;
 	}

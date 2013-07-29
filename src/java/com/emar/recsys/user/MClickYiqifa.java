@@ -27,6 +27,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.util.DateParse;
 import com.emar.recsys.user.util.UAParse;
+import com.emar.recsys.user.util.UtilMath;
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 import com.emar.util.Ip2AreaUDF;
@@ -198,11 +199,11 @@ public class MClickYiqifa extends Configured implements Tool {
 			}
 			
 			String tmps = "";
-			tmps = String.format("%d,info:%s", UtilObj.max(cnt_week), UtilStr.iarr2str(cnt_week));
+			tmps = String.format("%d,info:%s", UtilMath.max(cnt_week), UtilStr.iarr2str(cnt_week));
 			String s = tmps;
 			String s_sim = tmps.substring(0, tmps.indexOf(","));
 			
-			tmps = String.format("%d,info:%s", UtilObj.max(hours),UtilStr.iarr2str(hours));
+			tmps = String.format("%d,info:%s", UtilMath.max(hours),UtilStr.iarr2str(hours));
 			s = String.format("%s,%s", s, tmps);
 			s_sim = String.format("%s,%s", s_sim, tmps.substring(0, tmps.indexOf(",")));
 			
