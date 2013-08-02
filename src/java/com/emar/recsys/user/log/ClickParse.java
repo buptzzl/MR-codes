@@ -35,7 +35,8 @@ public class ClickParse extends BaseLog {
 			pv_id = atom[1];
 			ip = atom[2];
 			plat_user_id = atom[3];
-			oper_time = atom[4];
+//			oper_time = atom[4];
+			time = atom[4];
 			camp_id = atom[5];
 			idea_id = atom[6];
 			ad_modality = atom[7];
@@ -55,9 +56,9 @@ public class ClickParse extends BaseLog {
 			return String
 					.format(
 							"click_id=%s\u0001pv_id=%s\u0001ip=%s\u0001"
-									+ "plat_user_id=%s\u0001oper_time=%s\u0001camp_id=%s\u0001idea_id=%s"
+									+ "plat_user_id=%s\u0001time=%s\u0001camp_id=%s\u0001idea_id=%s"
 									+ "\u0001ad_modality=%s\u0001ad_zone_id=%s\u0001user_agent=%s\u0001user_id=%s",
-							click_id, pv_id, ip, plat_user_id, oper_time, camp_id, idea_id,
+							click_id, pv_id, ip, plat_user_id, time, camp_id, idea_id,
 							ad_modality, ad_zone_id, user_agent, user_id);
 		} else {
 			return null;

@@ -20,7 +20,7 @@ public class BaseLog {
 	public String idea_id;
 	public String ip;
 	public String mate_ids; 
-	public String oper_time;
+//	public String oper_time;  // 与time合并
 	public String order_id;
 	public String order_no;
 	public String order_price;
@@ -76,10 +76,10 @@ public class BaseLog {
 		idea_id = null;
 		ip = null;
 		mate_ids = null;
-		oper_time = null;
+//		oper_time = null;
 		order_id = null;
 		order_no = null;  //ad_modality,ad_zone_id,camp_id,camp_ids,click_id,domain,
-		order_price = null;  //idea_id,ip,mate_ids,oper_time,order_id,order_no,order_price,
+		order_price = null;  //idea_id,ip,mate_ids,order_id,order_no,order_price,
 		orig_prod_type = null;  //orig_prod_type,page_url,plat_user_id,prod_cnt,prod_name,
 		page_url = null;  //prod_no,prod_price,prod_type_name,pv_id,refer_url,sw_id,time,
 		plat_user_id = null;  //title,user_agent,user_cookieid,user_id
@@ -104,12 +104,12 @@ public class BaseLog {
 	public String toString() {
 		return String.format("status=%s\t"
 				+ "ad_modality=%s,ad_zone_id=%s,camp_id=%s,camp_ids=%s,click_id=%s,domain=%s,"
-				+ "idea_id=%s,ip=%s,mate_ids=%s,oper_time=%s,order_id=%s,order_no=%s,order_price=%s,"
+				+ "idea_id=%s,ip=%s,mate_ids=%s,order_id=%s,order_no=%s,order_price=%s,"
 				+ "orig_prod_type=%s,page_url=%s,plat_user_id=%s,prod_cnt=%s,prod_name=%s,"
 				+ "prod_no=%s,prod_price=%s,prod_type_name=%s,pv_id=%s,refer_url=%s,sw_id=%s,time=%s,"
 				+ "title=%s,user_agent=%s,user_cookieid=%s,user_id=%s",
 				status, ad_modality,ad_zone_id,camp_id,camp_ids,click_id,domain,
-				idea_id,ip,mate_ids,oper_time,order_id,order_no,order_price,
+				idea_id,ip,mate_ids,order_id,order_no,order_price,
 				orig_prod_type,page_url,plat_user_id,prod_cnt,prod_name,
 				prod_no,prod_price,prod_type_name,pv_id,refer_url,sw_id,time,
 				title,user_agent,user_cookieid,user_id);
@@ -122,7 +122,8 @@ public class BaseLog {
 			pv_id = atom[0];
 			plat_user_id = atom[1];
 			ip = atom[2];
-			oper_time = atom[3];
+//			oper_time = atom[3];
+			time = atom[3];
 			page_url = atom[4];
 			refer_url = atom[5];
 			user_agent = atom[6];
@@ -149,7 +150,8 @@ public class BaseLog {
 			pv_id = atom[1];
 			ip = atom[2];
 			plat_user_id = atom[3];
-			oper_time = atom[4];
+//			oper_time = atom[4];
+			time = atom[4];
 			camp_id = atom[5];
 			idea_id = atom[6];
 			ad_modality = atom[7];
@@ -182,7 +184,8 @@ public class BaseLog {
 			prod_type_name = atom[8];
 			order_price = atom[9];
 			camp_id = atom[10];
-			oper_time = atom[11];
+//			oper_time = atom[11];
+			time = atom[11];
 			if(13 < atom.length) {
 				domain = atom[12];
 				user_id = atom[13];

@@ -123,8 +123,7 @@ public class DateTrain {
 //		FSDataOutputStream out = null;
 //		out = ofs.create(new Path(outpath));
 		FileWriter out = new FileWriter(new File(outpath));
-		
-		FileSystem ofs = FileSystem.get(URI.create(outpath), conf);
+//		FileSystem ofs = FileSystem.get(URI.create(outpath), conf);
 		
 		for(String path: clickpath) {
 			try {

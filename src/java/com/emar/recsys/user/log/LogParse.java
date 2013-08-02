@@ -21,7 +21,7 @@ import com.emar.recsys.user.log.FileNameParse.LOG_TYPE;
  *
  */
 public class LogParse {
-	public static String EMAR = "emar", PLAT = "plat";
+	public static String EMAR = "emar", PLAT = "plat", EQUEA = "=";
 	public static String MAGIC = "@@@", 
 			SEPA = "\u0001", SEPA_MR = "\t", SEPA_CAMPS = ",";
 	
@@ -213,27 +213,29 @@ public class LogParse {
 				lparse.base.isdug = false;
 				lparse.parse(oneline.get(i), input[i]);
 				lparse.parse("86175b52-2432-4bd3-93a8-0db57dae4690\u000113704561999337850194\u00012013060606296932\u000128159303\u0001Zegda正大 夏装新品 都市休闲男条纹短袖POLO衫CB122H25\u000179.0\u00011\u00017\u00017\u000179.0\u00016954\u000120130606040041\u0001ule.com", "i_yiqifa_order_20130606_04.dat");
-//				System.out.println("logpath-info:\t" + lparse.logpath.toString()
-//						+ "\nout:\t" + lparse.base
-//						+ "\ninpath:\t" + input[i] + "\nindata:\t" + oneline.get(i) 
-//						+ "\nlogparse:\t" + lparse.base
-//						+ "\n[uid, plat-uid]:\n" + lparse.base.user_id + "\t" + lparse.base.plat_user_id);
+				System.out.println("logpath-info:\t" + lparse.logpath.toString()
+						+ "\nout:\t" + lparse.base
+						+ "\ninpath:\t" + input[i] + "\nindata:\t" + oneline.get(i) 
+						+ "\nlogparse:\t" + lparse.base
+						+ "\n[uid, plat-uid]:\n" + lparse.base.user_id + "\t" + lparse.base.plat_user_id);
+				break;
 			}
-			
-			Field field;
-			String fval, pval;
-//			field = LogParse.class.getField("SEPA"); // OK
-//			field = LogParse.class.getField("SEPA_"); // NoSuchFieldException
-//			field = BaseLog.class.getField("status"); // OK
-			
-			System.out.println("[reflect]\t SEPA=" + lparse.getField("SEPA")
-					+ "\t Base.status=" + lparse.getField("status") 
-					+ "\t File.plat=" + lparse.getField("plat"));
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
    
-	
+	public static void testGetField() throws ParseException {
+		LogParse lparse = new LogParse();
+		Field field;
+		String fval, pval;
+//		field = LogParse.class.getField("SEPA"); // OK
+//		field = LogParse.class.getField("SEPA_"); // NoSuchFieldException
+//		field = BaseLog.class.getField("status"); // OK
+		
+		System.out.println("[reflect]\t SEPA=" + lparse.getField("SEPA")
+				+ "\t Base.status=" + lparse.getField("status") 
+				+ "\t File.plat=" + lparse.getField("plat"));
+	}
 }

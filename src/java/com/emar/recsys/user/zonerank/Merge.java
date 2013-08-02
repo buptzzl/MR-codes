@@ -138,9 +138,9 @@ public class Merge extends Configured implements Tool {
 			}
 			if (set2.size() == 0) {
 				for (String s : set1) {
-					okey.set(s);
+					oval.set(s);
 					try {
-						mos.write(first, okey, oval, firstDir); // only key1
+						mos.write(first, key, oval, firstDir); // only key1
 						context.getCounter(Counters.RoIP).increment(1);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -149,9 +149,9 @@ public class Merge extends Configured implements Tool {
 				}
 			} else if (set1.size() == 0) {
 				for (String s : set2) {
-					okey.set(s);
+					oval.set(s);
 					try {
-						mos.write(second, okey, oval, secondDir); // only key2
+						mos.write(second, key, oval, secondDir); // only key2
 						context.getCounter(Counters.RoZone).increment(1);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -162,11 +162,11 @@ public class Merge extends Configured implements Tool {
 				// / 处理两者中的交集部分
 				Set<String> resMerge = new HashSet<String>();
 				UtilMR.mergeIPRank(set1, set2, resMerge); // set1必须为IP
-				oval.set("");
+//				oval.set("");
 				for (String s : resMerge) {
-					okey.set(s);
+					oval.set(s);
 					try {
-						mos.write(both, okey, oval, bothDir);
+						mos.write(both, key, oval, bothDir);
 						context.getCounter(Counters.RoBoth).increment(1);
 					} catch (Exception e) {
 						e.printStackTrace();

@@ -26,7 +26,7 @@ import com.emar.util.Ip2AreaUDF.IpArea;
 
 /**
  * 
- * @author Administrator 重用常见 IO 操作
+ * @author zhou 重用常见 IO 操作
  */
 public class HdfsIO {
 
@@ -77,18 +77,13 @@ public class HdfsIO {
 		return lines;
 	}
 
-	public static boolean setInput(String range, String timefmt, String fmt, Job job) {
-		String[] datapath = DateParse.getRange(range, timefmt);
-		String fpath;
+	public static void printInput(Job job) {
 		int fcnt = 0;
-		try {
-			for (String s : datapath) {
-				fpath = String.format(fmt, s);
-				FileInputFormat.addInputPath(job, new Path(fpath));
-			}
-			Path[] input_tot = FileInputFormat.getInputPaths(job);
-			for (Path p : input_tot) {
-				FileSystem fsystem = p.getFileSystem(job.getConfiguration());
+		Path[] input_tot = FileInputFormat.getInputPaths(job);
+		for (Path p : input_tot) {
+			FileSystem fsystem;
+			try {
+				fsystem = p.getFileSystem(job.getConfiguration());
 				if (fsystem.isFile(p)) {
 					System.out.println("[Info] inPath:" + p.toString());
 				} else {
@@ -98,8 +93,24 @@ public class HdfsIO {
 						System.out.println("[Info] inPath:" + ps.getPath());
 					}
 				}
+			} catch (IOException e) {
 			}
-			System.out.println("[Info] HdfsIO::setInput total-input-file=" + fcnt);
+		}
+		System.out.println("[Info] total-input-file=" + fcnt);
+		return;
+	}
+
+	public static boolean setInput(String range, String timefmt, String fmt,
+			Job job) {
+		String[] datapath = DateParse.getRange(range, timefmt);
+		String fpath;
+		int fcnt = 0;
+		try {
+			for (String s : datapath) {
+				fpath = String.format(fmt, s);
+				FileInputFormat.addInputPath(job, new Path(fpath));
+			}
+			printInput(job);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
@@ -119,9 +130,9 @@ public class HdfsIO {
 				+ HdfsIO.class.getResource("/com/emar/util/" + s)
 				+ "\ncload3: "
 				+ Ip2AreaUDF.class.getResource("resource/ip_dstc_ne.dat"));
-		
+
 		try {
-			String range = "2013061800_2013061900", tfmt = "yyyyMMdd", fmt="/data/stg/s_order_log/%s/1/*.dat";
+			String range = "2013061800_2013061900", tfmt = "yyyyMMdd", fmt = "/data/stg/s_order_log/%s/1/*.dat";
 			HdfsIO.setInput(range, tfmt, fmt, new Job());
 			System.out.println("from CMD");
 			HdfsIO.setInput(args[0], args[1], args[2], new Job());
@@ -129,7 +140,7 @@ public class HdfsIO {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 }

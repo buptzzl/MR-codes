@@ -187,7 +187,7 @@ public class DataNormalize {
 				itr.remove();
 				this.features.remove(k);
 			} else {
-				this.features.put(k, cnt);
+				this.features.put(k, cnt);  // 更新特征下标？
 				cnt += 1;
 			}
 		}

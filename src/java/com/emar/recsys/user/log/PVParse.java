@@ -26,7 +26,7 @@ public class PVParse extends BaseLog {
 			pv_id = atom[0];
 			plat_user_id = atom[1];
 			ip = atom[2];
-			oper_time = atom[3];
+			time = atom[3];
 			page_url = atom[4];
 			refer_url = atom[5];
 			user_agent = atom[6];
@@ -43,9 +43,9 @@ public class PVParse extends BaseLog {
 	public String toString() {
 		if(this.status) {
 			return String.format("pv_id=%s\u0001plat_user_id=%s\u0001ip=%s\u0001"
-					+ "oper_time=%s\u0001page_url=%s\u0001refer_url=%s\u0001user_agent=%s"
+					+ "time=%s\u0001page_url=%s\u0001refer_url=%s\u0001user_agent=%s"
 					+ "\u0001ad_modality=%s\u0001ad_zone_id=%s\u0001camp_id=%s\u0001"
-					+ "idea_id=%s\u0001user_id=%s", pv_id,plat_user_id,ip,oper_time,page_url,
+					+ "idea_id=%s\u0001user_id=%s", pv_id,plat_user_id,ip,time,page_url,
 					refer_url,user_agent,ad_modality,ad_zone_id,camp_id,idea_id,user_id);
 		} else {
 			return null;

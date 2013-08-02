@@ -3,6 +3,7 @@ package com.emar.recsys.user.util.itemclassify;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.emar.util.HdfsIO;
 
@@ -169,7 +170,7 @@ public class ItemClass {
 	/**
 	 * 
 	 * @param cid
-	 * @return list: (cid, desc)pair; maybe list==[]
+	 * @return list: (cid, desc)pair; 
 	 */
 	public List<StrPair> searchParCid(String cid) {
 		if(cid == null) {
@@ -190,6 +191,35 @@ public class ItemClass {
 		}
 		
 		return res;
+	}
+	// 除去返回类型不同， 其他同searchParCid
+	public String[] searchParArr(String cid) {
+		if(cid == null) {
+			return null;
+		}
+		String[] res = null;
+		String id;
+		int level = this.searchCID(cid);
+		if(level != -1) {
+			res = new String[level + 1];
+			while(level != -1) {
+				id = this.searchCID(cid, level).cid;
+//				res.add(new StrPair(cid, rinfo.desc));
+				res[level] = cid;
+				cid = id;
+				level -= 1;
+			}
+		}
+		
+		return res;
+	}
+	
+	// 返回第K层的所有类别ID
+	public Set<String> getClassID(int level) {
+		if(level < 0 || level >= classID.size())
+			return null;
+		
+		return classID.get(level).keySet();
 	}
 	
 	private static ItemClass instance;

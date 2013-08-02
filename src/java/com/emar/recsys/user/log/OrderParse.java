@@ -36,7 +36,7 @@ public class OrderParse extends BaseLog {
 			prod_type_name = atom[8];
 			order_price = atom[9];
 			camp_id = atom[10];
-			oper_time = atom[11];
+			time = atom[11];
 			if(13 < atom.length) {
 				domain = atom[12];
 				user_id = atom[13];
@@ -52,9 +52,9 @@ public class OrderParse extends BaseLog {
 			return String.format("order_id=%s\u0001plat_user_id=%s\u0001order_no=%s"
 					+"\u0001prod_no=%s\u0001prod_name=%s\u0001prod_price=%s\u0001prod_cnt=%s"
 					+"\u0001orig_prod_type=%s\u0001prod_type_name=%s\u0001order_price=%s"
-					+"\u0001camp_id=%s\u0001oper_time=%s\u0001domain=%s\u0001user_id=%s",
+					+"\u0001camp_id=%s\u0001time=%s\u0001domain=%s\u0001user_id=%s",
 					order_id,plat_user_id,order_no,prod_no,prod_name,prod_price,prod_cnt,
-					orig_prod_type,prod_type_name,order_price,camp_id,oper_time,domain,user_id);
+					orig_prod_type,prod_type_name,order_price,camp_id,time,domain,user_id);
 		} else {
 			return null;
 		}
