@@ -3,6 +3,7 @@ package com.emar.recsys.user.demo.sex;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ import com.emar.util.HdfsIO;
  * 
  * @author zhoulm M： 性别，并记录 
  * @R： part1/2(score==0?)
- * @fmt uid:prodCnt\x01[atom1, atom2...]\x01Sneg\x01Spos\x01\[s1@@@name1, s2@@@name2...(s*!=0)]
+ * @fmt uid:prodCnt\x01[sub-arr-atom1, sub-arr-atom2...]\x01Sneg\x01Spos\x01\[s1@@@name1, s2@@@name2...(s*!=0)]
  * 
  */
 public class GOrder extends Configured implements Tool {
@@ -47,7 +48,7 @@ public class GOrder extends Configured implements Tool {
 	private static final String SEPA = LogParse.SEPA, SEPA_MAG = LogParse.MAGIC,
 			SEPA_MR = LogParse.SEPA_MR;
 	private static final String Sex = "sex", Unk = "unk";
-	private static final int KIDX_NAME = -1;
+	private static final int KIDX_NAME = 3;
 
 	public static class MapFreq extends
 			Mapper<LongWritable, Text, Text, PairTInt> {
@@ -81,7 +82,9 @@ public class GOrder extends Configured implements Tool {
 			int sex = SexWord.isman(mval[KIDX_NAME]);
 
 			okey.set(atom[0]);
-			oval.setFirst(atom[1]);
+			// 添加空格，替换 \u0001为数组
+			oval.setFirst(
+					Arrays.asList(String.format("%s ", atom[1]).split(SEPA)).toString());
 			oval.setFlag(sex);
 			try {
 				context.write(okey, oval);
@@ -120,7 +123,9 @@ public class GOrder extends Configured implements Tool {
 			for (PairTInt pi : values) {
 				cnt_goods += 1;
 				tmp = pi.getFlag().get();
+				// 将\u0001字符替换掉，按数组字符串存储
 				stmp = pi.getFirst().toString();
+				
 				if (tmp != 0) {
 					score_neg += tmp;
 					if(tmp > 0) 
@@ -166,8 +171,9 @@ public class GOrder extends Configured implements Tool {
 
 		// FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[0]));
-		for (int i = 1; i < oArgs.length; ++i)
+		for (int i = 1; i < oArgs.length; ++i) {
 			FileInputFormat.addInputPath(job, new Path(oArgs[i]));
+		}
 		HdfsIO.printInput(job);
 
 		MultipleOutputs.addNamedOutput(job, Sex, TextOutputFormat.class,

@@ -28,23 +28,21 @@ public class ClassSex {
 	
 	private static Map<String, IntPair> classDistribute;  //全部类别的男女频率
 	private static Map<String, IntPair> classFilter;  // 过滤后的结果
-	private static Map<String, Integer> rawdata; // 存储每个用户的信息数组的字串
+//	private static Map<String, Integer> rawdata; // 存储每个用户的信息数组的字串
+	private static List rawdata;  // time,name,price,domain
 	private	static ItemClass ics;
 	private static boolean issum;  // 指示全局特征向量完成生成
 	
 	static {
 		classDistribute = new HashMap<String, IntPair>(30000,0.9f);
 		classFilter = new HashMap<String, IntPair>(1000, 0.95f);
-		rawdata = new HashMap<String, Integer>(10000, 0.95f);
+//		rawdata = new HashMap<String, Integer>(10000, 0.95f);
+		rawdata = new ArrayList<String>();
 		ics = ItemClass.getInstance();
 		issum = false;
 	}
 		
 	
-	public void addUser(String u) {
-		// TODO 增加1个用户, 更新类别数据
-		
-	}
 	public static boolean parseUser(String u) {
 		// TODO 解析一条用户数据, 确定atom1中无字符 \x01,如果有则在Reduce中替换掉
 		// prodCnt\x01[atom1, atom2...]\x01Sneg\x01Spos\x01\[s1\x01name1, s2\x01name2...(s*!=0)]
@@ -52,23 +50,20 @@ public class ClassSex {
 			return false;
 		
 		String[] atom = u.split("\u0001");
-		if(atom.length < 5)
+		if (atom.length < 5)
 			return false;
 		
 		int sneg = Integer.parseInt(atom[2]), spos = Integer.parseInt(atom[3]);
 		int idxRaw = 0;
-		if(rawdata.containsKey(atom[])) {  // TODO
-			idxRaw = rawdata.get(atom[]);
-		} else {
-			idxRaw = rawdata.size();
-			rawdata.put(atom[], idxRaw);
-		}
-		String[] raws = UtilStr.str2arr(atom[1]);
-		String cid;
+		
+		// 解析数组
+		List alist = new ArrayList();
+		int deep = UtilStr.str2list(atom[1], "[", "]", ", ", alist);
+		String cid = null;
 		IntPair ipair = null;
-		for(int i = 0; i < raws.length; ++i) {
-			// TODO 确定切分是否正确，及对应的Index
-			cid = raws[i].split()[];  
+		for(int i = 0; i < alist.size(); ++i) {
+			List ali = (List) alist.get(i);
+			cid = (String) ali.get(1);
 			String[] pars = ics.searchParArr(cid);  // 不可能返回NULL
 			for(int j = 0; j < pars.length; ++j) {
 				if(classDistribute.containsKey(pars[j])) 

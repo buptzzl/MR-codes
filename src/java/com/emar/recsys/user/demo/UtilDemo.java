@@ -7,6 +7,7 @@ package com.emar.recsys.user.demo;
  */
 public class UtilDemo {
 
+
 	/**
 	 * @param args
 	 */

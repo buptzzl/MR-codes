@@ -9,9 +9,10 @@ import com.emar.recsys.user.util.IUserException;
 import com.emar.recsys.user.util.UtilStr;
 
 /**
+ * TODO 查看TB 商品名挖掘流程， 实现商品名切分 
  * item属性： 属性有对应的优先级别；每识别一个属性，对应的内容即被删除
  * @author zhoulm
- * TODO
+ * 
  */
 public class ItemAttribute {
 	private static final Pattern cpatt = Pattern.compile("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|？|,|;|!");

@@ -54,9 +54,19 @@ public class FeatureType {
     
     public static final int HOSTLEAFSTEP = 4;
     public static final int HOSTLEAFSTEPMX = 5;
+   
+    public static final String ORDER = "ORDER";  // 订单部分
+    public static final String PRICE = "PRI"; 
+    public static final String P89 = "P89";
+    public static final String POINT = "POINT";
+    public static final String BEFORE = "UP";
+    public static final String AFTER = "DOWN";
+//    public static final String PRANGE = "PRANGE";  // 价格范围
     
     public static final String COMB = "COMB";
     public static final String CDATETIME = "DTIME";
+    
+    
     /**
      * punctuation
      */

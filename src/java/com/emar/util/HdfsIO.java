@@ -85,9 +85,14 @@ public class HdfsIO {
 			try {
 				fsystem = p.getFileSystem(job.getConfiguration());
 				if (fsystem.isFile(p)) {
+					fcnt += 1;
 					System.out.println("[Info] inPath:" + p.toString());
 				} else {
 					FileStatus[] input_fs = fsystem.globStatus(p);
+					if(input_fs == null) {
+						System.err.println("[Error] badPath:" + p);
+						continue;
+					}
 					for (FileStatus ps : input_fs) {
 						fcnt += 1;
 						System.out.println("[Info] inPath:" + ps.getPath());

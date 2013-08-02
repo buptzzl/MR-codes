@@ -1,9 +1,10 @@
 package com.emar.recsys.user.item;
 
 /**
+ * TODO
  * s_browse_prod_log 中的商品名处理与抽取
- * @author Administrator
- *
+ * @author zhoulm
+ * 
  */
 public class ItemWords {
 
