@@ -72,10 +72,19 @@ public class GOrder extends Configured implements Tool {
 		}
 
 		public void map(LongWritable key, Text val, Context context) {
-			atom = val.toString().split(SEPA_MR);
-			if (atom.length != 2) {
+			String sval = val.toString();
+			atom = sval.split(SEPA_MR);
+			if (atom.length < 2) {
 				context.getCounter(Cnts.ErrMIn).increment(1);
+				System.out.println("[ERROR] GOrder::map() line=\n" + val.toString());
 				return;
+			} 
+			if(atom.length > 2) {  // 原始数据中 可能有多个\t字符
+				StringBuffer sbuf = new StringBuffer();
+				for(int i = 1; i < atom.length; ++i) {
+					sbuf.append(atom[i] + " "); // replace \t with space.
+				}
+				atom[1] = sbuf.toString();
 			}
 
 			String[] mval = atom[1].split(SEPA);
@@ -89,6 +98,7 @@ public class GOrder extends Configured implements Tool {
 			try {
 				context.write(okey, oval);
 			} catch (Exception e) {
+				e.printStackTrace();
 				context.getCounter(Cnts.ErrMo).increment(1);
 			}
 		}
@@ -165,6 +175,8 @@ public class GOrder extends Configured implements Tool {
 		Job job = new Job(conf, "[gather order&sex data]");
 		job.setJarByClass(GOrder.class);
 		job.setMapperClass(MapFreq.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(PairTInt.class);
 		// job.setCombinerClass(.class);
 		job.setReducerClass(ReduceFreq.class);
 		job.setNumReduceTasks(8);

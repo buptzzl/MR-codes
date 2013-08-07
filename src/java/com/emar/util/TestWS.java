@@ -29,6 +29,7 @@ public class TestWS {
 		
 		public Complex() {
 			dic = Dictionary.getInstance();
+			System.out.println("[Info] Complex::init DICT-PATH=" + dic.getDicPath());
 		}
 
 		protected Seg getSeg() {
@@ -73,7 +74,7 @@ public class TestWS {
 			printlnHelp();
 			String inputStr = null;
 			System.out.println(segWords(txt, " | "));    //分词
-    	System.out.print("\nmmseg4j-"+this.getClass().getSimpleName().toLowerCase()+">");
+			System.out.print("\n<mmseg4j-"+this.getClass().getSimpleName().toLowerCase()+">");
 			/*
 	        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 	        while((inputStr = br.readLine()) != null) {
@@ -109,11 +110,11 @@ public class TestWS {
 		}
 	}
 
-	public static class JcsegTest {
+	public static class WordSegmentJcseg {
 		
-		ISegment seg = null;
+		public ISegment seg = null;
 		
-		public JcsegTest() throws JcsegException, IOException {
+		public WordSegmentJcseg() throws JcsegException, IOException {
 			
 			JcsegTaskConfig config = new JcsegTaskConfig();
 			// 指定文件的路径
@@ -153,17 +154,18 @@ public class TestWS {
 				if ( isFirst ) {
 					sb.append(word.getValue());
 					isFirst = false;
-				}
-				else {
-					sb.append(" ");
-					sb.append(word.getValue());
+				} else {
+					String[] pos = word.getPartSpeech();
+					sb.append("\t");
+					sb.append(word.getValue() + " " +word.getFrequency()
+							+ " " + (pos != null ? pos[0]: "#"));
 				}
 				//clear the allocations of the word.
 				word = null;
 				counter++;
 			}
 			long e = System.nanoTime() - _start;
-			System.out.println("分词结果：\n" + sb.toString() + "\ntime-token(ms):" + e/1000);
+			System.out.println("Jcsegtest 分词结果：\n" + sb.toString() + "\ntime-token(ms):" + e/1000);
 		}
 		
 	}
@@ -179,7 +181,7 @@ public class TestWS {
 				"智利进口红提 2kg/箱,越南火龙果 3.5kg/箱,越南火龙果1只装,蓝莓125g/盒*2,玉菇甜瓜3-4只装(约4kg),珍珠虾仁250g,新西兰绿色奇异果6粒装,野生小黄鱼450g,品裕农庄西兰花250g,南翔烧卖160g,法式咖啡（摩卡）250ML,品裕农庄牛心菜500g"
 		};
 		
-		JcsegTest jcsDemo = new JcsegTest();
+		WordSegmentJcseg jcsDemo = new WordSegmentJcseg();
 		jcsDemo.segment(txt[1]);
 		
 		

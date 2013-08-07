@@ -22,7 +22,7 @@
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-tools-1.0.4.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/lib/junit-4.5.jar"/>
-	<classpathentry kind="lib" path="D:/Data/MR-codes/lib/jcseg-core-1.8.8.jar"/>
+	<classpathentry kind="lib" path="D:/Data/MR-codes/lib/jcseg-core-1.8.8.jar" sourcepath="/IKAnylazer/jcseg-1.8.8/jcseg-core-1.8.8.jar"/>
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/hamcrest-core-1.1.jar"/>
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/junit-4.10.jar"/>

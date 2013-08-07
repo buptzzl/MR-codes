@@ -99,7 +99,18 @@ public class UtilStr {
 				words.add(subtmp);
 		}
 
-		// 拼接字 为 X-garm
+		return Xgram(words, Mxgram);
+	}
+
+	public static List<List> Xgram(List<String> words, int Mxgram) {
+		// 拼接字 为 X-gram, 低阶gram 位于List的后端
+		List<List> res = new ArrayList<List>(0);
+		if (words == null || words.size() == 0 || Mxgram < 1)
+			return res;
+
+		for (int i = 0; i < Mxgram; ++i)
+			res.add(new ArrayList<String>());
+
 		int[] spos = new int[Mxgram];
 		for (int i = 0; i < Mxgram; ++i)
 			spos[i] = (i - Mxgram + 1);
@@ -274,15 +285,15 @@ public class UtilStr {
 		// 最后一层的 数组
 		if (ibeg == -1 && idx != 0) {
 			atmp = tstr.split(sepa);
-			if(atmp.length != 1) {
-				for(String si: atmp) 
+			if (atmp.length != 1) {
+				for (String si : atmp)
 					arr.add(si);
 			} else {
 				arr.add(tstr);
 			}
-			
+
 		} else {
-			
+
 			// 递归处理中间的层次
 			for (iend = getRBound(tstr, left, right, ibeg), ++pdeep; ibeg != -1
 					&& iend != -1;) {
@@ -292,7 +303,7 @@ public class UtilStr {
 				int tdeep = str2list(stmp, left, right, sepa, arrAtom); // 递归
 				pdeep += tdeep;
 				if (deep < pdeep) { // 第一次迭代，更新深度
-//					deep += tdeep;
+				// deep += tdeep;
 					deep = pdeep; // 取最大深度
 				}
 				pdeep -= tdeep;
@@ -300,9 +311,9 @@ public class UtilStr {
 				idx = iend + 1; // 更新后缀串的起点
 				ibeg = tstr.indexOf(left, idx);
 				// 中间的非数组元素
-				if(ibeg != -1 && (ibeg - idx) != sepa.length()) {
+				if (ibeg != -1 && (ibeg - idx) != sepa.length()) {
 					String[] esub = tstr.substring(idx, ibeg).split(sepa);
-					for(String s: esub) {
+					for (String s : esub) {
 						arr.add(s);
 					}
 				}
@@ -310,9 +321,9 @@ public class UtilStr {
 			}
 		}
 		// 末尾的非数组元素
-		if(idx != tstr.length()) {
+		if (idx != tstr.length()) {
 			String[] esub = tstr.substring(idx + sepa.length()).split(sepa);
-			for(String s: esub) {
+			for (String s : esub) {
 				arr.add(s);
 			}
 		}
@@ -332,9 +343,9 @@ public class UtilStr {
 		int cnt_in = 1, cnt_mid = -1;
 		while (cnt_in != 0) {
 			iend = in.indexOf(right, ibeg + 1);
-			if (iend == -1 || iend == (in.length()-1))
-				return iend;  // error or last-char.
-			cnt_mid = UtilStr.SubStrCnt(in.substring(ibeg+1, iend), left);
+			if (iend == -1 || iend == (in.length() - 1))
+				return iend; // error or last-char.
+			cnt_mid = UtilStr.SubStrCnt(in.substring(ibeg + 1, iend), left);
 			if (cnt_mid == 0) {
 				--cnt_in;
 			} else {
@@ -345,10 +356,10 @@ public class UtilStr {
 
 		return iend;
 	}
+
 	public static void testStr2List() {
-		String[] in = new String[] { 
-				 "[[[a]], [[b]], [[c]]]", "[]", "[ab]", "[[], [ab]]",
-				"[[], [[ab], c], d, ]", "[[[a, b]], [[c]]]"};
+		String[] in = new String[] { "[[[a]], [[b]], [[c]]]", "[]", "[ab]",
+				"[[], [ab]]", "[[], [[ab], c], d, ]", "[[[a, b]], [[c]]]" };
 		for (int i = 0; i < in.length; ++i) {
 			Integer deep = new Integer(0);
 			List alist = new ArrayList();
@@ -404,10 +415,9 @@ public class UtilStr {
 				res.get(2).toString());
 	}
 
-	
 	public static void main(String[] args) {
 		// testXgram();
-				// UtilStr.testStr2arr();
+		// UtilStr.testStr2arr();
 		UtilStr.testStr2List();
 	}
 

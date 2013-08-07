@@ -7,7 +7,8 @@ mahout-distribution-0.7/
 lib/
 libs/
 classes/
-
+data/*.lex*
+data/lex-bak/
 
 # Packages
 *.egg

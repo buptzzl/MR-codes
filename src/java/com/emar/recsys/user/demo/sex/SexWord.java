@@ -32,19 +32,22 @@ public class SexWord {
 			mset.add(new HashSet<String>(100));
 		Set si;
 		si = fset.get(0);
-		si.addAll(Arrays.asList("女", "妇", "妈", "母", "妻", "娘", "公主"));
+		si.addAll(Arrays.asList("女", "妇", "妈", "母亲", "妻子", "娘子", "新娘", "公主",
+				"闺蜜", "姐妹", "御姐", "萝莉"));
 		si = mset.get(0);
-		si.addAll(Arrays.asList("男", "爸", "父", "夫", "郎", "王子"));
+		si.addAll(Arrays.asList("男", "爸", "父亲", "丈夫", "新郎", "王子"));
 		si = fset.get(1);
+			// 口红(提)
 		si.addAll(Arrays.asList("发饰", "发夹", "发卡", "发箍", "发带", "面膜", "耳环", "耳钉",
-				"耳夹", "耳线", "口红", "粉底", "粉饼", "唇笔", "唇线", "睫毛", "眼影", "眼线",
+				"耳夹", "耳线", "粉底", "粉饼", "唇笔", "唇线", "睫毛", "眼影", "眼线",
 				"眉笔", "眉粉", "眉膏", "首饰盒", "精油", "身体霜", "身体乳", "手链", "手镯", "指甲油",
 				"美甲", "胸", "撞色包", "臀", "卫生巾", "裙", "丝袜", "打底裤", "塑身裤", "旗袍",
 				"腿袜", "高跟", "流苏", "妈妈鞋", "松糕鞋", "马丁靴", "洞洞鞋",
 
 				"蕾丝", "雪纺", "吊带", "显瘦", "妩媚"));
 		si = mset.get(1);
-		si.addAll(Arrays.asList("褪须刀", "烟", "酒", "打火机", "zippo", "沙滩裤", "驾车鞋"));
+			// 烟 
+		si.addAll(Arrays.asList("褪须刀", "啤酒", "白酒", "烈酒", "打火机", "zippo", "沙滩裤", "驾车鞋"));
 		WMxLen = 3; // 最大子串长
 
 		if (isdebug)
@@ -159,6 +162,8 @@ public class SexWord {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		String[] atom = new String[] {
+				"酒店客栈, 钦州紫荆花城市酒店",
+				"蜂蜜, 百氏郎结晶蜂蜜(瓶装 400g)",
 				"三都港醇香黄鱼鲞 (袋装 200g)",
 				"仅80元/张，乐享价值198元东丽湖温泉欢乐谷单人通票1张（温泉+娱乐设施，不含餐）！通票有效期至2013年5月31日！亚洲最大室内温泉游乐主题公园，冬日养生温泉，和家人一起体验温泉水上游乐场~",
 				"碧柔男士控油爽肤乳液(瓶装 95ml)", "碧柔女士控油爽肤乳液(瓶装 95ml)",
@@ -166,10 +171,11 @@ public class SexWord {
 
 		int res;
 		for (int i = 0; i < atom.length; ++i) {
-//			SexWord.isdebug = true;
+			SexWord.isdebug = true;
 			res = SexWord.isman(atom[i]);
 			System.out.println(String.format("[Info] res=%d\tinput=%s", res,
 					atom[i]));
+			break;
 		}
 	}
 
