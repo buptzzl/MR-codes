@@ -31,7 +31,7 @@ import com.emar.recsys.user.feature.FeatureDriver;
 /**
  * 基于日志抽取训练用数据
  * @author zhoulm
- * TODO HDFS写文件时数据丢失， 问题测试+考虑将写文件改为本地写
+ * 
  */
 public class DateTrain {
 	private HashMap<String, String> clickid;

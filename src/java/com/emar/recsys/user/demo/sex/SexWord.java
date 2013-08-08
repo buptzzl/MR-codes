@@ -34,6 +34,7 @@ public class SexWord {
 		si = fset.get(0);
 		si.addAll(Arrays.asList("女", "妇", "妈", "母亲", "妻子", "娘子", "新娘", "公主",
 				"闺蜜", "姐妹", "御姐", "萝莉"));
+			// BC： 圣女果 
 		si = mset.get(0);
 		si.addAll(Arrays.asList("男", "爸", "父亲", "丈夫", "新郎", "王子"));
 		si = fset.get(1);

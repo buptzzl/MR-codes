@@ -3,9 +3,12 @@ package com.emar.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,7 +37,7 @@ public class HdfsIO {
 	 * @param path
 	 * @param c
 	 *            input as this.getClass()
-	 * @return 读取 本地 or Global 文件的内容返回
+	 * @return 读取 本地文件 or 包中的资源文件 or Global 文件的内容返回
 	 */
 	public static List<String> readFile(Class c, String path) {
 		if (path == null) {
@@ -43,17 +46,24 @@ public class HdfsIO {
 		ArrayList<String> lines = new ArrayList<String>();
 		BufferedReader buf;
 		String line;
-
+		
 		try {
-			InputStream ins = c.getResourceAsStream(path);
-
-			buf = new BufferedReader(new InputStreamReader(ins));
-			while ((line = buf.readLine()) != null) {
-				lines.add(line);
+			try {
+				buf = new BufferedReader(new FileReader(new File(path)));
+				while ((line = buf.readLine()) != null) {
+					lines.add(line);
+				}
+				buf.close();
+			} catch (FileNotFoundException e2) {
+				InputStream ins = c.getResourceAsStream(path);
+				buf = new BufferedReader(new InputStreamReader(ins));
+				while ((line = buf.readLine()) != null) {
+					lines.add(line);
+				}
+				buf.close();
 			}
-			buf.close();
-
-		} catch (Exception e) {
+			
+		} catch (IOException e) {
 			e.printStackTrace();
 			lines.clear();
 			// load Global file
@@ -77,6 +87,9 @@ public class HdfsIO {
 		return lines;
 	}
 
+	/**
+	 * 打印 MR 的有效输入文件 
+	 */
 	public static void printInput(Job job) {
 		int fcnt = 0;
 		Path[] input_tot = FileInputFormat.getInputPaths(job);
@@ -105,6 +118,9 @@ public class HdfsIO {
 		return;
 	}
 
+	/**
+	 * 设置 MR 的输入文件路径
+	 */
 	public static boolean setInput(String range, String timefmt, String fmt,
 			Job job) {
 		String[] datapath = DateParse.getRange(range, timefmt);
@@ -127,10 +143,14 @@ public class HdfsIO {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
+		System.out.print("[Info] local file read size: " + localData.size()
+				+ "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
+		
+		
 		String s = "resource/classify/firstcate";
 		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);
-		System.out.println("[test] \n" + "size: " + lines.size()
+		System.out.println("[Info] resource file read size: " + lines.size()
 				+ "\nclass-load: " + HdfsIO.class.getResource(s) + "\ncload2： "
 				+ HdfsIO.class.getResource("/com/emar/util/" + s)
 				+ "\ncload3: "

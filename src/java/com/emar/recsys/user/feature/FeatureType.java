@@ -61,6 +61,7 @@ public class FeatureType {
     public static final String POINT = "POINT";
     public static final String BEFORE = "UP";
     public static final String AFTER = "DOWN";
+    public static final String CLASS = "CLASS";  // 类别词'
 //    public static final String PRANGE = "PRANGE";  // 价格范围
     
     public static final String COMB = "COMB";

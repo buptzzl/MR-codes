@@ -158,7 +158,7 @@ public class ItemAttribute {
 			// 识别数量模式
 			s = item.get(i);
 			if (Units.contains(s) && (isD || s.length() > NUnitTrueMn)) { // 单位
-				sword.add(item.get(i-1) + s);
+				sword.add((i != 0 ? item.get(i-1):"") + s);
 				size.add(sword.get(sword.size() - 1)); //
 				isD = false;
 				isU = true;

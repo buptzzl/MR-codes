@@ -49,7 +49,7 @@ public class DataNormalize {
 		this.outpath = out;
 		this.sepa = ", ";
 		this.dataBuf = new StringBuffer();
-		this.features = new HashMap<String, Integer>(1 << 10);
+		this.features = new HashMap<String, Integer>(1 << 10, 0.95f);
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class DataNormalize {
 		BufferedWriter of = new BufferedWriter(new FileWriter(f));
 		of.write(infof);
 		of.write(relationf);
-		of.write(this.setAttritbute());
+		of.write(this.setAttritbute());  
 		of.write(classf);
 		of.write(dataf);
 
@@ -78,6 +78,9 @@ public class DataNormalize {
 		of.close();
 	}
 
+	/**
+	 * 添加所有特征类目信息
+	 */
 	private String setAttritbute() {
 		dataBuf.delete(0, dataBuf.length());
 		List<Entry<String, Integer>> forder = UtilObj

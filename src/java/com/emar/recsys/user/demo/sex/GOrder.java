@@ -26,6 +26,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.emar.recsys.user.count.FrequenceRatio;
 import com.emar.recsys.user.count.FrequenceRatio.MapFreq;
@@ -87,13 +89,16 @@ public class GOrder extends Configured implements Tool {
 				atom[1] = sbuf.toString();
 			}
 
-			String[] mval = atom[1].split(SEPA);
+			String[] mval = String.format("%s ", atom[1]).split(SEPA);
 			int sex = SexWord.isman(mval[KIDX_NAME]);
 
 			okey.set(atom[0]);
+			JSONArray obj = new JSONArray();
+			for(int i = 0; i < mval.length; ++i) 
+				obj.put(mval[i]);
 			// 添加空格，替换 \u0001为数组
-			oval.setFirst(
-					Arrays.asList(String.format("%s ", atom[1]).split(SEPA)).toString());
+			oval.setFirst(obj.toString());
+//					Arrays.asList(String.format("%s ", atom[1]).split(SEPA)).toString());
 			oval.setFlag(sex);
 			try {
 				context.write(okey, oval);
@@ -124,32 +129,39 @@ public class GOrder extends Configured implements Tool {
 		}
 
 		public void reduce(Text key, Iterable<PairTInt> values, Context context) {
-			int score_neg = 0, score_pos = 0, cnt_goods = 0;
+			int score_sum = 0, score_pos = 0, cnt_goods = 0;
 			int tmp = 0;
-			List<String> scores = new ArrayList<String>();
-			List<String> rawdata = new ArrayList<String>();
+//			List<String> scores = new ArrayList<String>();
+//			List<String> rawdata = new ArrayList<String>();
+			JSONArray scores = new JSONArray();
+			JSONArray rawdata = new JSONArray();
 			String stmp;
 			
 			for (PairTInt pi : values) {
 				cnt_goods += 1;
 				tmp = pi.getFlag().get();
-				// 将\u0001字符替换掉，按数组字符串存储
 				stmp = pi.getFirst().toString();
 				
 				if (tmp != 0) {
-					score_neg += tmp;
+					score_sum += tmp;
 					if(tmp > 0) 
 						score_pos += tmp;
-					scores.add(String.format("%d%s%s", tmp, SEPA_MAG, stmp));
+//					scores.add(String.format("%d%s%s", tmp, SEPA_MAG, stmp));
+					scores.put(new JSONArray(new String[]{tmp+"", stmp}));
 				}
 
-				rawdata.add(stmp);
+//				rawdata.add(stmp);
+				rawdata.put(new JSONArray(stmp));
 			}
-
-			oval.set(String.format("%d\u0001%s\u0001%d\u0001%d\u0001%s", cnt_goods,
-					rawdata.toString(), score_neg, score_pos, scores.toString()));
+			JSONObject jobj = new JSONObject();
+			jobj.put(ISex.NGood, cnt_goods).put(ISex.RawLog, rawdata)
+				.put(ISex.SSum, score_sum).put(ISex.SPos, score_pos)
+				.put(ISex.IScore, scores);
+//			oval.set(String.format("%d\u0001%s\u0001%d\u0001%d\u0001%s", cnt_goods,
+//					rawdata.toString(), score_sum, score_pos, scores.toString()));
+			oval.set(jobj.toString());
 			try {
-				if (score_neg != 0 || score_pos != 0)
+				if (score_sum != 0 || score_pos != 0)
 					mos.write(Sex, key, oval, Sex + "/");
 				else
 					mos.write(Unk, key, oval, Unk + "/");

@@ -2,6 +2,9 @@ package com.emar.recsys.user.util;
 
 import java.util.*;
 
+import javax.swing.JPopupMenu.Separator;
+
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
 
 public class UtilStr {
@@ -258,6 +261,25 @@ public class UtilStr {
 		}
 		return res;
 	}
+	
+	// 将N级广义数组 转换为2级数组
+	public static boolean listDeepTrim(List arr) {
+		if(arr == null || arr.size() == 0) {
+			return false;
+		}
+		int mx = 0;
+		
+		for(int i = 0; i < arr.size(); ++i) {
+			if (arr.get(i) instanceof List) {
+				List arr_s1 = (List) arr.get(i);
+				for(int j = 0; j < arr_s1.size(); ++j) {
+					if(!(arr_s1.get(j) instanceof String)) 
+						((ArrayList)arr_s1).set(j, arr_s1.get(j).toString());
+				}
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * 嵌套解析多层数组为多层list， 解析 [[20130113152937, 50011980, 乳液, 卸洗凝胶, 102.4, ]]
@@ -280,10 +302,11 @@ public class UtilStr {
 		String stmp = null;
 		String[] atmp = null;
 
-		int ibeg = 0, iend = 0, idx = tstr.length();
-		ibeg = tstr.indexOf(left);
+		int ibeg = 0, iend = 0, idx = tstr.length(), pbeg = -1, isep = -1;
+//		ibeg = tstr.indexOf(left);
+		ibeg = getLBound(tstr, left, sepa, 0);
 		// 最后一层的 数组
-		if (ibeg == -1 && idx != 0) {
+		if (ibeg == -1) {
 			atmp = tstr.split(sepa);
 			if (atmp.length != 1) {
 				for (String si : atmp)
@@ -293,14 +316,21 @@ public class UtilStr {
 			}
 
 		} else {
+			isep = tstr.indexOf(sepa);
+			if(isep < ibeg) {  // 前端的非子数组元素
+				atmp = tstr.substring(0, ibeg).split(sepa);
+				for(int i = 0; i < atmp.length; ++i) 
+					arr.add(atmp[i]);
+			}
 
 			// 递归处理中间的层次
-			for (iend = getRBound(tstr, left, right, ibeg), ++pdeep; ibeg != -1
-					&& iend != -1;) {
-				stmp = tstr.substring(ibeg, iend + 1);
+			for (iend = getRBound(tstr, left, right, sepa, ibeg + 1), ++pdeep; ibeg != -1
+					&& iend != -1; iend = getRBound(tstr, left, right, sepa, ibeg + 1)) {
+				stmp = tstr.substring(ibeg, iend + right.length());
 				List arrAtom = new ArrayList();
 				arr.add(arrAtom);
 				int tdeep = str2list(stmp, left, right, sepa, arrAtom); // 递归
+				((ArrayList) arrAtom).trimToSize();
 				pdeep += tdeep;
 				if (deep < pdeep) { // 第一次迭代，更新深度
 				// deep += tdeep;
@@ -309,15 +339,17 @@ public class UtilStr {
 				pdeep -= tdeep;
 
 				idx = iend + 1; // 更新后缀串的起点
-				ibeg = tstr.indexOf(left, idx);
+//				ibeg = tstr.indexOf(left, idx);
+				ibeg = getLBound(tstr, left, sepa, idx);
+				if (ibeg == -1) 
+					break;
 				// 中间的非数组元素
 				if (ibeg != -1 && (ibeg - idx) != sepa.length()) {
 					String[] esub = tstr.substring(idx, ibeg).split(sepa);
 					for (String s : esub) {
 						arr.add(s);
 					}
-				}
-				iend = getRBound(tstr, left, right, ibeg);
+				} 
 			}
 		}
 		// 末尾的非数组元素
@@ -330,23 +362,60 @@ public class UtilStr {
 		deep += 1;
 		return deep;
 	}
-
-	// 查找最外层符号配对时的 右边界位置。 无法配对时返回-1.
-	private static int getRBound(String in, String left, String right, int beg) {
-		// 内部使用，不进行有效性检验
-		int ibeg = 0, iend = 0;
-		ibeg = in.indexOf(left, beg);
-		if (ibeg == -1) {
-			return in.length() - 1; // 无 外层符号
+	private static int getLBound(String in, String left, String sepa, int beg) {
+		 // 左边界位置: 1 起点， 2  分隔符后的出现. 
+		int ibeg = in.indexOf(left, beg);  // <0 || ==0 时直接返回
+		while(ibeg > 0 && in.lastIndexOf(sepa, ibeg) != (ibeg - sepa.length())) {
+			ibeg = in.indexOf(left, ibeg + 1);  // 无效，继续向后找
 		}
-
+		
+		return ibeg; 
+	}
+	// 查找最外层符号配对时的 右边界位置。 无法配对时返回-1.
+	private static int getRBound(String in, String left, String right, String sepa, int beg) {
+		int N = 1, Nleft = 0;
+		int ibeg = 0, iend = 0, sbeg = 0;
+		
+		iend = in.indexOf(right, beg);
+		while(N != 0) {
+			while(iend != -1 && 
+					(iend + right.length() != in.length() && in.indexOf(sepa, iend + 1) != (iend + right.length()))) {
+				beg = iend + 1;
+				iend = in.indexOf(right, beg);
+			}
+			if(iend == -1)  // 无匹配符号 
+				break;
+			Nleft = UtilStr.SubStrCnt(in.substring(sbeg, iend), sepa + left);  // 特殊的前缀条件
+			sbeg = iend;
+			N = N + Nleft - 1;
+		}
+		return iend;
+		/*
+		// 右边界位置： 1 终点， 2 分隔符前出现 且 中间的左右边界符已经匹配 
+		int ibeg = 0, iend = 0, nbeg;
+		ibeg = getLBound(in, left, sepa, beg);  // 下一个左边界
+		iend = in.lastIndexOf(right);
+		if (ibeg == -1 || iend == -1) {
+			if (iend == (in.length() - right.length())
+					|| in.indexOf(sepa, iend) == (iend + right.length())) 
+				return iend;
+			return -1;
+		}
+		ibeg = beg;
 		int cnt_in = 1, cnt_mid = -1;
 		while (cnt_in != 0) {
-			iend = in.indexOf(right, ibeg + 1);
-			if (iend == -1 || iend == (in.length() - 1))
+//			nbeg = in.indexOf(left, ibeg + 1); 
+			nbeg = getLBound(in, left, sepa, ibeg + 1);
+			// 在两个 前缀分割符之间，执行最长匹配
+			iend = nbeg == -1 ? in.lastIndexOf(right, in.length()) : in.lastIndexOf(right, nbeg);
+//			iend = in.indexOf(right, nbeg == -1 ? ibeg + 1);
+			if (iend == -1 || iend == (in.length() - right.length()))
 				return iend; // error or last-char.
-			cnt_mid = UtilStr.SubStrCnt(in.substring(ibeg + 1, iend), left);
-			if (cnt_mid == 0) {
+			cnt_mid = Math.min(UtilStr.SubStrCnt(in.substring(ibeg + 1, iend), left), 
+					UtilStr.SubStrCnt(in.substring(ibeg + 1, iend), right));
+			if (cnt_mid == 0 && 
+					(iend == (in.length() - right.length())
+						|| in.indexOf(sepa, iend) == (iend + right.length()))) {
 				--cnt_in;
 			} else {
 				cnt_in = cnt_mid; // 中间还有 mid 可左边界待匹配
@@ -355,17 +424,26 @@ public class UtilStr {
 		}
 
 		return iend;
+		*/
 	}
 
 	public static void testStr2List() {
-		String[] in = new String[] { "[[[a]], [[b]], [[c]]]", "[]", "[ab]",
-				"[[], [ab]]", "[[], [[ab], c], d, ]", "[[[a, b]], [[c]]]" };
+		String[] in = new String[] { 
+//				"[[[a]], [[b]], [[c]]]", "[]", "[ab]",
+//				"[[], [ab]]", "[[], [[ab], c], d, ]", "[[[a, b]], [[c]]]",
+				"[[20130704173923, 50011397, 珠宝, 中粮工业苏格兰野生黄金蟹 [非真空] (袋装 400g), 42.0, womai.com ], [20130704173923, 50017087, 景点门票, 琨山水产 密云水库野生银鱼 (袋装 500g), 36.0, womai.com ]]",
+				"[2013, 5001, zhubao, zhguo[ti-td, ]",
+				"[2013, 5001, zhubao, [zhguoti-td] bcd], ]",
+				"[20130628171747, 50011397, 珠宝/钻石/翡翠/黄金, 中粮工业苏格兰野生黄金蟹 [非真空] [袋装 [400g]], 42.0, womai.com ]"
+				};
 		for (int i = 0; i < in.length; ++i) {
 			Integer deep = new Integer(0);
 			List alist = new ArrayList();
 			deep = str2list(in[i], "[", "]", ", ", alist);
 			System.out.println("[info] deep=" + deep + "\tlist="
 					+ alist.toString());
+			listDeepTrim(alist);  // test Deep.
+			System.out.println("[Info] listDeepTrim() " + alist);
 		}
 	}
 

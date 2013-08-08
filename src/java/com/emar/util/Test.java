@@ -9,11 +9,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.file.tfile.RandomDistribution.Flat;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 //import com.emar.classify.GoodsMark;
 
@@ -49,10 +52,16 @@ public class Test {
 		String durl = URLDecoder.decode(urls, "utf8");
 		String tmptest = "shangchangdazhe/";
 		String[] testa = "【两盒 包邮】仅18.7元，享我买价,49元	的海南妃子笑荔枝;盒装（1000克）！核小、肉厚".split("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|,|;|!");
-		
+		JSONArray jobj = new JSONArray();
+		for(int i = 0; i < testa.length; ++i)
+			jobj.put(testa[i]);
+		JSONArray jobj2 = new JSONArray();
+		jobj2.put(jobj); jobj2.put(jobj);
+		JSONArray jobj3 = jobj2.getJSONArray(0);
 		
 		System.out.println("\n[test]"
-				+ Arrays.asList(testa)
+				+ new JSONArray(new String[]{"a", "b"}) + "\n" + jobj3
+				+ "\n" + new HashSet<String>(Arrays.asList("1", "2")).toString()
 				+ "\n" + durl.contains("fanxian")
 				+ "\n" + null
 				+ "\n" + smap.toString()

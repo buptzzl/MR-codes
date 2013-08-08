@@ -82,7 +82,7 @@ public class IclassifyMap2 extends Mapper<LongWritable, Text, Text, Text> {
 					+ "\nindata=" + line);
 			return;
 		}
-		
+		this.logparse.base.prod_name.replace(", ", ","); //便于后续存储到数组中 使用, 做分割符
 		String[] pclass = this.ClassifyGoods(this.logparse.base.prod_name).split("\t");
 		if (pclass.length != 5 || pclass[IdxClass].equals(UnuseClass)) {
 			context.getCounter(Counters.ErrClassify).increment(1);
