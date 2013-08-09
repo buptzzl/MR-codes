@@ -1,0 +1,9 @@
+@By zhouliaoming
+
+
+用户实时兴趣部分说明：
+可能的函数接口： 
+	int example(const std::list<UStruct> &ulist, std::map<int, float> &rec);
+1. 输入数据ulist：按列表存储的用户实时兴趣， 每个列表成员UStruct 中包含 时间、行为类型、 行为兴趣标签集合。
+2. 输出数据rec: k-v存储， 以用户兴趣为key, 兴趣的权重为value.
+3. 返回int 算法序列标号.

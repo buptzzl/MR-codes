@@ -6,7 +6,7 @@ package com.emar.recsys.user.log;
  * @author zhoulm
  * 
  */
-public class FileNameParse {
+public class LogNameParse {
 	public String source;
 //	public String plat;
 //	public String type;
@@ -63,7 +63,7 @@ public class FileNameParse {
 	 * 
 	 * @param line
 	 */
-	public FileNameParse(String line) {
+	public LogNameParse(String line) {
 		this.fill(line);
 	}
 
@@ -120,7 +120,7 @@ public class FileNameParse {
 				"/data/stg/s_ad_click_log/20130505/2/i_yigao_click_20130505_04.dat" };
 
 		for (String si : s) {
-			FileNameParse fpar = new FileNameParse(si);
+			LogNameParse fpar = new LogNameParse(si);
 			System.out.println(fpar);
 		}
 	}

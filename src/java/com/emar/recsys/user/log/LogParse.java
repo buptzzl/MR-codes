@@ -12,8 +12,8 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import com.emar.recsys.user.log.FileNameParse.LOG_PLAT;
-import com.emar.recsys.user.log.FileNameParse.LOG_TYPE;
+import com.emar.recsys.user.log.LogNameParse.LOG_PLAT;
+import com.emar.recsys.user.log.LogNameParse.LOG_TYPE;
 
 /**
  * 通用日志解析类
@@ -30,7 +30,7 @@ public class LogParse {
 //	private ClickParse click;
 //	private OrderParse order;
 	
-	public FileNameParse logpath;
+	public LogNameParse logpath;
 	
 	private Field field;
 	/*
@@ -53,7 +53,7 @@ public class LogParse {
 //		pv = new PVParse("");
 //		click = new ClickParse("");
 //		order = new OrderParse("");
-		logpath = new FileNameParse("");
+		logpath = new LogNameParse("");
 	}
 	public void reset() {
 		base.reset();
@@ -140,7 +140,7 @@ public class LogParse {
 			res = field.get(this.base);
 		} catch (NoSuchFieldException e1) {
 			try {
-				field = FileNameParse.class.getField(fname);
+				field = LogNameParse.class.getField(fname);
 				res = field.get(this.logpath);
 			} catch(NoSuchFieldException e2) {
 				try {

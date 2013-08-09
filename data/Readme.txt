@@ -1,3 +1,5 @@
+@By zhouliaoming
+
 结果的格式：
 	IDType@@@plat-user-id@@@plat\t[classTypeID=value, classTypeID=value,...]\t[可选的备用字段内容]
 	说明： IDType指示是否为emarID, plat-user-id为第三方ID或emarID， plat为平台名称，classTypeID为淘宝类别ID
