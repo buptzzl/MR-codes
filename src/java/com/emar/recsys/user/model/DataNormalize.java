@@ -16,30 +16,34 @@ import java.util.Map.Entry;
 import com.emar.recsys.user.util.UtilObj;
 
 /**
- * 转换binary特征的表示， 类别标示写在第1列
+ * 转换字符串表达的特征 为 binary特征， 类别标示写在最后一列
  * @author zhoulm
  * 
  */
 public class DataNormalize {
 
 	private HashMap<String, Integer> features;
-	private static final String infof = "% ARF file for the user-behave-targeting\n";
+//	private static final String infof = "% ARF file for the user-behave-targeting\n";
 	private static final String relationf = "\n@relation user-behavoir-targeting\n";
-	private static final String classf = "@attribute classtype {0, 1}\n";
+//	private static final String classf = "@attribute classtype {0, 1}\n";
+//	private static final String regressf = "@attribute classtype numeric\n";
 	private static final String dataf = "\n@data\n";
 	
+	public IModel Parser;
 	private StringBuffer dataBuf;
-	private String inpath, outpath;
-	private String sepa;
-
+	private String inpath, outpath, sepa;
+//	private String classInfo;
+	
 	private int idxClass;
+	private boolean flagRegress;
+	public boolean debug;
 
-	public DataNormalize(String in, String out, String sepa) throws Exception {
-		this(in, out);
+	public DataNormalize(String out, String in, String parser, String sepa) throws Exception {
+		this(in, out, sepa);
 		this.sepa = sepa;
 	}
 
-	public DataNormalize(String in, String out) throws Exception {
+	public DataNormalize(String out, String in, String parser) throws Exception {
 		if (in == null || out == null) {
 			System.out
 					.println("[ERROR] DataNormalize::init inpath or outpath is NULL.");
@@ -50,10 +54,11 @@ public class DataNormalize {
 		this.sepa = ", ";
 		this.dataBuf = new StringBuffer();
 		this.features = new HashMap<String, Integer>(1 << 10, 0.95f);
+		this.Parser = (IModel)Class.forName(parser).newInstance();  // 基于反射
 	}
 
 	/**
-	 * 写本地数据
+	 * 生成arff文件， 写本地数据
 	 * 
 	 * @throws IOException
 	 */
@@ -63,19 +68,28 @@ public class DataNormalize {
 			f.createNewFile();
 		}
 		BufferedWriter of = new BufferedWriter(new FileWriter(f));
-		of.write(infof);
+//		of.write(infof);
 		of.write(relationf);
 		of.write(this.setAttritbute());  
-		of.write(classf);
+		of.write(this.Parser.getAttribute());
 		of.write(dataf);
 
 		BufferedReader rf = new BufferedReader(new FileReader(this.inpath));
-		String line;
+		String line, ltrain;
 		while ((line = rf.readLine()) != null) {
 			of.write(this.setData(line));
 		}
 		rf.close();
 		of.close();
+	}
+	/** 特征名规划化。 */
+	private String nameNormalize(String f) {
+		if(f == null) {
+			return "";  // 无效字符
+		}
+		
+		return f.trim().replace(' ', '-').replace('%', '~')
+				.replace('\'', '^').replace(',', '*');
 	}
 
 	/**
@@ -88,7 +102,7 @@ public class DataNormalize {
 		for (Entry<String, Integer> as : forder) {
 			// 替换掉空格 按arff格式标示
 			dataBuf.append(String.format("@attribute %s {0, 1}\n", 
-					as.getKey().replace(' ', '-')));  
+					as.getKey()));  
 		}
 		return dataBuf.toString();
 	}
@@ -96,15 +110,15 @@ public class DataNormalize {
 	// data 的稀疏数据格式， 仅保留清洗后的结果
 	private String setData(String line) {
 		if (line == null) {
-			return null;
+			return "";
 		}
 		Integer tmp;
 		Set<Integer> arrSet = new HashSet<Integer>();
 		
 		dataBuf.delete(0, dataBuf.length());
-		
-		String[] atom = line.split(sepa);
 		dataBuf.append("{");
+//		String[] atom = line.split(sepa);
+		/*
 		for (String s : atom) {
 			s = s.trim();
 			tmp = features.get(s);
@@ -113,13 +127,28 @@ public class DataNormalize {
 //				dataBuf.append(String.format("%d 1%s",tmp,sepa));
 			}
 		}
+		*/
+		// 基于新的解析方式。
+		if(Parser.parseLine(line) == null)
+			return "";
+		Object[] fs = Parser.getFeatures();
+		for(Object s: fs) {
+			tmp = features.get((String)s);
+			if(tmp != null)
+				arrSet.add(tmp);
+		}
+			
+		
 		List<Integer> arr = Arrays.asList(arrSet.toArray(new Integer[0]));
 		Collections.sort(arr);  // asc
 		for(Integer t: arr) {
 			dataBuf.append(String.format("%d 1%s", t, sepa));
 		}
-		dataBuf.deleteCharAt(dataBuf.length() - sepa.length());
-		dataBuf.append(this.setClass(atom[idxClass]));
+//		dataBuf.deleteCharAt(dataBuf.length() - sepa.length());
+		// 添加目标字段信息
+//		dataBuf.append(this.setClass(atom[idxClass]));
+		dataBuf.append(String.format("%d %s", this.features.size(), 
+				(String)this.Parser.getClassify()));
 		
 		dataBuf.append("}\n");
 		return dataBuf.toString();
@@ -131,18 +160,49 @@ public class DataNormalize {
 		return String.format("%s%d 1", sepa, this.features.size()); 
 	}
 
+	/**
+	 * 收集所有特征，形成索引ID 
+	 */
 	public void init(boolean cntfreq) throws IOException {
 		BufferedReader rf = new BufferedReader(new FileReader(this.inpath));
 		String line;
 		String[] atom;
 		String tmp;
 		while ((line = rf.readLine()) != null) {
+			/// 基于新的特征解析方式
+			if(Parser.parseLine(line) == null) {
+				System.out.println("[Info] init()\ninput=" + line
+						+ "\nParse-result:\n" + Parser);
+				continue;
+			}
+			Object[] fs = Parser.getFeatures();
+			for(int i = 0; i < fs.length; ++i) {
+				tmp = (String) fs[i];
+				tmp = this.nameNormalize(tmp);
+				if(tmp.length() == 0)
+					continue;
+				if(cntfreq) {
+					// 统计频率信息
+					if (!this.features.containsKey(tmp)) {
+						this.features.put(tmp, 1);
+					} else {
+						this.features.put(tmp, this.features.get(tmp) + 1);
+					}
+				} else {
+					if (!this.features.containsKey(tmp)) {
+						this.features.put(tmp, this.features.size());
+					}
+				}
+			}
+			
+			/*
 			atom = line.split(this.sepa);
 			if (atom.length < this.idxClass) {
 				System.out
 						.println("[Warn] DataNormalize::init() class-type is unknown.");
 				continue;
 			}
+			// 将 类别下标之外的索引作为特征添加进来
 			for (int i = 0; i < this.idxClass; ++i) {
 				tmp = atom[i].trim();
 				if (cntfreq) {  // 统计频率信息
@@ -171,22 +231,34 @@ public class DataNormalize {
 					}
 				}
 			}
+			*/
 		}
 		rf.close();
 	}
-	// 按频率裁剪特征集合的数量，生成新的特征顺序, 有效区间 [fmin, fmax]
+	
+	public void setRegress(boolean b) {
+		this.flagRegress = b;
+	}
+	public boolean getRegress() {
+		return this.flagRegress;
+	}
+	
+	/** 按频率裁剪特征集合的数量，生成新的特征顺序, 有效区间 [fmin, fmax] */
 	public void featureTrim(Integer fmin, Integer fmax) {
 		if(fmin == null || (fmax != null && fmax < fmin)) {
 			return; //
 		}
 		int cnt = 0;
+		int cnt_rm = 0, cnt_tot = 0;  // for debug.  
 		Integer f = 0;
 		String k;
 		Iterator<String> itr = this.features.keySet().iterator();
 		while(itr.hasNext()) {
+			cnt_tot += 1;
 			k = itr.next();
 			f = this.features.get(k);
 			if(f < fmin || (fmax != null && f > fmax)) {
+				cnt_rm += 1;
 				itr.remove();
 				this.features.remove(k);
 			} else {
@@ -194,24 +266,38 @@ public class DataNormalize {
 				cnt += 1;
 			}
 		}
+		if(debug) {
+			System.out.printf("[Info] DataNormalize::featureTrim() " +
+					"cnt_total=%d\tcnt_remove=%d\tcnt_retail=%d\n", cnt_tot, cnt_rm, cnt);
+		}
 	}
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+//		if(args.length < 2)
+//			System.out.println("Usage: <out> <in> <parser-param>");
+		
 		DataNormalize nor;
 		try {
-			nor = new DataNormalize("D:/Downloads/telnet/train.txt",
-					"D:/Data/MR-codes/data/test.txt", ", ");
+//			nor = new DataNormalize(
+//					"D:/Data/MR-codes/data/test/test.arff",
+//					"D:/Data/MR-codes/data/test/train.txt",
+//					"com.emar.recsys.user.model.ParseLine$ParseArrayAtom");
+			nor = new DataNormalize(args[0], args[1], "com.emar.recsys.user.model.ParseLine$ParseOrder");
+			if(args.length > 2) {
+				nor.Parser.init(args[2]);
+			} else {
+				nor.Parser.init(ParseLine.ParseOrder.ClassType.BinarySex.toString(), "debug");
+			}
+			nor.debug = true;
 			nor.init(true);
 			System.out.println("[Test] " + nor.features.size());
 			nor.featureTrim(2, null);
 			System.out.println("[Test] " + nor.features.size());
 			nor.writeData();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

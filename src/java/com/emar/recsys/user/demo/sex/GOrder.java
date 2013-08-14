@@ -33,6 +33,7 @@ import com.emar.recsys.user.count.FrequenceRatio;
 import com.emar.recsys.user.count.FrequenceRatio.MapFreq;
 import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq;
 import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq.Cnts;
+import com.emar.recsys.user.demo.IKeywords;
 import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.PairTInt;
 import com.emar.util.HdfsIO;
@@ -129,7 +130,7 @@ public class GOrder extends Configured implements Tool {
 		}
 
 		public void reduce(Text key, Iterable<PairTInt> values, Context context) {
-			int score_sum = 0, score_pos = 0, cnt_goods = 0;
+			int score_diff = 0, score_pos = 0, cnt_goods = 0;
 			int tmp = 0;
 //			List<String> scores = new ArrayList<String>();
 //			List<String> rawdata = new ArrayList<String>();
@@ -143,7 +144,7 @@ public class GOrder extends Configured implements Tool {
 				stmp = pi.getFirst().toString();
 				
 				if (tmp != 0) {
-					score_sum += tmp;
+					score_diff += tmp;
 					if(tmp > 0) 
 						score_pos += tmp;
 //					scores.add(String.format("%d%s%s", tmp, SEPA_MAG, stmp));
@@ -154,14 +155,14 @@ public class GOrder extends Configured implements Tool {
 				rawdata.put(new JSONArray(stmp));
 			}
 			JSONObject jobj = new JSONObject();
-			jobj.put(ISex.NGood, cnt_goods).put(ISex.RawLog, rawdata)
-				.put(ISex.SSum, score_sum).put(ISex.SPos, score_pos)
-				.put(ISex.IScore, scores);
+			jobj.put(IKeywords.NGood, cnt_goods).put(IKeywords.RawLog, rawdata)
+				.put(IKeywords.SReduce, score_diff).put(IKeywords.SPos, score_pos)
+				.put(IKeywords.IScore, scores);
 //			oval.set(String.format("%d\u0001%s\u0001%d\u0001%d\u0001%s", cnt_goods,
 //					rawdata.toString(), score_sum, score_pos, scores.toString()));
 			oval.set(jobj.toString());
 			try {
-				if (score_sum != 0 || score_pos != 0)
+				if (score_diff != 0 || score_pos != 0)
 					mos.write(Sex, key, oval, Sex + "/");
 				else
 					mos.write(Unk, key, oval, Unk + "/");

@@ -283,12 +283,7 @@ public class UtilStr {
 
 	/**
 	 * 嵌套解析多层数组为多层list， 解析 [[20130113152937, 50011980, 乳液, 卸洗凝胶, 102.4, ]]
-	 * 
-	 * @param str
-	 * @param left
-	 * @param right
-	 * @param sepa
-	 * @return
+	 * 注意： 保证每次的 arr 中的内容已经清空。
 	 */
 	public static int str2list(String str, String left, String right,
 			String sepa, List arr) {
@@ -431,6 +426,7 @@ public class UtilStr {
 		String[] in = new String[] { 
 //				"[[[a]], [[b]], [[c]]]", "[]", "[ab]",
 //				"[[], [ab]]", "[[], [[ab], c], d, ]", "[[[a, b]], [[c]]]",
+				"[[1625, 50010728, 26], [50018772, 50016729, 50012786], [50014597, 50016736], [], [], [], [], [], [], []]",
 				"[[20130704173923, 50011397, 珠宝, 中粮工业苏格兰野生黄金蟹 [非真空] (袋装 400g), 42.0, womai.com ], [20130704173923, 50017087, 景点门票, 琨山水产 密云水库野生银鱼 (袋装 500g), 36.0, womai.com ]]",
 				"[2013, 5001, zhubao, zhguo[ti-td, ]",
 				"[2013, 5001, zhubao, [zhguoti-td] bcd], ]",

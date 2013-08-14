@@ -1,0 +1,53 @@
+% ARF file for the user-behave-targeting
+
+@relation user-behavoir-targeting
+@attribute l*cart落  {0, 1}
+@attribute 2013~ {0, 1}
+@attribute ��ɫ {0, 1}
+@attribute ���� {0, 1}
+@attribute ����� {0, 1}
+@attribute PRI_0 {0, 1}
+@attribute PRI_1 {0, 1}
+@attribute PRI_2 {0, 1}
+@attribute V_��ɫ���� {0, 1}
+@attribute ��װ {0, 1}
+@attribute PRI_LEN_3 {0, 1}
+@attribute PRI_LEN_2 {0, 1}
+@attribute V_���� {0, 1}
+@attribute PRI_LEN_1 {0, 1}
+@attribute PRI_DOWN_P89 {0, 1}
+@attribute ORDER_CLASS_�˶���\ {0, 1}
+@attribute ORDER_URL.com- {0, 1}
+@attribute �ļ� {0, 1}
+@attribute �¿� {0, 1}
+@attribute ORDER_URLyougou {0, 1}
+@attribute ��Ʒ {0, 1}
+@attribute ��ͯ {0, 1}
+@attribute V_��Ӫ��Ŀ {0, 1}
+@attribute V_��װ��ʽ {0, 1}
+@attribute HUAZHUANG {0, 1}
+@attribute ������ {0, 1}
+@attribute ORDER_DATE_1 {0, 1}
+@attribute Ů {0, 1}
+@attribute ORDER_DATE_4 {0, 1}
+@attribute ORDER_DATE_7 {0, 1}
+@attribute V_��� {0, 1}
+@attribute V_Ʒ�� {0, 1}
+@attribute �� {0, 1}
+@attribute YINGSHI {0, 1}
+@attribute PRI_POINT {0, 1}
+@attribute ORDER_CLASS_��Ĥ {0, 1}
+@attribute ��Ĥ {0, 1}
+@attribute PRI_UP_P89 {0, 1}
+@attribute ��� {0, 1}
+@attribute V_ϵ�� {0, 1}
+@attribute classtype {0, 1}
+
+@data
+{0 1, 1 1, 2 1, 3 1, 4 1, 6 1, 8 1, 10 1, 12 1, 16 1, 17 1, 18 1, 19 1, 21 1, 27 1, 30 1, 31 1, 34 1, 37 1, 40 1}
+{0 1, 1 1, 2 1, 3 1, 6 1, 10 1, 12 1, 16 1, 17 1, 18 1, 19 1, 22 1, 26 1, 27 1, 31 1, 32 1, 34 1, 38 1, 40 1}
+{3 1, 5 1, 6 1, 7 1, 11 1, 13 1, 16 1, 20 1, 29 1, 30 1, 31 1, 33 1, 34 1, 37 1, 39 1, 40 0}
+{3 1, 4 1, 6 1, 10 1, 11 1, 14 1, 24 1, 25 1, 26 1, 28 1, 34 1, 35 1, 36 1, 37 1, 38 1, 40 1}
+{3 1, 6 1, 9 1, 10 1, 15 1, 16 1, 18 1, 20 1, 22 1, 23 1, 28 1, 31 1, 32 1, 34 1, 39 1, 40 0}
+{2 1, 3 1, 5 1, 6 1, 8 1, 10 1, 11 1, 13 1, 16 1, 21 1, 24 1, 29 1, 31 1, 34 1, 37 1, 38 1, 39 1, 40 1}
+{3 1, 4 1, 6 1, 7 1, 9 1, 11 1, 13 1, 14 1, 16 1, 23 1, 24 1, 29 1, 30 1, 31 1, 33 1, 34 1, 38 1, 39 1, 40 1}

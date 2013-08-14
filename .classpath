@@ -28,5 +28,7 @@
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/mockito-all-1.8.5.jar"/>
 	<classpathentry kind="lib" path="libs/apache-mrunit-1.0.0-hadoop1/lib/mrunit-1.0.0-hadoop1.jar"/>
+	<classpathentry kind="lib" path="lib/weka-src.jar"/>
+	<classpathentry kind="lib" path="lib/weka.jar" sourcepath="lib/weka-src.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

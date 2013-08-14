@@ -117,8 +117,8 @@ public class ItemAttribute {
 					item.clear();
 				}
 //				fsingle = true;
-				sword.add(w); // add word.
-				spos.add(pos[0]);
+				sword.add(w.trim()); // add word.
+				spos.add(pos[0].trim());
 			} else {
 				int[] wcnt = UtilStr.strCharCnt(w);
 				if (w.length() == 1 || Units.contains(w)
@@ -135,7 +135,7 @@ public class ItemAttribute {
 				if ((wcnt[1] + wcnt[2]) == w.length()
 						&& UtilStr.isDigital(w.substring(0, wcnt[2]))) // 数量模式
 					size.add(w);
-				sword.add(w);
+				sword.add(w.trim());
 				spos.add(EMP_POS); // 每个词都有对应的词性
 			}
 		}
@@ -158,7 +158,7 @@ public class ItemAttribute {
 			// 识别数量模式
 			s = item.get(i);
 			if (Units.contains(s) && (isD || s.length() > NUnitTrueMn)) { // 单位
-				sword.add((i != 0 ? item.get(i-1):"") + s);
+				sword.add((i != 0 ? item.get(i-1).trim():"") + s);
 				size.add(sword.get(sword.size() - 1)); //
 				isD = false;
 				isU = true;
@@ -181,7 +181,7 @@ public class ItemAttribute {
 				continue;
 			}
 			if ((wcnt[1] + wcnt[3]) == s.length() && isD && wcnt[2] < NUnitTrueEMx) {
-				sword.add(item.get(i-1) + s);
+				sword.add((item.get(i-1) + s).trim());
 				size.add(sword.get(sword.size() - 1)); //
 				isD = false;
 				isU = false;
@@ -208,7 +208,7 @@ public class ItemAttribute {
 		if ((end - beg) < 3) {
 			for (int i = 0; i < (end - beg); ++i)
 				sbuf.append(item.get(i + beg));
-			sword.add(sbuf.toString());
+			sword.add(sbuf.toString().trim());
 			spos.add(EMP_POS);
 		} else {
 			List<List> grams = UtilStr.Xgram(item.subList(beg, end), KGram);

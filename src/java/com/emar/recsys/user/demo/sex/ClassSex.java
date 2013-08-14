@@ -9,6 +9,7 @@ import java.util.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.emar.recsys.user.demo.IKeywords;
 import com.emar.recsys.user.feature.FeatureType;
 import com.emar.recsys.user.item.ItemAttribute;
 import com.emar.recsys.user.item.ItemFeature;
@@ -23,7 +24,7 @@ import com.emar.util.HdfsIO;
  * 
  * @fmt score_pos, score_neg, uid, classID-list, feature-list.
  * @author zhoulm
- * 
+ * TODO: 新特征识别：  对标注的词性 按 “-”分割出。 对 单位 归并出具体的 单位词、 数字。
  */
 public class ClassSex {
 
@@ -51,15 +52,18 @@ public class ClassSex {
 		@Override
 		public String toString() {
 			String uniqeF = new HashSet<String>(features).toString();
-			uniqeF = uniqeF.substring(1, uniqeF.length() - 1);
+//			uniqeF = uniqeF.substring(1, uniqeF.length() - 1);
 
-			List<Set<String>> classMerge = new ArrayList<Set<String>>(10);
-			for (int i = 0; i < 10; ++i) {
-				classMerge.add(new HashSet<String>(10, 0.9f));
-			}
+			List<Set<String>> classMerge = new ArrayList<Set<String>>();
+//			for (int i = 0; i < 10; ++i) {
+//				classMerge.add(new HashSet<String>(10, 0.9f));
+//			}
 			for (String[] carr : classes) {
-				for (int i = 0; i < carr.length; ++i)
+				for (int i = 0; i < carr.length; ++i) {
+					if(classMerge.size() < (i + 1)) 
+						classMerge.add(new HashSet<String>());  // 动态申请
 					classMerge.get(i).add(carr[i]);
+				}
 			} // FMT: level0:[cid...], level1:[cid...] ...
 			String uniqueC = classMerge.toString();
 
@@ -97,14 +101,25 @@ public class ClassSex {
 			for (int i = 1; i < atom.length; ++i)
 				atom[1] = atom[1] + atom[i];
 		}
-		JSONObject jobj = new JSONObject(atom[1]);
-		JSONArray jRawLog = jobj.getJSONArray(ISex.RawLog);
-		int ssum = jobj.getInt(ISex.SSum);
-		int sfemale = jobj.getInt(ISex.SPos);
+		JSONObject jobj;
+		JSONArray jRawLog;
+		try {
+			jobj = new JSONObject(atom[1]);
+			jRawLog = jobj.getJSONArray(IKeywords.RawLog);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		int sfemale = jobj.getInt(IKeywords.SPos);
+		int sreduce = jobj.optInt(IKeywords.SSum, sfemale + 1);  // sfemale-smale.
+		if(sreduce == (sfemale + 1)) {  // GOrder 中先后使用了两种key
+			sreduce = jobj.optInt(IKeywords.SReduce);  
+		}
+		sreduce = 2*sfemale - sreduce;  // change to sum.
 		IntPair ipair;
-		if (ssum == 0)
-			ipair = new IntPair(sfemale / (float) ssum, (ssum - sfemale)
-					/ (float) ssum, atom[0]);
+		if (sreduce == 0)
+			ipair = new IntPair(sfemale / (float) sreduce, (sfemale - sreduce)
+					/ (float) sreduce, atom[0]);
 		else
 			ipair = new IntPair(0.0f, 0.0f, atom[0]);
 		String time, cid, cname, name, price, domain;
@@ -121,14 +136,14 @@ public class ClassSex {
 			if (badCase) { // 对基于 产品名识别的 Badcase 进行过滤
 				for (int j = 0; j < BadCase[0].length; ++j) {
 					if (name.indexOf(BadCase[0][j]) != -1) {
-						ssum -= 1;
+						sreduce -= 1;
 						sfemale -= 1;
 						break;
 					}
 				}
 				for (int j = 0; j < BadCase[1].length; ++j) {
 					if (name.indexOf(BadCase[1][j]) != -1) {
-						ssum -= 1;
+						sreduce -= 1;
 						break;
 					}
 				}
@@ -173,13 +188,15 @@ public class ClassSex {
 			} catch (ParseException e) {
 			}
 		}
-		if (badCase && ssum > 0) {
-			ipair.smale = (ssum - sfemale) / (float) ssum;
-			ipair.sfemale = sfemale / (float) ssum;
+		if (badCase && sreduce > 0) {
+			ipair.smale = (sreduce - sfemale) / (float) sreduce;
+			ipair.sfemale = sfemale / (float) sreduce;
 		}
+		((ArrayList)ipair.features).trimToSize();
 		return ipair;
 	}
 
+	@Deprecated
 	public static IntPair parseUser(String u) {
 		// TODO 解析一条用户数据, 确定atom1中无字符 \x01,如果有则在生成时的Reduce中替换掉
 		// prodCnt\x01[atom1, atom2...]\x01Sneg\x01Spos\x01\[s1\x01name1,
