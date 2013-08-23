@@ -152,6 +152,7 @@ public class ClassSex {
 			String[] cidTree = ics.searchParArr(cid);
 			if (cidTree != null)
 				ipair.classes.add(cidTree);
+			/**  // 仅仅抽取词，进行特征选择
 			// time
 			int[] ftime = DateParse.getWeekDayHour(time, FMT_T);
 			if (ftime != null) {
@@ -179,6 +180,7 @@ public class ClassSex {
 			ipair.features.add(FeatureType.concat(FeatureType.ORDER,
 					FeatureType.SEG, FeatureType.URL, domain.substring(0,
 							idxHost == -1 ? domain.length() : idxHost)));
+			*/
 			// prod_name
 			ItemAttribute iatr;
 			try {

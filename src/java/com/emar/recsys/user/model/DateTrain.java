@@ -29,7 +29,7 @@ import com.emar.recsys.user.feature.FeatureDriver;
 
 
 /**
- * 基于日志抽取训练用数据
+ * 基于PV&Click日志抽取 LR训练用数据
  * @author zhoulm
  * 
  */

@@ -29,7 +29,7 @@ public final class ParseLine{
 	/**
 	 * 解析 classid, f1, f2 .... 
 	 */
-	public static class ParseArrayAtom implements IModel {
+	public static class ParseArrayAtom implements IAttrParser {
 		// 定义 arff 的分类属性说明字符串
 		String[] atom;
 		String[] features;
@@ -88,15 +88,15 @@ public final class ParseLine{
 	/**
 	 * 解析 订单中的部分关键字
 	 */
-	public static class ParseOrder implements IModel {
+	public static class ParseOrder implements IAttrParser {
 		private JSONArray rawdata;
 		private JSONObject obj;
 		
-		private float Smale, Sfemale;
-		private String uid;
-		private List<ArrayList<String>> classes;  // 类别层次信息
-		private String[] features;
-		private ClassType OperType;
+		public float Smale, Sfemale;
+		public String uid;
+		public List<ArrayList<String>> classes;  // 类别层次信息
+		public String[] features;
+		public ClassType OperType;
 		public boolean debug;
 		public static enum ClassType { 
 			BinarySex,  // 男女性别分类 
@@ -111,7 +111,7 @@ public final class ParseLine{
 				return ClassType.BinaryClass;  // 默认操作的类型
 			}
 		};
-		/** 默认构造方法。  注意： 在使用前需要指定 OperType 的值 */
+		/** 默认构造方法。  注意： 在使用前需要调用 init() 指定 OperType 的值 */
 		public ParseOrder() {
 			classes = new ArrayList<ArrayList<String>>();
 			OperType = null;
@@ -163,7 +163,7 @@ public final class ParseLine{
 			case RegressFemale:
 				return Sfemale + "";
 			case RegressMale:
-				return Smale + "";
+				return -1*Smale + "";
 			case RegressClassFemale:
 			case RegressClassMale:
 				// TODO 按类别体系进行回归？
@@ -251,7 +251,7 @@ public final class ParseLine{
 			for(Class c: ipar.getClass().getDeclaredClasses()) {
 				System.out.println("sub-class:\t" + c.toString());
 			}
-			IModel iojb =(IModel) Class.forName("com.emar.recsys.user.model.ParseLine$ParseArrayAtom").newInstance();
+			IAttrParser iojb =(IAttrParser) Class.forName("com.emar.recsys.user.model.ParseLine$ParseArrayAtom").newInstance();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

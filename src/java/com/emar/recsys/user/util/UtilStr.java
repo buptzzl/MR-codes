@@ -174,7 +174,7 @@ public class UtilStr {
 		}
 		return false;
 	}
-
+	/** 全为数字 */
 	public static boolean isDigital(String s) {
 		if (s == null) {
 			return false;
@@ -185,6 +185,18 @@ public class UtilStr {
 			if (c < '0' || '9' < c) {
 				return false;
 			}
+		}
+		return true;
+	}
+	/** 全为字符 */
+	public static boolean isChars(String s) {
+		if(s == null)
+			return false;
+		char c;
+		for (int i = 0; i < s.length(); ++i) {
+			c = s.charAt(i);
+			if(!('a' <= c && c <= 'z') || !('A' <= c && c <= 'Z'))
+				return false;
 		}
 		return true;
 	}

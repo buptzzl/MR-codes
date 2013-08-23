@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
 import weka.classifiers.functions.Logistic;
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
@@ -17,7 +18,7 @@ import weka.core.Instances;
 
 /**
  * 
- * Weka模型训练与预测
+ * Weka模型训练|预测|持久化存储和加载。
  * 
  */
 public class LRPredict implements Serializable {
@@ -28,7 +29,8 @@ public class LRPredict implements Serializable {
 
 	private Logistic lrModel;
 	private Classifier model;
-	private Instances inst = null;
+	private Instances inst;
+	private Evaluation eval;
 
 	public LRPredict() {
 		lrModel = new Logistic();
@@ -52,6 +54,16 @@ public class LRPredict implements Serializable {
 					"[Info] EvaluationClassifier()\n" +
 					weka.classifiers.Evaluation.evaluateModel(
 					this.model, opts));
+			/**
+			eval = new Evaluation(this.getInstances());
+			eval.evaluateModel(classifier, this.getInstances());
+			System.out.println("[Info] EvaluateWeka::crossValidationDetail \n"
+					+ "AUC=" + eval.weightedAreaUnderROC() 
+					+ "\tTotal Time Cost=" + eval.totalCost()
+					+ eval.toClassDetailsString()
+					+ "\n" + eval.toSummaryString()
+					+ "\n" + eval.toMatrixString());
+					*/
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -188,14 +200,12 @@ public class LRPredict implements Serializable {
 	 */
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
-		String[] ops1 = { 
-//				"-t", "E:/Data/pinyou/data/features.training.clean.arff",  
-//				"-t", "C:/Program Files/Weka-3-6/data/weather.nominal.arff",
-//				"-R", "1.0E-6", "-M", "-1",  "-i", //, "-D"
-				// "-split-percentage","50",
-//				"-K", "1", "-S", "0",  "-N", "0", "-M", "100", "-W",
-//				"1.0 1.0"
-//				"-x", "5",
+		String[] ops1 = {
+				"-t", "C:/Program Files/Weka-3-6/data/credit-g.arff",
+				"-i", // "-x", "5", 
+//				"-R", "1.0E-6", "-M", "-1",  // LR
+//				"-I", "10", "-K", "0", "-S", "1",  // RandomForest
+				"-K", "1", "-S", "0",  "-N", "0", "-M", "100", "-W", "1.0 1.0",
 				};
 		// 预测的输入
 		String[] predictedData = { "sunny", "mild", "normal", "TRUE" };
@@ -214,9 +224,10 @@ public class LRPredict implements Serializable {
 //		lrPredict.EvaluationClassifier(ops1);
 //		lrPredict.EvaluationClassifier(args);
 		System.out.println("[args] " + Arrays.asList(args));
-		String[] opts = new String[args.length - 1];
-		System.arraycopy(args, 1, opts, 0, args.length - 1);
-		lrPredict.EvaluationClassifier(opts, args[0]);
+//		ops1 = new String[args.length - 1];
+//		System.arraycopy(args, 1, ops1, 0, args.length - 1);
+//		lrPredict.EvaluationClassifier(ops1, args[0]);
+		lrPredict.EvaluationClassifier(ops1, "weka.classifiers.functions.LibSVM");
 		/*
 		if (lrPredict.Setoption(ops1)) {
 			if (lrPredict.Training(pidx)) {

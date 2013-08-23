@@ -14,9 +14,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.emar.recsys.user.util.UtilObj;
+import com.emar.recsys.user.util.UtilStr;
 
 /**
- * 转换字符串表达的特征 为 binary特征， 类别标示写在最后一列
+ * 转换字符串表达的特征 为 binary特征， 类别标示写在最后一列，生成 arff文件。
  * @author zhoulm
  * 
  */
@@ -29,7 +30,7 @@ public class DataNormalize {
 //	private static final String regressf = "@attribute classtype numeric\n";
 	private static final String dataf = "\n@data\n";
 	
-	public IModel Parser;
+	public IAttrParser Parser;
 	private StringBuffer dataBuf;
 	private String inpath, outpath, sepa;
 //	private String classInfo;
@@ -54,7 +55,7 @@ public class DataNormalize {
 		this.sepa = ", ";
 		this.dataBuf = new StringBuffer();
 		this.features = new HashMap<String, Integer>(1 << 10, 0.95f);
-		this.Parser = (IModel)Class.forName(parser).newInstance();  // 基于反射
+		this.Parser = (IAttrParser)Class.forName(parser).newInstance();  // 基于反射
 	}
 
 	/**
@@ -195,43 +196,6 @@ public class DataNormalize {
 				}
 			}
 			
-			/*
-			atom = line.split(this.sepa);
-			if (atom.length < this.idxClass) {
-				System.out
-						.println("[Warn] DataNormalize::init() class-type is unknown.");
-				continue;
-			}
-			// 将 类别下标之外的索引作为特征添加进来
-			for (int i = 0; i < this.idxClass; ++i) {
-				tmp = atom[i].trim();
-				if (cntfreq) {  // 统计频率信息
-					if (!this.features.containsKey(tmp)) {
-						this.features.put(tmp, 1);
-					} else {
-						this.features.put(tmp, this.features.get(tmp) + 1);
-					}
-				} else {
-					if (!this.features.containsKey(tmp)) {
-						this.features.put(tmp, this.features.size());
-					}
-				}
-			}
-			for (int i = this.idxClass + 1; i < atom.length; ++i) {
-				tmp = atom[i].trim();
-				if (cntfreq) {
-					if (!this.features.containsKey(tmp)) {
-						this.features.put(tmp, 1);
-					} else {
-						this.features.put(tmp, this.features.get(tmp) + 1);
-					}
-				} else {
-					if (!this.features.containsKey(tmp)) {
-						this.features.put(tmp, this.features.size());
-					}
-				}
-			}
-			*/
 		}
 		rf.close();
 	}
@@ -249,13 +213,22 @@ public class DataNormalize {
 			return; //
 		}
 		int cnt = 0;
-		int cnt_rm = 0, cnt_tot = 0;  // for debug.  
+		int cnt_rm = 0, cnt_tot = 0, cnt_badkey = 0;  // for debug.  
 		Integer f = 0;
 		String k;
 		Iterator<String> itr = this.features.keySet().iterator();
 		while(itr.hasNext()) {
 			cnt_tot += 1;
 			k = itr.next();
+			int [] scnt = UtilStr.strCharCnt(k);
+			if(scnt != null && k.length() < 4 
+					&& (scnt[1] + scnt[2] + scnt[3]) == k.length()) {
+				// 按特征字 的内容过滤
+				itr.remove();
+				this.features.remove(k);
+				cnt_badkey += 1;
+				continue;
+			}
 			f = this.features.get(k);
 			if(f < fmin || (fmax != null && f > fmax)) {
 				cnt_rm += 1;
@@ -268,7 +241,8 @@ public class DataNormalize {
 		}
 		if(debug) {
 			System.out.printf("[Info] DataNormalize::featureTrim() " +
-					"cnt_total=%d\tcnt_remove=%d\tcnt_retail=%d\n", cnt_tot, cnt_rm, cnt);
+					"fmid=%d\tfmax=%d\tcnt_total=%d\tbad_key=%d\tcnt_remove=%d\tcnt_retail=%d\n", 
+					fmin, fmax, cnt_tot, cnt_badkey, cnt_rm, cnt);
 		}
 	}
 
@@ -294,7 +268,8 @@ public class DataNormalize {
 			nor.debug = true;
 			nor.init(true);
 			System.out.println("[Test] " + nor.features.size());
-			nor.featureTrim(2, null);
+			int fmin = args.length > 3 ? Integer.parseInt(args[3]):3;
+			nor.featureTrim(fmin, null);
 			System.out.println("[Test] " + nor.features.size());
 			nor.writeData();
 		} catch (Exception e) {
