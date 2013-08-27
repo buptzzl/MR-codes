@@ -34,6 +34,11 @@ public interface IAttrParser {
 	 */
 	public abstract Object[] getFeatures();
 	
+	/**
+	 * 解析结果中 实例的权重
+	 */
+	public abstract Object getWeight() ;
+	
 	/** 方便测试 */
 	public abstract String toString();
 	

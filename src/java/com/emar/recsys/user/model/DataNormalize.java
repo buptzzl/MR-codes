@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
+import com.sun.xml.internal.stream.Entity;
 
 /**
  * 转换字符串表达的特征 为 binary特征， 类别标示写在最后一列，生成 arff文件。
@@ -32,7 +33,7 @@ public class DataNormalize {
 	
 	public IAttrParser Parser;
 	private StringBuffer dataBuf;
-	private String inpath, outpath, sepa;
+	private String inpath, outpath, fpath, sepa;
 //	private String classInfo;
 	
 	private int idxClass;
@@ -52,6 +53,7 @@ public class DataNormalize {
 		}
 		this.inpath = in;
 		this.outpath = out;
+		this.fpath = out + ".feature";
 		this.sepa = ", ";
 		this.dataBuf = new StringBuffer();
 		this.features = new HashMap<String, Integer>(1 << 10, 0.95f);
@@ -59,7 +61,7 @@ public class DataNormalize {
 	}
 
 	/**
-	 * 生成arff文件， 写本地数据
+	 * 生成arff文件， 写本地数据。 并写特征映射表。
 	 * 
 	 * @throws IOException
 	 */
@@ -79,9 +81,12 @@ public class DataNormalize {
 		String line, ltrain;
 		while ((line = rf.readLine()) != null) {
 			of.write(this.setData(line));
+			of.newLine();
 		}
 		rf.close();
 		of.close();
+		
+		this.writeFeatures(this.fpath);
 	}
 	/** 特征名规划化。 */
 	private String nameNormalize(String f) {
@@ -118,17 +123,7 @@ public class DataNormalize {
 		
 		dataBuf.delete(0, dataBuf.length());
 		dataBuf.append("{");
-//		String[] atom = line.split(sepa);
-		/*
-		for (String s : atom) {
-			s = s.trim();
-			tmp = features.get(s);
-			if(tmp != null) {  
-				arrSet.add(tmp);
-//				dataBuf.append(String.format("%d 1%s",tmp,sepa));
-			}
-		}
-		*/
+
 		// 基于新的解析方式。
 		if(Parser.parseLine(line) == null)
 			return "";
@@ -139,7 +134,6 @@ public class DataNormalize {
 				arrSet.add(tmp);
 		}
 			
-		
 		List<Integer> arr = Arrays.asList(arrSet.toArray(new Integer[0]));
 		Collections.sort(arr);  // asc
 		for(Integer t: arr) {
@@ -150,15 +144,36 @@ public class DataNormalize {
 //		dataBuf.append(this.setClass(atom[idxClass]));
 		dataBuf.append(String.format("%d %s", this.features.size(), 
 				(String)this.Parser.getClassify()));
-		
-		dataBuf.append("}\n");
+		dataBuf.append("}");
+		// 添加实例的权重信息
+		String weight = (String)Parser.getWeight();
+		if(weight != null) 
+			dataBuf.append(String.format(",  { %s }", weight));
 		return dataBuf.toString();
 	}
+	
 	private String setClass(String vclass) {
 		if(vclass.equals("0")) {
 			return "";
 		}
 		return String.format("%s%d 1", sepa, this.features.size()); 
+	}
+	
+	private void writeFeatures(String path) throws IOException {
+		if(path == null || this.features == null) 
+			return;
+		
+		File f = new File(path);
+		if (!f.exists()) {
+			f.createNewFile();
+		}
+		BufferedWriter wbuf = new BufferedWriter(new FileWriter(path));
+//		for(Entry<String, Integer> ai: this.features.entrySet()) {
+//			wbuf.write(ai.toString());
+//			wbuf.newLine();
+//		}
+		wbuf.write(this.features.toString());
+		wbuf.close();
 	}
 
 	/**
@@ -250,8 +265,10 @@ public class DataNormalize {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		if(args.length < 2)
-//			System.out.println("Usage: <out> <in> <parser-param>");
+		System.out.println("Usage: java -DEfeatureMin=3 -DEdebug=debug " +
+				"-DEmodel=RegressClassFemal -DEweight=1 -DEout=outpath -DEin=inpath" +
+				" -jar myjar.jar");
+		System.out.println("[Info] " + System.getProperties());
 		
 		DataNormalize nor;
 		try {
@@ -259,18 +276,25 @@ public class DataNormalize {
 //					"D:/Data/MR-codes/data/test/test.arff",
 //					"D:/Data/MR-codes/data/test/train.txt",
 //					"com.emar.recsys.user.model.ParseLine$ParseArrayAtom");
-			nor = new DataNormalize(args[0], args[1], "com.emar.recsys.user.model.ParseLine$ParseOrder");
-			if(args.length > 2) {
-				nor.Parser.init(args[2]);
-			} else {
-				nor.Parser.init(ParseLine.ParseOrder.ClassType.BinarySex.toString(), "debug");
-			}
+			String reflectParser = "com.emar.recsys.user.model.ParseLine$ParseOrder";
+			String pin = System.getProperty("Ein");
+			String pout = System.getProperty("Eout");
+			String fmn = System.getProperty("EfeatureMin", "3");
+			int fmin = Integer.parseInt(fmn);
+//			String fmax = System.getProperty("featureMax", null);
+			String debug = System.getProperty("Edebug", "debug"); 
+			String fmodel = System.getProperty("Emodel", "BinarySex");
+			String fweight = System.getProperty("Eweight", "0"); 
+			
+			nor = new DataNormalize(pout, pin, reflectParser);
+			nor.Parser.init(fmodel, debug, fweight);
+			
 			nor.debug = true;
 			nor.init(true);
-			System.out.println("[Test] " + nor.features.size());
-			int fmin = args.length > 3 ? Integer.parseInt(args[3]):3;
+			System.out.println("[Info] before trim: " + nor.features.size());
+			
 			nor.featureTrim(fmin, null);
-			System.out.println("[Test] " + nor.features.size());
+			System.out.println("[Test] after trim: " + nor.features.size());
 			nor.writeData();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -15,6 +15,9 @@ import weka.classifiers.functions.Logistic;
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.classifiers.functions.LibLINEAR;
+import weka.classifiers.functions.LibSVM;
+
 
 /**
  * 
@@ -205,7 +208,7 @@ public class LRPredict implements Serializable {
 				"-i", // "-x", "5", 
 //				"-R", "1.0E-6", "-M", "-1",  // LR
 //				"-I", "10", "-K", "0", "-S", "1",  // RandomForest
-				"-K", "1", "-S", "0",  "-N", "0", "-M", "100", "-W", "1.0 1.0",
+				"-K", "1", "-S", "0", "-N", "0", "-M", "1000", "-W", "1.0 1.0"
 				};
 		// 预测的输入
 		String[] predictedData = { "sunny", "mild", "normal", "TRUE" };

@@ -12,13 +12,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.file.tfile.RandomDistribution.Flat;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-//import com.emar.classify.GoodsMark;
 
 public class Test {
 	
@@ -37,6 +35,7 @@ public class Test {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws ParseException, IOException  {
+		System.out.println("[args] " + System.getProperty("test"));  // 不能通过命令行传递，只能在jar前使用
 		
 		HashMap<String, Integer> smap = new HashMap<String, Integer>();
 		smap.put("aa", 1);
@@ -47,6 +46,11 @@ public class Test {
 //		System.out.print(GoodsMark.getInstance().ClassifyGoods("葡萄酒100ml"));
 		
 		String s1 = "add69c2f2fd282210bbbeaf076d2b8d9\u0001\u0001112.236.22.25\u00016bdd89e9-14c3-31ea-8e8f-658929b69911\u000120130522210018\u000182510\u0001115736\u00011\u0001141985\u0001";
+
+		Pattern cpatt = Pattern
+				.compile("\\(|\\)|（|）|\\[|\\]|【|】|\\{|\\}| |,|\\?|;|\"|\\t|，|。|；|？|“|”|、|…|—|！|￥");
+		String[] res_patt = cpatt.split("a,b;c\"d\te，f。g；h？i“j”k、l——m……n(o)p[q]r{s}t【u】v wxyz");
+		System.out.println("[Info] for pattern=" + Arrays.asList(res_patt));
 		
 		String urls = "http://fanxian.egou.com/oauthcallback.do?from=qq&bind=1&source=http%3A%2F%2Fwww.egou.com%2Fghs%2Fshop4529292.htm%3Fchn%3Dgdt%26tag%3Dghs%26utm_source%3Dgdt%26etc_n%3Ddirectad%26etc_m%3Dgdt%26etc_c%3Dkyp%26etc_g%3Dkyp%26etc_t%3Dqianxi%26tanceng%3D1%26qz_gdt%3Dc96WvF8aQioKViSxLas_gOI0vGv1Ns6T4cZWH6sw26kNu5p3jItqSKec_I0lhFxPkcPuUbG50aU&code=926191221712AC8B33DF7D8E53B7B75D";
 		String durl = URLDecoder.decode(urls, "utf8");

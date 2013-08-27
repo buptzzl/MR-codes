@@ -36,7 +36,10 @@ public class ClassSex {
 	// 内部使用的pair类 用户对象：
 	public static class IntPair {
 		public float sfemale;
-		public float smale;
+		/** 男性概率。 用负数表示， 绝对值与女性概率之和为1. */
+		public float smale;  
+		/** 总的男女属性商品 个数 */
+		public int confidence;  // @add
 		public String uid;
 		public List<String[]> classes; // 数组存储的类别按由粗到细的顺序
 		public List<String> features;
@@ -44,6 +47,7 @@ public class ClassSex {
 		public IntPair(float f, float s, String uid) {
 			sfemale = f;
 			smale = s;
+			confidence = 1;
 			this.uid = uid;
 			classes = new ArrayList<String[]>();
 			features = new ArrayList<String>();
@@ -68,8 +72,8 @@ public class ClassSex {
 			String uniqueC = classMerge.toString();
 
 			// TODO 根据训练格式的要求输出, 采用\t做分割符方便存储多级类目信息
-			return String.format("%.4f\t%.4f\t%s\t%s\t%s", sfemale, smale, uid,
-					uniqeF, uniqueC);
+			return String.format("%.4f\t%.4f\t%s\t%s\t%s\t%d", sfemale, smale, uid,
+					uniqeF, uniqueC, confidence);
 		}
 
 	}
@@ -122,6 +126,7 @@ public class ClassSex {
 					/ (float) sreduce, atom[0]);
 		else
 			ipair = new IntPair(0.0f, 0.0f, atom[0]);
+		ipair.confidence = sreduce;
 		String time, cid, cname, name, price, domain;
 		for (int i = 0; i < jRawLog.length(); ++i) {
 			JSONArray item = jRawLog.getJSONArray(i);
@@ -352,10 +357,10 @@ public class ClassSex {
 	 */
 	public static void main(String[] args) {
 		try {
-			String ins = "d:/downloads/telnet/good_sex_100", outs = "d:/downloads/telnet/good_sex_100_f";
+			String ins = "D:/Data/MR-codes/data/test/goodSex.3", outs = "D:/Data/MR-codes/data/test/good_sex_100_f";
 			System.out.println("[Info] ClassSex::main args="
 					+ Arrays.asList(args));
-			// ClassSex.dump(outs, ins);
+//			 ClassSex.dump(outs, ins);
 			ClassSex.dump(args[0], args[1]);
 		} catch (IOException e) {
 			e.printStackTrace();
