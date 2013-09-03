@@ -126,7 +126,7 @@ public class ClassSex {
 					/ (float) sreduce, atom[0]);
 		else
 			ipair = new IntPair(0.0f, 0.0f, atom[0]);
-		ipair.confidence = sreduce;
+		ipair.confidence = sreduce == 0 ? 1 : sreduce;
 		String time, cid, cname, name, price, domain;
 		for (int i = 0; i < jRawLog.length(); ++i) {
 			JSONArray item = jRawLog.getJSONArray(i);

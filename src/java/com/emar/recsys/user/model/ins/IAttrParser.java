@@ -1,4 +1,4 @@
-package com.emar.recsys.user.model;
+package com.emar.recsys.user.model.ins;
 
 /**
  * model 包中的属性解析通用接口，注意： 所有实现必须定义无参的默认构造函数。
@@ -38,6 +38,21 @@ public interface IAttrParser {
 	 * 解析结果中 实例的权重
 	 */
 	public abstract Object getWeight() ;
+	
+	public static int[] CntClass = new int[100];
+	/**
+	 * 对分类数据等， 解析不同的类别到index.
+	 */
+	public abstract int getClassIndex() ;
+	/**
+	 * 统计分类等的数据，
+	 * @param idx 计数器CntClass的索引
+	 */
+	public abstract void countClass(int idx) ;
+	/**
+	 * 打印统计数据。  建议：数据处理完后调用该方法。
+	 */
+	public abstract String getStaticInfo();
 	
 	/** 方便测试 */
 	public abstract String toString();

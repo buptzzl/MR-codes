@@ -7,8 +7,8 @@ import org.json.JSONObject;
 
 import com.emar.recsys.user.demo.IKeywords;
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.model.ParseLine.ParseOrder;
-import com.emar.recsys.user.model.ParseLine.ParseOrder.ClassType;
+import com.emar.recsys.user.model.ins.ParseOrder;
+import com.emar.recsys.user.model.ins.ParseOrder.ClassType;
 
 /**
  * 性别结果 规范化，实现可视化。

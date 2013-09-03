@@ -13,6 +13,9 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.Map.Entry;
 
+import weka.classifiers.functions.LinearRegression;
+
+import com.emar.recsys.user.model.ins.IAttrParser;
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 import com.sun.xml.internal.stream.Entity;
@@ -70,23 +73,29 @@ public class DataNormalize {
 		if (!f.exists()) {
 			f.createNewFile();
 		}
+		
+		int fsize = 0;  // @debug
+		for(int i = 0; i < Parser.CntClass.length; ++i)
+			Parser.CntClass[i] = 0;
 		BufferedWriter of = new BufferedWriter(new FileWriter(f));
 //		of.write(infof);
 		of.write(relationf);
 		of.write(this.setAttritbute());  
 		of.write(this.Parser.getAttribute());
 		of.write(dataf);
-
 		BufferedReader rf = new BufferedReader(new FileReader(this.inpath));
 		String line, ltrain;
 		while ((line = rf.readLine()) != null) {
 			of.write(this.setData(line));
 			of.newLine();
+			fsize += 1;
 		}
 		rf.close();
 		of.close();
 		
 		this.writeFeatures(this.fpath);
+		System.out.println("[Info] data's class distribution: \n" + Parser.getStaticInfo()
+				+ "\nfile size=" + fsize);
 	}
 	/** 特征名规划化。 */
 	private String nameNormalize(String f) {
@@ -269,14 +278,13 @@ public class DataNormalize {
 				"-DEmodel=RegressClassFemal -DEweight=1 -DEout=outpath -DEin=inpath" +
 				" -jar myjar.jar");
 		System.out.println("[Info] " + System.getProperties());
-		
 		DataNormalize nor;
 		try {
 //			nor = new DataNormalize(
 //					"D:/Data/MR-codes/data/test/test.arff",
 //					"D:/Data/MR-codes/data/test/train.txt",
 //					"com.emar.recsys.user.model.ParseLine$ParseArrayAtom");
-			String reflectParser = "com.emar.recsys.user.model.ParseLine$ParseOrder";
+			String reflectParser = "com.emar.recsys.user.model.ins.ParseOrder";
 			String pin = System.getProperty("Ein");
 			String pout = System.getProperty("Eout");
 			String fmn = System.getProperty("EfeatureMin", "3");
