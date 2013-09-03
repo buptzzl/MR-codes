@@ -1,0 +1,9 @@
+## 参数文件。测试使用。 ##
+alpha, 1
+beta, -1
+gamma, -1
+delta, 1
+epsilon, 1
+zeta, 0
+K, 2
+K1, 2
