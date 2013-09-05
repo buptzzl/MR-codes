@@ -80,7 +80,7 @@ public class DataNormalize {
 		BufferedWriter of = new BufferedWriter(new FileWriter(f));
 //		of.write(infof);
 		of.write(relationf);
-		of.write(this.setAttritbute());  
+		of.write(this.setAttribute());  
 		of.write(this.Parser.getAttribute());
 		of.write(dataf);
 		BufferedReader rf = new BufferedReader(new FileReader(this.inpath));
@@ -110,7 +110,7 @@ public class DataNormalize {
 	/**
 	 * 添加所有特征类目信息
 	 */
-	private String setAttritbute() {
+	private String setAttribute() {
 		dataBuf.delete(0, dataBuf.length());
 		List<Entry<String, Integer>> forder = UtilObj
 				.entrySort(features, false);
