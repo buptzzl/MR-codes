@@ -16,10 +16,10 @@ public class WekaEnsemble {
 	}
 
 	public static void main(String[] args) {
-//		String trainFile = "C://Program Files//Weka-3-6//data//segment-challenge.arff";
-//		String testFile = "C://Program Files//Weka-3-6//data//segment-test.arff";
-		String trainFile = args[0];
-		String testFile = args[1];
+		String trainFile = "C://Program Files//Weka-3-6//data//segment-challenge.arff";
+		String testFile = "C://Program Files//Weka-3-6//data//segment-test.arff";
+//		String trainFile = args[0];
+//		String testFile = args[1];
 		
 	       Instances trainIns = null;
 	       Instances testIns = null;

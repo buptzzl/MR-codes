@@ -1,9 +1,9 @@
 package com.emar.recsys.user.model.ins;
 
 /**
- * model 包中的属性解析通用接口，注意： 所有实现必须定义无参的默认构造函数。
+ * model 包中的 属性字段解析通用接口，注意： 所有实现必须定义无参的默认构造函数。
  * @author zhoulm
- *
+ * 
  */
 public interface IAttrParser {
 	
@@ -16,7 +16,7 @@ public interface IAttrParser {
 	public abstract void setAttribute(String s) ;
 
 	/**
-	 * 解析一行数据， 抽取对应的字段用于特征规范化
+	 * 解析一行数据， 抽取对应的字段用于特征规范化。将NaN 转换为0. 
 	 * @param line
 	 * @return 任意的类型
 	 */

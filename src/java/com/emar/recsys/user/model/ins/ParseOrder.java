@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.util.UtilStr;
+import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
 
 /**
  * 训练数据的字段解析类 集合. 解析 订单中的部分关键字。
@@ -37,7 +39,8 @@ public final class ParseOrder implements IAttrParser {
 			sright = "]";
 	public static final int Ifemale = 0, Imale = 1, Iuid = 2, Ifea = 3,
 			Iclass = 4, Icf = 5, DConfidence = 1, IdxSumIn = 99, IdxUnk = 0;
-
+//	public static final BigDecimal ZERO = new BigDecimal(0);
+	public static final double ZERO = 1e-8;
 	private JSONArray rawdata;
 	private JSONObject obj;
 
@@ -48,14 +51,21 @@ public final class ParseOrder implements IAttrParser {
 	public String[] features;
 	public ClassType OperType;
 	public boolean debug;
-	/** w==0？ 是否抽取各ins的weight。 不同值指示不同的权重抽取方式。 */
-	public int fweight;
-
+	/** 抽取各ins的weight。 不同enum值指示不同的权重抽取方式。 */
+	public WeightType fweight;
+	/** 特征向量 到 不同用途的arff 枚举类 */
 	public static enum ClassType {
-		BinarySex, // 男女性别分类
-		RegressFemale, RegressMale, // 男女性别回归
-		BinaryClass, // 类别性别分类
-		RegressClassFemale, RegressClassMale; // 类别性别回归
+		/** 男女分值的大小 确定返回0 or 1 */
+		BinarySex, 
+		/** 男女性别回归， 直接使用对应的分值 */
+		RegressFemale, RegressMale, 
+		BinaryClass, // 类别性别分类, 分值与BinarySex 相同
+		RegressClassFemale, RegressClassMale, // 类别性别回归
+		/** 男性分值优先， 不为0时返回1 */
+		BinaryMale,
+		BinaryFemale,
+		/** 按M|F|U 三个类别打标签 */
+		SexUnk;
 
 		public static ClassType setType(String ctype) {
 			for (ClassType s : ClassType.values())
@@ -64,6 +74,27 @@ public final class ParseOrder implements IAttrParser {
 			return ClassType.BinaryClass; // 默认操作的类型
 		}
 	};
+	/** 权重的计算样例 枚举类 */
+	public static enum WeightType {
+		/** 直接使用1 */
+		One,
+		Default, 
+		/** 直接使用 男女 分值 */
+		Female, Male,  
+		/** 直接使用原始日志中的频率(置信度 ) */
+		FCount,
+		/** conf*(female_score - male_score) */
+		Conf_Diff,
+		/** 使用男女的频率 */
+		CountFemale, CountMale;
+		
+		public static WeightType setType(String ctype) {
+			for(WeightType w : WeightType.values())
+				if (w.toString().equals(ctype))
+					return w;
+			return WeightType.One;
+		}
+	}
 
 	/** 默认构造方法。 注意： 在使用前需要调用 init() 指定 OperType 的值 */
 	public ParseOrder() {
@@ -85,24 +116,33 @@ public final class ParseOrder implements IAttrParser {
 		String[] atom = line.split(sepa);
 		if (atom.length < 5) {
 			if (debug)
-				System.out.println("[ERR] ParseOrder::parseLine() line-LEN="
-						+ atom.length);
+				System.out.println("[ERR] ParseOrder::parseLine() line size<5");
 			return null;
 		}
 		try {
 			Sfemale = Float.parseFloat(atom[Ifemale].trim());
-			Smale = Float.parseFloat(atom[Imale].trim());
 		} catch (NumberFormatException e) {
 		}
+//		if (Double.isNaN(Sfemale))
+//			Sfemale = 0;
+		try {
+			Smale = Float.parseFloat(atom[Imale].trim());
+		} catch (Exception e) {
+		}
+//		if(Double.isNaN(Smale))
+//			Smale = 0;
 		uid = atom[Iuid].trim();
-		confidence = this.getWeight(atom);
+		
 		// List<String> ftmp = new ArrayList<String>();
 		features = UtilStr.str2arr(atom[Ifea]);
 		classes.clear();
 		int flag = UtilStr.str2list(atom[Iclass], sleft, sright, sepa_com,
 				classes);
 		this.countClass(this.getClassIndex());
-
+		try {
+			confidence = Integer.parseInt(atom[Icf].trim());
+		} catch (Exception e) {
+		}
 		if (features == null || classes == null) {
 			if (debug)
 				System.out.println("[ERR] ParseOrder::parseLine() return null."
@@ -113,21 +153,46 @@ public final class ParseOrder implements IAttrParser {
 		return true;
 	}
 
-	/** 解析最后一列的值为权重。 不同解析方式须指定weight的值。 default=1. */
-	private float getWeight(String[] atom) {
-		final int N = Icf + 1;
-		if (atom.length < N)
-			return DConfidence;
+	/** 
+	 * 解析最后一列的值为权重。 不同解析方式须指定weight的值。 default=1. 
+	 * @see 必须在解析了 对应字段的值 如： Sfemale, Smale之后调用。
+	 */
+	public Object getWeight() {
+		float weight = confidence;
 		switch (fweight) {
-		case 0:
-			return DConfidence; // default weight.
-		case 1:
-			return Float.parseFloat(atom[Icf]); // use orignal value.
-
+		case Default:
+			weight = DConfidence;
+			break;
+		case Female:
+			weight = Double.isNaN(Sfemale) ? 1: Sfemale;
+			break;
+		case Male:
+			weight = Double.isNaN(Smale) ? 1: Smale;
+			break;
+		case FCount:
+			weight = confidence;
+			break;
+		case Conf_Diff:
+			weight = confidence * (Sfemale - Smale);
+			break;
+		case CountFemale:
+			weight = confidence * Sfemale;
+			break;
+		case CountMale:
+			weight = confidence * Smale;
+			break;
+		case One:
+			weight = 1;
+			break;
 		default:
 			break;
 		}
-		return DConfidence;
+		if (weight < 0)
+			weight *= -1;
+		if (weight < 1)
+			weight = 1; 
+		
+		return weight;
 	}
 
 	@Override
@@ -146,6 +211,22 @@ public final class ParseOrder implements IAttrParser {
 		case RegressClassMale:
 			// TODO 按类别体系进行回归？
 			return null;
+		case BinaryFemale:
+			return (ZERO < Sfemale || Sfemale < -(ZERO)) ? "1" : "0"; 
+		case BinaryMale:
+			return (Smale > ZERO || Smale < -(ZERO)) ? "1" : "0";
+		case SexUnk:
+			if (Double.isNaN(Smale) || (-(ZERO) < Smale && Smale < ZERO)) {
+				if (Double.isNaN(Sfemale) || (-(ZERO) < Sfemale && Sfemale < ZERO))
+					return "2";  // UNK
+				else 
+					return "1";  // female
+			} else {
+				if(Double.isNaN(Sfemale) || Sfemale <= Smale)
+					return "0"; // male
+				else 
+					return "1";
+			}
 		default:
 			return Smale < Sfemale ? "1" : "0";
 		}
@@ -170,6 +251,8 @@ public final class ParseOrder implements IAttrParser {
 		case BinarySex:
 		case BinaryClass:
 			return "@attribute classtype {0, 1}\n";
+		case SexUnk:
+			return "@attribute tri_class { 0, 1, 2}\n";
 		case RegressClassFemale:
 		case RegressClassMale:
 			return "@attribute RegressClassSex numeric\n";
@@ -179,7 +262,7 @@ public final class ParseOrder implements IAttrParser {
 		default:
 			break;
 		}
-		return null;
+		return "@attribute classtype {0, 1}\n";
 	}
 
 	@Override
@@ -194,8 +277,12 @@ public final class ParseOrder implements IAttrParser {
 		this.OperType = ClassType.setType(args[0]);
 		if (args.length > 1)
 			debug = args[1].equals("debug"); // 设置调试信息
+		fweight = WeightType.One;
 		if (args.length > 2)
-			fweight = Integer.parseInt(args[2].trim());
+			fweight = WeightType.setType(args[2].trim());
+		
+		if (debug)
+			System.out.println("[Info] Parseorder::init() " + this.toString());
 
 		return this.OperType == null ? false : true;
 	}
@@ -205,49 +292,23 @@ public final class ParseOrder implements IAttrParser {
 		if (features == null || classes == null)
 			return "ParseOrder\t" + getAttribute() + "\nfeature=" + features
 					+ "\nclass=" + classes + "\nuid=" + uid + "\tdebug="
-					+ debug + "\tconfidence=" + confidence;
+					+ debug + "\tconfidence=" + confidence + "\tOperType=" + OperType
+					+ "\tweight_type=" + fweight;
 		return String.format(
-				"%s%s\t%s\nclass=%s\nuser=%s\ndebug=%s\tconfidence=%f",
+				"%s%s\t%s\nclass=%s\nuser=%s\ndebug=%s\tconfidence=%f\tOperType=%s\tweight_type=%s",
 				getAttribute(), getClassify(), Arrays.asList(getFeatures()),
-				classes.toString(), uid, debug + "", confidence);
+				classes.toString(), uid, debug + "", confidence, OperType.toString(), fweight.toString());
 	}
-
-	@Override
-	public Object getWeight() {
-		float weight = 0.0f;
-		switch (this.OperType) {
-		case BinarySex:
-		case BinaryClass:
-			weight = confidence * (Sfemale - Smale);
-			break;
-		// return String.format("%f", confidence);
-		case RegressFemale:
-			weight = confidence * Sfemale;
-			break;
-		case RegressMale:
-			weight = confidence * Smale;
-			break;
-		case RegressClassFemale:
-		case RegressClassMale:
-			// TODO
-			break;
-		default:
-			break;
-		}
-		if (weight < 0)
-			weight *= -1;
-		if (weight < 1)
-			weight = 1; // 最小值权重为1
-
-		return String.format("%.6f", weight);
-	}
-
+	
 	@Override
 	public int getClassIndex() {
 		int idx = 0;
 		switch (this.OperType) {
 		case BinarySex:
 		case BinaryClass:
+		case BinaryFemale:
+		case BinaryMale:
+		case SexUnk:
 			String c = this.getClassify();
 			if (c != null)
 				idx = c.charAt(0) - '0' + (1 + IdxUnk);
@@ -306,9 +367,14 @@ public final class ParseOrder implements IAttrParser {
 		switch (OperType) {
 		case BinaryClass:
 		case BinarySex:
+		case BinaryFemale:
+		case BinaryMale:
 			sinfo = String.format("%s, male size=%d, female size=%d", sinfo,
 					CntClass[1], CntClass[2]);
 			break;
+		case SexUnk:
+			sinfo = String.format("%s, male size=%d, female size=%d, unk size=%d", 
+					sinfo, CntClass[1], CntClass[2], CntClass[3]);
 		case RegressFemale:
 		case RegressMale:
 			for (int i = 1; i < 11; ++i)
@@ -328,11 +394,12 @@ public final class ParseOrder implements IAttrParser {
 	public static void main(String[] args) {
 		ParseOrder pord = new ParseOrder();
 
-		String in = "D:/Data/MR-codes/data/test/good_sex.txt", out = "D:/Data/MR-codes/data/test/good_sex.f.txt";
-
+		String in = "D:/Data/MR-codes/data/test/good_sex.txt";
 		try {
-			// pord.init(ClassType.BinarySex.toString());
-			pord.init(ClassType.RegressMale.toString());
+			 pord.init(ClassType.SexUnk.toString(), "",
+//			pord.init(ClassType.RegressMale.toString(), "debug", 
+					WeightType.Default.toString());
+			
 			String line;
 			System.out.println("[Info] attr=" + pord.getAttribute());
 			DataInputStream fr = new DataInputStream(new BufferedInputStream(
@@ -342,7 +409,7 @@ public final class ParseOrder implements IAttrParser {
 				System.out.print("[Info] class=" + pord.getClassify());
 				if (pord.getFeatures() == null)
 					continue;
-				System.out.println("[Info] feature="
+				System.out.println("[Info] feature-size="
 						+ pord.getFeatures().length);
 			}
 			fr.close();

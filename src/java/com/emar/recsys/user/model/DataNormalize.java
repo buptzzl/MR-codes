@@ -153,11 +153,12 @@ public class DataNormalize {
 //		dataBuf.append(this.setClass(atom[idxClass]));
 		dataBuf.append(String.format("%d %s", this.features.size(), 
 				(String)this.Parser.getClassify()));
+		String ctmp = (String )this.Parser.getClassify();
 		dataBuf.append("}");
 		// 添加实例的权重信息
-		String weight = (String)Parser.getWeight();
+		Float weight = (Float)Parser.getWeight();
 		if(weight != null) 
-			dataBuf.append(String.format(",  { %s }", weight));
+			dataBuf.append(String.format(",  { %.4f }", weight));
 		return dataBuf.toString();
 	}
 	
@@ -177,10 +178,6 @@ public class DataNormalize {
 			f.createNewFile();
 		}
 		BufferedWriter wbuf = new BufferedWriter(new FileWriter(path));
-//		for(Entry<String, Integer> ai: this.features.entrySet()) {
-//			wbuf.write(ai.toString());
-//			wbuf.newLine();
-//		}
 		wbuf.write(this.features.toString());
 		wbuf.close();
 	}
@@ -265,7 +262,7 @@ public class DataNormalize {
 		}
 		if(debug) {
 			System.out.printf("[Info] DataNormalize::featureTrim() " +
-					"fmid=%d\tfmax=%d\tcnt_total=%d\tbad_key=%d\tcnt_remove=%d\tcnt_retail=%d\n", 
+					"fmin=%d\tfmax=%d\tcnt_total=%d\tbad_key=%d\tcnt_remove=%d\tcnt_retail=%d\n", 
 					fmin, fmax, cnt_tot, cnt_badkey, cnt_rm, cnt);
 		}
 	}
@@ -276,26 +273,28 @@ public class DataNormalize {
 	public static void main(String[] args) {
 		System.out.println("Usage: java -DEfeatureMin=3 -DEdebug=debug " +
 				"-DEmodel=RegressClassFemal -DEweight=1 -DEout=outpath -DEin=inpath" +
-				" -jar myjar.jar");
+				"-DEwmodel=Female -jar myjar.jar");
 		System.out.println("[Info] " + System.getProperties());
 		DataNormalize nor;
 		try {
+//			TODO 更新单测的代码
 //			nor = new DataNormalize(
 //					"D:/Data/MR-codes/data/test/test.arff",
 //					"D:/Data/MR-codes/data/test/train.txt",
-//					"com.emar.recsys.user.model.ParseLine$ParseArrayAtom");
+//					"com.emar.recsys.user.model.ins.ParseOrder");
 			String reflectParser = "com.emar.recsys.user.model.ins.ParseOrder";
 			String pin = System.getProperty("Ein");
 			String pout = System.getProperty("Eout");
-			String fmn = System.getProperty("EfeatureMin", "3");
+			String fmn = System.getProperty("EfeatureMin", "1");
 			int fmin = Integer.parseInt(fmn);
 //			String fmax = System.getProperty("featureMax", null);
 			String debug = System.getProperty("Edebug", "debug"); 
 			String fmodel = System.getProperty("Emodel", "BinarySex");
-			String fweight = System.getProperty("Eweight", "0"); 
+			String insWeight = System.getProperty("Ewmodel", "One");
+//			String fweight = System.getProperty("Eweight", "0"); 
 			
 			nor = new DataNormalize(pout, pin, reflectParser);
-			nor.Parser.init(fmodel, debug, fweight);
+			nor.Parser.init(fmodel, debug, insWeight);  //for ParseOrder.
 			
 			nor.debug = true;
 			nor.init(true);

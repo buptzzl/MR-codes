@@ -64,17 +64,21 @@ public class WekaFilterFeature {
 		asaver.writeBatch();
 	}
 
-	/** 采用增量写方式： 基于dtrain 的头文件属性，过滤dtest 的属性与ins */
-	public static boolean dataFilter(String ptemplate, String pfilter,
+	/** 
+	 * 采用增量写方式： 基于dtrain 的头文件属性，过滤dtest 的属性与ins.
+	 * 注意： 相同的属性的取值 也必须完全相同（含顺序），使用最后一列为分类标签所在列
+	 */
+	public static boolean dataFilter(String ptrain, String ptest,
 			String pout) throws Exception {
-		if (ptemplate == null || pfilter == null || pout == null)
+		if (ptrain == null || ptest == null || pout == null)
 			return false;
-		DataSource stemp = new DataSource(ptemplate);
-//		System.out.println("[test] loader=" + stemp.getLoader());
+		DataSource stemp = new DataSource(ptrain);
 		Instances header = stemp.getStructure();
+		header.setClassIndex(header.numAttributes() -1);
 
-		DataSource source = new DataSource(pfilter);
+		DataSource source = new DataSource(ptest);
 		Instances ins = source.getStructure();
+		ins.setClassIndex(ins.numAttributes() - 1);
 		Attribute attr;
 		int Ntemp = header.numAttributes();
 		int N = 0;
@@ -89,11 +93,8 @@ public class WekaFilterFeature {
 			}
 		}
 		System.out.println("[info] dataFilter() total-size=" + ins.numAttributes()
-				+ "\ttarget-size=" + header.numAttributes() + "\teffect-size=" + N);
-		// Enumeration enu = ins.enumerateAttributes();
-		// while (enu.hasMoreElements()) {
-		// Attribute attribute = (Attribute) enu.nextElement();
-		// }
+				+ "\ttarget-size=" + header.numAttributes() + "\teffect-size=" + N
+				+ "\nmap=" + Utils.arrayToString(temp2filter));
 		
 		ArffSaver parff = new ArffSaver();
 		File fout = new File(pout);
@@ -103,22 +104,46 @@ public class WekaFilterFeature {
 		parff.setRetrieval(Saver.INCREMENTAL);
 //		parff.setStructure(header);  // the same as latter one.
 		parff.setInstances(header);
-		Instance temp;
+		SparseInstance temp;
+		int[] idxIns = new int[Ntemp];
+		int Nfill = 0, Nr = 0, Nw = 0, Ne = 0;
 		while (source.hasMoreElements(ins)) {
+			for (int i = 0; i < idxIns.length; ++i) {
+				idxIns[i] = -1;
+			}
+			Nfill = 0;
 			Instance inst = source.nextElement(ins);
-			temp = new Instance(Ntemp);
-			temp.setDataset(header);
+			Nr ++;
 			for (int i = 0; i < Ntemp; ++i) {
 				int idx = temp2filter[i];
-				if(idx != -1) {
-					temp.setValue(i, inst.stringValue(idx));  //header.attribute(idx))
-				} else {
-					temp.setMissing(i);
+				if(idx != -1 && !inst.isMissing(idx) && inst.value(idx) > 1e-6) {
+					idxIns[i] = idx;
+					Nfill ++;
 				}
 			}
+			if (Nfill == 0) {
+				System.out.println("[ERROR] instance is empty after filter.");
+				++Ne;
+			}
+//			temp = new SparseInstance(Nfill);
+			temp = new SparseInstance(1);
+			temp.setDataset(header);
+			temp.setValue(header.classIndex(), inst.value(inst.classIndex()));
+			for (int i = 0; i < Ntemp && Nfill != 0; ++i)
+				if (idxIns[i] != -1) {
+					temp.setValue(i, inst.value(idxIns[i]));
+					-- Nfill;
+//					System.out.print(", idx=" + i + " unk-fidx=" + idxIns[i] + "\trval="
+//							+ inst.value(idxIns[i]) + " wval=" + temp.value(i));
+				}
+//			System.out.println("[Test] Nfill=" + Nfill
+//					+ "\nval=" + temp + "\nsrc-val=" + inst);
 			parff.writeIncremental(temp);
+			Nw ++;
 		}
 		parff.getWriter().flush();
+		System.out.println("[Info] read-size=" + Nr + "\twrite-size=" + Nw
+				+ "\tempty-size=" + Ne);
 		
 		return true;
 	}
@@ -156,19 +181,19 @@ public class WekaFilterFeature {
 	 */
 	public static void main(String[] args) throws Exception {
 		// load data
-		System.out.println("\n0. Loading data");
 		String inpath = System.getProperty("Ein"), outpath = System
 				.getProperty("Eout");
+		System.out.println("[info] in=" + inpath + "\nout="
+				+ outpath);
 //		DataSource source = new DataSource(inpath);
 		// DataSource source = new
 		// DataSource("C:/Program Files/Weka-3-6/data/weather.nominal.arff");
 		// /**
-		System.out.println("[info] in=" + inpath + "\nout="
-				+ outpath);
+		
 		// unit test.
-//		String p = "D:/Data/MR-codes/data/test/";
-//		dataFilter(p + "merge_filter.arff", p + "merge_template.arff", 
-//				p+ "merge_.arff");
+//		String p = "D:/Data/"; 
+//		dataFilter(p + "tN450.arff", p + "tunk.arff",
+//				p+ "tmerge_.arff");
 		dataFilter(inpath, outpath, outpath+".arff");
 		// */
 		// 1. meta-classifier
