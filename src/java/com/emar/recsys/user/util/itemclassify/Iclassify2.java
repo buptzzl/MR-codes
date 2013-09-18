@@ -31,63 +31,64 @@ public class Iclassify2 {
 		// DistributedCache.addCacheFile(new
 		// URI("hdfs://host116:9000/user/hadoop/wzcstop/stopword#stopword"),
 		// conf);//这个可以正确实现
+		final String pconf = "/recommend/user/zhouliaoming/conf/ItemClasses"; 
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/fourthdict#fourthdict"), conf);// 这个也是可以的
+				pconf + "/fourthdict#fourthdict"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/thirddict#thirddict"), conf);// 这个也是可以的
+				pconf + "/thirddict#thirddict"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/seconddict#seconddict"), conf);// 这个也是可以的
+				pconf + "/seconddict#seconddict"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/firstdict#firstdict"), conf);// 这个也是可以的
+				pconf + "/firstdict#firstdict"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/brandwords#brandwords"), conf);// 这个也是可以的
+				pconf + "/brandwords#brandwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/abcmap#abcmap"), conf);// 这个也是可以的
+				pconf + "/abcmap#abcmap"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/districtwords#districtwords"), conf);// 这个也是可以的
+				pconf + "/districtwords#districtwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/colorwords#colorwords"), conf);// 这个也是可以的
+				pconf + "/colorwords#colorwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/packwords#packwords"), conf);// 这个也是可以的
+				pconf + "/packwords#packwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/firstcate#firstcate"), conf);// 这个也是可以的
+				pconf + "/firstcate#firstcate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/secondcate#secondcate"), conf);// 这个也是可以的
+				pconf + "/secondcate#secondcate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/thirdcate#thirdcate"), conf);// 这个也是可以的
+				pconf + "/thirdcate#thirdcate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/fourthcate#fourthcate"), conf);// 这个也是可以的
+				pconf + "/fourthcate#fourthcate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/yanjingwords#yanjingwords"), conf);// 这个也是可以的
+				pconf + "/yanjingwords#yanjingwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/brand2cate#brand2cate"), conf);// 这个也是可以的
+				pconf + "/brand2cate#brand2cate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/combinewords#combinewords"), conf);// 这个也是可以的
+				pconf + "/combinewords#combinewords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/catewords#catewords"), conf);// 这个也是可以的
+				pconf + "/catewords#catewords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/code2catewords#code2catewords"), conf);// 这个也是可以的
+				pconf + "/code2catewords#code2catewords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/brandworddf2#brandworddf2"), conf);// 这个也是可以的
+				pconf + "/brandworddf2#brandworddf2"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/brandascate#brandascate"), conf);// 这个也是可以的
+				pconf + "/brandascate#brandascate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/landscapewords#landscapewords"), conf);// 这个也是可以的
+				pconf + "/landscapewords#landscapewords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/parentcate#parentcate"), conf);// 这个也是可以的
+				pconf + "/parentcate#parentcate"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/genderjudgewords#genderjudgewords"),
+				pconf + "/genderjudgewords#genderjudgewords"),
 				conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/genderwords#genderwords"), conf);// 这个也是可以的
+				pconf + "/genderwords#genderwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/adjwords#adjwords"), conf);// 这个也是可以的
+				pconf + "/adjwords#adjwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/wordprob#wordprob"), conf);// 这个也是可以的
+				pconf + "/wordprob#wordprob"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/nwords#nwords"), conf);// 这个也是可以的
+				pconf + "/nwords#nwords"), conf);// 这个也是可以的
 		DistributedCache.addCacheFile(new URI(
-				"/user/hadoop/wzcconfig/verbwords#verbwords"), conf);// 这个也是可以的
+				pconf + "/verbwords#verbwords"), conf);// 这个也是可以的
 
 		String[] oargs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();

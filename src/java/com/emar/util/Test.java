@@ -2,6 +2,7 @@ package com.emar.util;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.text.ParseException;
@@ -17,6 +18,8 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.io.Text;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
 
 public class Test {
 	
@@ -35,7 +38,6 @@ public class Test {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws ParseException, IOException  {
-		System.out.println("[args] " + System.getProperty("test"));  // 不能通过命令行传递，只能在jar前使用
 		
 		HashMap<String, Integer> smap = new HashMap<String, Integer>();
 		smap.put("aa", 1);
@@ -62,14 +64,11 @@ public class Test {
 		JSONArray jobj2 = new JSONArray();
 		jobj2.put(jobj); jobj2.put(jobj);
 		JSONArray jobj3 = jobj2.getJSONArray(0);
-		
 		System.out.println("\n[test]"
 				+ new JSONArray(new String[]{"a", "b"}) + "\n" + jobj3
 				+ "\n" + new HashSet<String>(Arrays.asList("1", "2")).toString()
 				+ "\n" + durl.contains("fanxian")
-				+ "\n" + null
 				+ "\n" + smap.toString()
-				+ "\n--\\a--"
 				+ "5\t\t".split("\t").length
 				+ "\t" + s.split("\u0001").length
 				+ "\n" + Float.valueOf("123.02")

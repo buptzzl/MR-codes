@@ -345,12 +345,13 @@ public class PredictParser {
 		try {
 			PredictParser rps;
 			// unit test.
-			psource = "D:/Downloads/telnet/good_sex_src.txt";
-			psave = "D:/Downloads/telnet/good_sex.731.test";
+			psource = "C:/Program Files/Weka-3-6/data/credit-g.txt"; //"D:/Downloads/telnet/good_sex_src.txt";
+			psave = psource + ".res";  //D:/Downloads/telnet/good_sex.731.test";
 			s_default = new String[] {
 					"-l",
-					"C:/Program Files/Weka-3-6/model/goode_sex.731_pss.J48.model",
-					"-T", "D:/Downloads/telnet/good_sex.731_fs.IG1E-8.arff" };
+					"C:/Program Files/Weka-3-6/model/test.credit-g.Liblinear.model", //goode_sex.731_pss.J48.model",
+					"-T", "C:/Program Files/Weka-3-6/data/credit-g.arff" // "D:/Downloads/telnet/good_sex.731_fs.IG1E-8.arff" 
+					};
 			female = null;
 			// ObjectInputStream ois = new ObjectInputStream(
 			// new

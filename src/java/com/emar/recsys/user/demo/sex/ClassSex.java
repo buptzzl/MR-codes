@@ -22,7 +22,7 @@ import com.emar.util.HdfsIO;
 /**
  * 对每个已分的类别， 生成训练数据
  * 
- * @fmt score_pos, score_neg, uid, classID-list, feature-list.
+ * @fmt score_pos, score_neg, uid, classID-list, feature-list, confidence.
  * @author zhoulm
  * TODO: 新特征识别：  对标注的词性 按 “-”分割出。 对 单位 归并出具体的 单位词、 数字。
  */
