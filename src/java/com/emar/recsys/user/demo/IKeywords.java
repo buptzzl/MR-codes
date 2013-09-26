@@ -19,11 +19,15 @@ public interface IKeywords {
 	
 	public static final String KUid="Uid";
 	
+	/** user profile result. */
+	public static final String UID_CONSUMER = "CONSUMER"; // 消费
+	public static final String UID_CONS_W = "CONSUMER_WEIGHT"; 
+	
 	/** 订单日志中的 key */
 	public static final String NGood = "Ngood";  // goods总数
 	public static final String RawLog = "RawLog"; 
-	public static final String SSum = "SSum";
-	public static final String SPos = "SPos";  // female's score
+	public static final String SSum = "SSum"; // N_female+N_male
+	public static final String SPos = "SPos";  // N_female
 	public static final String SReduce = "SRed";  // fscore-mscore.
 	public static final String IScore = "IScore";
 	
