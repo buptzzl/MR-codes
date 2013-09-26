@@ -73,7 +73,7 @@ public class PredictMerge {
 		return true;
 	}
 	
-	/** 抽取一行预测的结果。主要有：类别、分数。 子类须重写。 */
+	/** 抽取Weka一行预测结果。主要有：类别、分数。 子类须重写。 */
 	protected String[] ScorePredict(String line) {
 		if (line.trim().length() == 0)
 			return null;

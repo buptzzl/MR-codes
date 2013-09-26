@@ -46,7 +46,7 @@ public class HdfsIO {
 		ArrayList<String> lines = new ArrayList<String>();
 		BufferedReader buf;
 		String line;
-		
+
 		try {
 			try {
 				buf = new BufferedReader(new FileReader(new File(path)));
@@ -62,7 +62,7 @@ public class HdfsIO {
 				}
 				buf.close();
 			}
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			lines.clear();
@@ -88,31 +88,34 @@ public class HdfsIO {
 	}
 
 	/**
-	 * 打印 MR 的有效输入文件 
+	 * 打印 MR 的有效输入文件
+	 * 
+	 * @throws IOException
 	 */
-	public static void printInput(Job job) {
+	public static void printInput(Job job) throws IOException {
 		int fcnt = 0;
 		Path[] input_tot = FileInputFormat.getInputPaths(job);
+
 		for (Path p : input_tot) {
 			FileSystem fsystem;
-			try {
-				fsystem = p.getFileSystem(job.getConfiguration());
-				if (fsystem.isFile(p)) {
-					fcnt += 1;
-					System.out.println("[Info] inPath:" + p.toString());
-				} else {
-					FileStatus[] input_fs = fsystem.globStatus(p);
-					if(input_fs == null) {
-						System.err.println("[Error] badPath:" + p);
-						continue;
-					}
-					for (FileStatus ps : input_fs) {
-						fcnt += 1;
-						System.out.println("[Info] inPath:" + ps.getPath());
-					}
+			// try { // 不处理异常，出错则终止程序
+			fsystem = p.getFileSystem(job.getConfiguration());
+			if (fsystem.isFile(p)) {
+				fcnt += 1;
+				System.out.println("[Info] inPath:" + p.toString());
+			} else {
+				FileStatus[] input_fs = fsystem.globStatus(p);
+				if (input_fs == null) {
+					System.err.println("[Error] badPath:" + p);
+					continue;
 				}
-			} catch (IOException e) {
+				for (FileStatus ps : input_fs) {
+					fcnt += 1;
+					System.out.println("[Info] inPath:" + ps.getPath());
+				}
 			}
+			// } catch (IOException e) {
+			// }
 		}
 		System.out.println("[Info] total-input-file=" + fcnt);
 		return;
@@ -120,22 +123,24 @@ public class HdfsIO {
 
 	/**
 	 * 设置 MR 的输入文件路径
+	 * @throws IOException 
 	 */
 	public static boolean setInput(String range, String timefmt, String fmt,
-			Job job) {
+			Job job) throws IOException {
 		String[] datapath = DateParse.getRange(range, timefmt);
 		String fpath;
 		int fcnt = 0;
-		try {
-			for (String s : datapath) {
-				fpath = String.format(fmt, s);
+
+		for (String s : datapath) {
+			fpath = String.format(fmt, s);
+			try {  // 可能文件不存在
 				FileInputFormat.addInputPath(job, new Path(fpath));
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			printInput(job);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
 		}
+		printInput(job);
+
 		return true;
 	}
 
@@ -146,8 +151,7 @@ public class HdfsIO {
 		List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
 		System.out.print("[Info] local file read size: " + localData.size()
 				+ "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
-		
-		
+
 		String s = "resource/classify/firstcate";
 		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);
 		System.out.println("[Info] resource file read size: " + lines.size()

@@ -202,7 +202,7 @@ public class Merge extends Configured implements Tool {
 		conf.set(CIsFirst, oargs[3]);
 
 		Job job = new Job(conf, "[merge two part together]");
-		job.setJarByClass(GLogOrder.class);
+		job.setJarByClass(Merge.class);
 		job.setMapperClass(MapCombine.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(PriorPair.class);

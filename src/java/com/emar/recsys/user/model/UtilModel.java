@@ -16,21 +16,38 @@ import weka.core.Utils;
  */
 public class UtilModel {
 
-	/** 处理binary 分类结果的分值修正 */
-	public static double[] adjustPredict(double[] scores) {
-		// TODO
-		if (scores == null)
-			return null;
+	
 
-		return null;
-	}
-
-	/** 对adjustSexPredict 的包装 */
+	/** Un-UT. 对adjustSexPredict 的包装 */
 	public static double[] adjustSexPredict(double smale, double sfemale) {
 		final double[] male = new double[2], female = new double[2];
 		male[1] = smale;
 		female[1] = sfemale;
 		return adjustSexPredict(male, female);
+	}
+	
+	/** UT done. 对三类别的性别预测分值修正:交换未知类别分值与 M|F中较大者的值   */
+	public static double[] adjustSexPredict(double[] scores) {
+		if (scores == null || scores.length < 3)
+			return null;
+		if (scores[2] <= scores[0] || scores[2] <= scores[1])
+			return scores;
+		
+		final double sDiff = 0.2;
+		final int sAmply = 10;  // M|F 分值差异比率
+		int idxUpdate = 0;  // 默认调整为男性
+		double stmp;
+		if (scores[0] < scores[1])
+			idxUpdate = 1;
+		
+		if (scores[2] < 0.5
+				|| scores[1^idxUpdate] * sAmply < scores[idxUpdate]) {
+			stmp = scores[2];
+			scores[2] = scores[idxUpdate];
+			scores[idxUpdate] = stmp;
+		}
+
+		return scores;
 	}
 
 	/**
@@ -63,20 +80,6 @@ public class UtilModel {
 		}
 
 		return res;
-	}
-
-	public static void testAdjustSexPredict() {
-		double[] m1 = new double[] { 0.1, 0.9 }, m2 = new double[] { 0.9, 0.1 }, f1 = new double[] {
-				0.8, 0.2 }, f2 = new double[] { 0.06, 0.94 }, res;
-		res = adjustSexPredict(m1, f1);
-		System.out.println(Utils.arrayToString(res));
-		res = adjustSexPredict(m1, f2);
-		System.out.println(Utils.arrayToString(res));
-		res = adjustSexPredict(m2, f2);
-		System.out.println(Utils.arrayToString(res));
-		res = adjustSexPredict(m2, f1);
-		System.out.println(Utils.arrayToString(res));
-
 	}
 
 	public static void main(String[] args) {

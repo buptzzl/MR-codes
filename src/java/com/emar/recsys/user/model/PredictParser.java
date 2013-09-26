@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import com.emar.recsys.user.demo.IKeywords;
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.util.UtilMath;
 
 import weka.classifiers.Classifier;
 import weka.core.Instance;
@@ -46,7 +47,7 @@ public class PredictParser {
 	private String[] m_evalParam;
 	private String KEY; // json 的key
 	/** 原始文件的行数（规模） */
-	private int Nsrc;
+	private int Nsrc, Incorrect;
 	/** 增加 概率分布 到预测结果 */
 	private boolean debug;
 
@@ -54,8 +55,9 @@ public class PredictParser {
 			throws Exception {
 		atom = new ArrayList<JSONObject>();
 		scores = new ArrayList<List>();
-		debug = true;
+		debug = false;
 		Nsrc = 0;
+		Incorrect = 0;
 		psrc = pathJson;
 		pdst = pathSave;
 		m_evalParam = opts;
@@ -90,42 +92,49 @@ public class PredictParser {
 			ins.setClassIndex(ins.numAttributes() - 1);
 		testSource.reset();
 		ins = testSource.getStructure(ins.classIndex());
-		int i = 0;
+		// int i = 0;
 		while (testSource.hasMoreElements(ins)) {
 			Instance inst = testSource.nextElement(ins);
 
-			Instance withMissing = (Instance) inst.copy();
-			withMissing.setDataset(inst.dataset());
-			withMissing.setMissing(withMissing.classIndex());
-			double predValue = classifier.classifyInstance(withMissing);
-			double[] dist = classifier.distributionForInstance(withMissing);
-
-			double actValue;
-			double error;
-			if (inst.dataset().classAttribute().isNumeric()) {
-				actValue = inst.classValue();
-				error = Instance.isMissingValue(predValue)
-						|| inst.classIsMissing() ? 0.0 : predValue
-						- inst.classValue();
-			} else {
-				actValue = inst.classIndex();
-				error = Instance.isMissingValue(predValue)
-						|| inst.classIsMissing() ? 1 : (int) predValue
-						- (int) inst.classValue();
-			}
-			List<Double> predVals = new ArrayList<Double>();
-			// predVals.add(actValue); // classLabel
-			for (int j = 0; j < dist.length; ++j)
-				predVals.add(dist[j]);
-			this.scores.add(predVals);
-
-			if (debug)
-				System.out.println("[Info] predVal=" + predValue
-						+ "\tprob-dist=" + Utils.arrayToString(dist)
-						+ "\tdata=" + inst);
-			i++;
+			this.instancePredict(inst, classifier);
+			// i++;
 		}
 
+	}
+
+	/** 处理1个实例 */
+	private void instancePredict(Instance inst, Classifier classifier)
+			throws Exception {
+		Instance withMissing = (Instance) inst.copy();
+		withMissing.setDataset(inst.dataset());
+		withMissing.setMissing(withMissing.classIndex());
+		double predValue = classifier.classifyInstance(withMissing);
+		double[] dist = classifier.distributionForInstance(withMissing);
+
+		double actValue;
+		double error;
+		if (inst.dataset().classAttribute().isNumeric()) {
+			// actValue = inst.classValue();
+			error = Instance.isMissingValue(predValue) || inst.classIsMissing() ? 0.0
+					: predValue - inst.classValue();
+		} else {
+			error = Instance.isMissingValue(predValue) || inst.classIsMissing() ? 1
+					: (int) predValue - (int) inst.classValue();
+		}
+		if (Math.abs(error) > UtilMath.m_Zero)
+			Incorrect++;
+
+		dist = UtilModel.adjustSexPredict(dist);
+
+		List<Double> predVals = new ArrayList<Double>(dist.length);
+		for (int j = 0; j < dist.length; ++j)
+			predVals.add(dist[j]);
+		this.scores.add(predVals);
+
+		if (debug)
+			System.out.println("[Info] predVal=" + predValue + "\tprob-dist="
+					+ Utils.arrayToString(dist) + "\tdata=" + inst);
+		return;
 	}
 
 	/** 基于两个模型预测数据（先male, 后female. 需要保证两个测试文件的实例的顺序一致）. 采用与Evaluation 相同的参数。 */
@@ -184,30 +193,20 @@ public class PredictParser {
 					.distributionForInstance(withMissing2);
 			female[i] = dfemale[IdxPositive];
 
-			double actValue;
-			double error;
-			if (inst.dataset().classAttribute().isNumeric()) {
-				actValue = inst.classValue();
-				error = Instance.isMissingValue(predValue)
-						|| inst.classIsMissing() ? 0.0 : predValue
-						- inst.classValue();
-			} else {
-				actValue = inst.classIndex();
-				error = Instance.isMissingValue(predValue)
-						|| inst.classIsMissing() ? 1 : (int) predValue
-						- (int) inst.classIndex();
-			}
-
 			++i;
 			if (debug)
 				System.out.println("[Info] predVal=" + predValue
 						+ "\tprob-dist=" + "\tdata=" + inst);
 		}
-		// 归一化预测分值， 更新男女性别的预测分值。
+		this.scoreMerge(male, female);
+	}
+
+	/** 归一化预测分值， 更新男女性别的预测分值。 */
+	private void scoreMerge(double[] male, double[] female) {
 		double m_mean = Utils.mean(male), f_mean = Utils.mean(female), m_var = Utils
 				.variance(male), f_var = Utils.variance(female);
 		double m_score, f_score, normal = 1;
-		for (int j = 0; j < i; ++j) {
+		for (int j = 0; j < Nsrc; ++j) {
 			m_score = male[j];
 			f_score = female[j];
 			if ((male[j] < 0.5 && female[j] < 0.5)
@@ -227,6 +226,7 @@ public class PredictParser {
 				predVals.add(d_score[j]);
 			this.scores.add(predVals);
 		}
+
 	}
 
 	/**
@@ -254,7 +254,7 @@ public class PredictParser {
 		return true;
 	}
 
-	/** 加载原始数据 的规模 */
+	/** 统计原始数据 的行数 */
 	private boolean init() throws Exception {
 		if (psrc == null)
 			return false;
@@ -344,20 +344,16 @@ public class PredictParser {
 		}
 		try {
 			PredictParser rps;
-			// unit test.
-			psource = "C:/Program Files/Weka-3-6/data/credit-g.txt"; //"D:/Downloads/telnet/good_sex_src.txt";
-			psave = psource + ".res";  //D:/Downloads/telnet/good_sex.731.test";
-			s_default = new String[] {
-					"-l",
-					"C:/Program Files/Weka-3-6/model/test.credit-g.Liblinear.model", //goode_sex.731_pss.J48.model",
-					"-T", "C:/Program Files/Weka-3-6/data/credit-g.arff" // "D:/Downloads/telnet/good_sex.731_fs.IG1E-8.arff" 
-					};
-			female = null;
-			// ObjectInputStream ois = new ObjectInputStream(
-			// new
-			// FileInputStream("C:/Program Files/Weka-3-6/model/goode_sex.731_pss.J48.model"));
-			// Classifier classifier = (Classifier) ois.readObject();
-			// ois.close();
+			// unit test. 
+//			psource = "C:/Program Files/Weka-3-6/data/credit-g.txt";
+//			psave = psource + ".res"; //D:/Downloads/telnet/good_sex.731.test"; 
+//			s_default = new String[] { 
+//					"-l", "C:/Program Files/Weka-3-6/model/test.credit-g.Liblinear.model",
+//			  "-T", "C:/Program Files/Weka-3-6/data/credit-g.arff" 
+//			 "D:/Downloads/telnet/good_sex.731_fs.IG1E-8.arff" 
+//			 }; 
+//			female = null;
+			
 			if (key == null)
 				rps = new PredictParser(psource, psave, s_default);
 			else

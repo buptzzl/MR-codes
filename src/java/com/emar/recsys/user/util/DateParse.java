@@ -3,6 +3,7 @@ package com.emar.recsys.user.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -162,11 +163,17 @@ public class DateParse {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String trange = "2013061800_2013061823";
-		String[] res = DateParse.getRange(trange, "yyyyMMdd/1/*_HH");
-		System.out.println("[Info] getRange()\n"
-				+ res
-				);
+		String[][] trange = {
+				{"2013061800_2013061802", "yyyyMMdd/3/*/*_HH.*"}, 
+				{"2013061800_2013061802", "/yyyyMMdd/1/*/*.d*"},
+				{"2013061800_2013061802", "yyyyMMdd/1/*_HH"}
+		};
+		for (int i = 0; i < trange.length; ++i) {
+			String[] res = DateParse.getRange(trange[i][0], trange[i][1]);
+			System.out.println("[Info] getRange()\n"
+					+ Arrays.asList(res)
+					);
+		}
 		
 		String[] t = { "20130616 17:12:12", "yyyyMMdd HH:mm:ss" };
 		String[] t2 = { "20130616", "yyyyMMdd" };

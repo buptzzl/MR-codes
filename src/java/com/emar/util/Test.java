@@ -64,6 +64,8 @@ public class Test {
 		JSONArray jobj2 = new JSONArray();
 		jobj2.put(jobj); jobj2.put(jobj);
 		JSONArray jobj3 = jobj2.getJSONArray(0);
+		
+		Object ot1 = 1.2, ot2 = "abc", ot3 = "1.23";
 		System.out.println("\n[test]"
 				+ new JSONArray(new String[]{"a", "b"}) + "\n" + jobj3
 				+ "\n" + new HashSet<String>(Arrays.asList("1", "2")).toString()
