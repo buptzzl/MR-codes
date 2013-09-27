@@ -22,7 +22,12 @@ import org.junit.Assert;
  */
 public class UtilObj {
 	
-	// 将[b=-1, a=1, c=2], {a=1}等字符串转换为HashMap, value必须为Number
+	/** 
+	 * 将[b=-1, a=1, c=2], {a=1}等字符串转换为HashMap, value必须为Number.
+	 * @param unuse 无效字符（含边界字符）
+	 * @param sepa 不同kv-pair之间的分割符
+	 * @return
+	 */
 	public static Map<String, Float> Str2Map(String in, String unuse, String sepa) {
 		if(in == null || in.length() < 3) {
 			return null;
@@ -46,6 +51,40 @@ public class UtilObj {
 		for(String s: atoms) {
 			eidx = s.indexOf('=');
 			res.put(s.substring(0, eidx), Float.valueOf(s.substring(eidx+1).trim()));
+		}
+		return res;
+	}
+	/**
+	 * 将[b=-1, a=1, c=2], {a=1}等字符串转换为HashMap
+	 * @param s_Wrap 过滤掉的无效字符集合
+	 * @param s_kvPair 不同键值对 之间的分隔符
+	 * @param s_kv 键值之间的分隔符
+	 */
+	public static Map<String, Float> Str2Map(String in, String s_Wrap, 
+			String s_kvPair, String s_kv) {
+		if(in == null || in.length() < 3) {
+			return null;
+		}
+		
+		char c;
+		Set<Character> cset = new HashSet<Character>();
+		for(int i = 0; i < s_Wrap.length(); ++i) {
+			cset.add(s_Wrap.charAt(i));
+		}
+		StringBuffer sbuf = new StringBuffer(in.length());
+		for(int i = 0; i < in.length(); ++i) {
+			if(!cset.contains(in.charAt(i))) 
+				sbuf.append(in.charAt(i));
+		}
+		in = sbuf.toString();
+		String[] atoms = in.split(s_kvPair);
+		
+		Map<String, Float> res = new HashMap<String, Float>();
+		int eidx, N_s = s_kv.length();
+		for(String s: atoms) {
+			eidx = s.indexOf(s_kv);
+			res.put(s.substring(0, eidx).trim(), 
+					Float.valueOf(s.substring(eidx+N_s).trim()));
 		}
 		return res;
 	}
@@ -126,9 +165,19 @@ public class UtilObj {
 		Assert.assertEquals(s, res.toString());
 	}
 	
+	public static void testStr2Map_4() {
+		String[] s = new String[] {
+				"{50008055=1.0}", 
+				"{50012996=2.0, 50010535=2.0, 50012385=1.0, 50016845=1.0, 50011399=1.0, 50009879=1.0, 50018806=1.0}"
+		};
+		for (int i = 0; i < s.length; ++i)
+			Assert.assertEquals(s[i], UtilObj.Str2Map(s[i], "{}[]", ",", "=")+"");
+	}
+	
 	public static void main(String[] args) {
 		UtilObj.testStr2Map();
 		UtilObj.testSortMap();
+		UtilObj.testStr2Map_4();
 		
 	}
 

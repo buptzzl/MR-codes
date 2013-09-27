@@ -18,8 +18,8 @@ import org.apache.hadoop.fs.Path;
 import com.emar.recsys.user.util.UtilStr;
 
 /**
- * 过滤HDFS上的多个数据，产出最终结果
- * @author Administrator
+ * 过滤HDFS上的多个数据，产出最终结果到本地。
+ * @author zhoulm
  *
  */
 public class GFilter {
@@ -62,11 +62,6 @@ public class GFilter {
 		FileStatus[] cfstat = cfs.globStatus(cpath);
 		for(FileStatus cfsi: cfstat) {
 			this.pathMid.add(cfsi.getPath().toString());
-//			in = cfs.open(cfsi.getPath());
-//			while ((line = in.readLine()) != null) {
-				// 
-//			}
-//			in.close();
 		}
 		System.out.println("[Info] GFilter::listFile() add-infile=" 
 				+ (this.pathMid.size() - fsz));
@@ -92,13 +87,12 @@ public class GFilter {
 				}
 			}
 			// @test
-			System.out.println("[Info] GFilter::reload() cntr=" + cntr);
+			System.out.println("[Info] GFilter::reload \npath=" + s + " cntr=" 
+					+ cntr + " cntwrite=" + cnt);
 			out.flush();
 			in.close();
 		}
 		out.close();
-		System.out.println("[Info] GFilter::reload() read-size=" 
-				+ cntr + "\twrite-size=" + cnt);
 		return true;
 	}
 	

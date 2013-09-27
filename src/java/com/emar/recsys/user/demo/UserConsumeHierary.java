@@ -31,13 +31,14 @@ public class UserConsumeHierary {
 	private static final String RawLog = IKeywords.RawLog, 
 			KUid = IKeywords.KUid, UID_CONSUMER = IKeywords.UID_CONSUMER, 
 			UID_CONS_W = IKeywords.UID_CONS_W;
-	private static final int IdxClass = 1, IdxPrice = 4;
+	private static final int IdxClass = 1, IdxPrice = 4, 
+			i_price=0, i_level=1, i_info=2, i_weight=3;
 	
 	private static StringBuffer kUid;
 	
-	private HashMap<String, ConsumerHierary> h_consumers;
+	private HashMap<String, ConsumerHierary> h_consumers;//cid:hierary
 	private String pathIn, pathOut;  // 原始JSON 文件路径
-	/** uid:[ cid:[ [scores], [levels], [name,LEVEL_INFO], [tmp-weights] ],..] 缓存全部用户ID  */
+	/** uid:[ cid:[ [prices], [levels], [name,LEVEL_INFO], [tmp-weights] ],..] 缓存全部用户ID  */
 	private HashMap<String, String[][][]> cons_user; 
 	private boolean f_load, debug; 
 	
@@ -51,8 +52,10 @@ public class UserConsumeHierary {
 		f_load = false;
 		debug = false;
 		
-		new FileReader(pathIn);
-		new FileWriter(pathOut);
+		FileReader fr = new FileReader(pathIn);
+		fr.close();
+		FileWriter fw = new FileWriter(pathOut);
+		fw.close();
 	}
 	private static void setUid() {
 		kUid.delete(0, kUid.length());
@@ -135,17 +138,18 @@ public class UserConsumeHierary {
 		for (Map.Entry<String, HashMap<Float, Integer>> ei : cid2prices.entrySet()) {
 //			c_val[idx][0] = ei.getValue().toArray(new String[ei.getValue().size()]);
 			t_set = ei.getValue();
-			c_val[idx][0] = new String[t_set.size()];
-			c_val[idx][3] = new String[c_val[idx][0].length];
+			c_val[idx][i_price] = new String[t_set.size()];
+			c_val[idx][i_weight] = new String[c_val[idx][i_price].length];
 			int j = 0;
 			TreeSet<Float> e_price = new TreeSet<Float>(t_set.keySet());// sort.
 			for (Float fi : e_price) {
-				c_val[idx][0][j] = fi.toString();
-				c_val[idx][3][j] = t_set.get(fi).toString();//frequence
+				c_val[idx][i_price][j] = fi.toString();
+				c_val[idx][i_weight][j] = t_set.get(fi).toString();//frequence
+				++j;
 			}
 			
-			c_val[idx][1] = new String[c_val[idx][0].length];
-			c_val[idx][2] = new String[]{ei.getKey(), ""};//class, emtpy-for-LEVEL_INFO.
+//			c_val[idx][i_level] = new String[c_val[idx][i_price].length];//unuse.
+			c_val[idx][i_info] = new String[]{ei.getKey(), ""};//class, emtpy-for-LEVEL_INFO.
 			idx ++;
 		}
 		this.cons_user.put(raw.getString(kUid.toString()), c_val);
@@ -165,31 +169,31 @@ public class UserConsumeHierary {
 			for (int i = 0; i < t3_arr.length; ++i) {
 				int l_tmp;
 				
-				h_con = this.h_consumers.get(t3_arr[i][2][0]);
+				h_con = this.h_consumers.get(t3_arr[i][i_info][0]);
 				int[] l_freq = new int[h_con.getMaxLayer()];
-				for (int j = 0; j < t3_arr[i][0].length; ++j) {
+				for (int j = 0; j < t3_arr[i][i_price].length; ++j) {
 //					t3_arr[i][1][j] = h_con.getLayer(t3_arr[i][0][j])+"";
-					l_tmp = h_con.getLayer(t3_arr[i][0][j]);
+					l_tmp = h_con.getLayer(t3_arr[i][i_price][j]);
 					if (l_tmp < 0) {
 						if (debug)
 							System.out.println("[ERR] UserCon--getHierary() layer="
 									+ l_tmp + " unnormal");
 					} else {
-						l_freq[l_tmp] += Integer.parseInt(t3_arr[i][3][j]);
+						l_freq[l_tmp] += Integer.parseInt(t3_arr[i][i_weight][j]);
 					}
 				}
-				// TODO 更新第4列 即权重类别 
+
 				level_info.clear();
 				for (int j = 0; j < l_freq.length; ++j) {
 					if (l_freq[j] != 0) 
 						level_info.put(j, l_freq[j]);
 				}
-				t3_arr[i][2][1] = level_info.toString();
+				t3_arr[i][i_info][1] = level_info.toString();
 				
 				if (debug) 
 					System.out.println(String.format("[Info] UserConsumeHierary::getHierary" 
-							+ " \nrange=%s \nprices=%s \nlevel=%s",h_con,
-							Arrays.asList(t3_arr[i][0]), Arrays.asList(t3_arr[i][1])));
+							+ " \nrange=%s \nprices=%s \nlevels=%s",h_con,
+							Arrays.asList(t3_arr[i][i_price]), Arrays.asList(t3_arr[i][i_info])));
 			}
 		}
 		
@@ -210,7 +214,7 @@ public class UserConsumeHierary {
 			j_root.put(KUid, ei.getKey());
 			for (int i = 0; i < t3_arr.length; ++i) {
 //				JSONArray jarr_cons = new JSONArray(t3_arr[i][1]);
-				j_cons.put(t3_arr[i][2][0], t3_arr[i][2][1]);//cid:[level-info]
+				j_cons.put(t3_arr[i][i_info][0], t3_arr[i][i_info][1]);//cid:[level-info]
 			}
 			j_root.put(UID_CONS_W, j_cons);
 			wbuf.write(j_root.toString());

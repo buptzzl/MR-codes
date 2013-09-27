@@ -92,9 +92,9 @@ public class Iclassify2 {
 
 		String[] oargs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
-		if (oargs.length != 4) {
-			System.out
-					.println("Usage:<out> <data-range> <time-FMT-in-path> <path-fmt>");
+		if (oargs.length != 5) {
+			System.out.println("Usage:<out> <data-range> <time-FMT-in-path> " +
+							"<path-fmt> <num-reduce>");
 			System.exit(4);
 		}
 
@@ -103,11 +103,11 @@ public class Iclassify2 {
 		job.setMapperClass(IclassifyMap2.class);
 		// job.setCombinerClass(IclassifyReducer.class);
 		job.setReducerClass(IclassifyReduce2.class);
-		job.setNumReduceTasks(32);
+		job.setNumReduceTasks(Integer.parseInt(oargs[4]));
 
 		// FileInputFormat.addInputPath(job, new Path(args[0]));
 		HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
-		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(oargs[0]));
 
 		MultipleOutputs.addNamedOutput(job, "userClassrank",
 				TextOutputFormat.class, Text.class, Text.class);

@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.emar.recsys.user.util.DateParse;
 import com.emar.util.Ip2AreaUDF.IpArea;
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 /**
  * 
@@ -117,7 +119,7 @@ public class HdfsIO {
 			// } catch (IOException e) {
 			// }
 		}
-		System.out.println("[Info] total-input-file=" + fcnt);
+		System.out.println("[Info3] total-input-file=" + fcnt);
 		return;
 	}
 
@@ -129,13 +131,19 @@ public class HdfsIO {
 			Job job) throws IOException {
 		String[] datapath = DateParse.getRange(range, timefmt);
 		String fpath;
-		int fcnt = 0;
 
+		FileSystem fs = FileSystem.get(job.getConfiguration());
+		FileStatus[] a_fs;
 		for (String s : datapath) {
 			fpath = String.format(fmt, s);
 			try {  // 可能文件不存在
-				FileInputFormat.addInputPath(job, new Path(fpath));
-			} catch (IOException e) {
+				Path npi = new Path(fpath);
+				a_fs = fs.globStatus(npi);
+				if (a_fs != null && a_fs.length != 0) {
+					FileInputFormat.addInputPath(job, npi);
+					System.out.println("[setInput::Add] " + fpath);
+				}
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
