@@ -32,17 +32,21 @@ import org.json.JSONArray;
 
 import com.emar.recsys.user.log.BaseLog;
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.PairFloatInt;
+import com.emar.recsys.user.util.mr.PairFloatInt;
 import com.emar.util.HdfsIO;
 
 /**
  * 
- * 统计给定路径下的 给定主键出现的频率， 1 支持指定副键列表 与主键组成 key， 2 支持 比率计算， 指定分母数据源即可 2.1 支持统计
- * 两个数据源之间 指定KEY 的交集数，建议单个key求交集。 2.2 分子 分母 可统计各自的key 与组合key, 不建议使用 注： 1 采用
- * stripe 模式缓存频数; 2 统计的 key 直接使用对应的字段名;
+ * 统计给定路径下的 给定主键出现的频率。
+ *   1 支持指定副键列表 与主键组成 key， 
+ *   2 支持 比率计算， 指定分母数据源即可 
+ *     2.1 支持统计 两个数据源之间 指定KEY 的交集数，建议单个key求交集。 
+ *     2.2 分子 分母 可统计各自的key 与组合key, 不建议使用 
+ * 注： 
+ *   1 采用 stripe 模式缓存频数; 
+ *   2 统计的 key 直接使用对应的字段名;
  * 
  * @author zhoulm
- * 
  *         直接读入两份日志，stripe变为两个， value 采用pair的方式区别开，在R中做归并 Ratio计算。
  * 
  */

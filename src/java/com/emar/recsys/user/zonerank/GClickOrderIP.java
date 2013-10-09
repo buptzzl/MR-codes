@@ -31,9 +31,9 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.emar.recsys.user.util.PriorPair;
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
+import com.emar.recsys.user.util.mr.PriorPair;
 import com.emar.util.Ip2AreaUDF;
 import com.emar.util.exp.UrlPair;
 

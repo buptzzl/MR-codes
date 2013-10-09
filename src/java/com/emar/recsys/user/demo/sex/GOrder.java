@@ -35,7 +35,7 @@ import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq;
 import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq.Cnts;
 import com.emar.recsys.user.demo.IKeywords;
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.PairTInt;
+import com.emar.recsys.user.util.mr.PairTInt;
 import com.emar.util.HdfsIO;
 
 /**

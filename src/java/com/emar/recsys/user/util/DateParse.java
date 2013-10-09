@@ -94,7 +94,6 @@ public class DateParse {
 			cbeg.setTime(dbeg);
 			dend = dateformat.parse(times[1]);
 			cend.setTime(dend);
-			// TODO 输出时间区间字符串
 			while(cbeg.before(cend)) {
 				res.add(outfmt.format(cbeg.getTime()));
 				cbeg.add(Calendar.HOUR_OF_DAY, 1);
@@ -102,7 +101,7 @@ public class DateParse {
 			
 		} catch (ParseException e) {
 		} // DateTime
-		String[] resarr = res.toArray(new String[0]);
+		String[] resarr = res.toArray(new String[res.size()]);
 		return resarr;
 	}
 	

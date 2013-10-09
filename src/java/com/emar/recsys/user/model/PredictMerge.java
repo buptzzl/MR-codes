@@ -15,7 +15,8 @@ import weka.filters.supervised.instance.StratifiedRemoveFolds;
 import com.emar.recsys.user.demo.IKeywords;
 
 /**
- * 解析 预测结果， 合并到JSON，解决第三方库 不能通过 反射 基于 PredictParser 归并到预测结果的问题。
+ * 解析 预测结果， 合并到JSON，解决第三方库 不能通过 反射加载 序列化的对象的问题。 
+ * 基于 PredictParser 归并到预测结果的问题。
  * @author zhoulm
  *
  */

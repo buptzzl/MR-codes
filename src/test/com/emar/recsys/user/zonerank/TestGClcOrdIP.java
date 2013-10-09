@@ -19,7 +19,7 @@ import org.apache.hadoop.mrunit.types.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.emar.recsys.user.util.PriorPair;
+import com.emar.recsys.user.util.mr.PriorPair;
 import com.emar.recsys.user.zonerank.GClickOrderIP.MapClick;
 import com.emar.recsys.user.zonerank.GClickOrderIP.ReduceClick;
 

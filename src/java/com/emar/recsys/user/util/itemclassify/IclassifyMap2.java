@@ -78,7 +78,7 @@ public class IclassifyMap2 extends Mapper<LongWritable, Text, Text, Text> {
 		if(this.logparse.base.prod_name == null || this.logparse.base.prod_name.trim().length()==0) {
 			context.getCounter(Counters.ErrPName).increment(1);
 			System.out.println("[Err] IclassifyMap2::map() path=" + path 
-					+ "\nparse-res=" + this.logparse + "\n" + this.logparse.base.isdug  
+					+ "\nparse-res=" + this.logparse + "\n" + this.logparse.base.isdebug  
 					+ "\nindata=" + line);
 			return;
 		}

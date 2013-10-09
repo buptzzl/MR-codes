@@ -15,11 +15,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import oracle.net.aso.p;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.web.resources.Param;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -126,16 +129,19 @@ public class HdfsIO {
 	/**
 	 * 设置 MR 的输入文件路径
 	 * @throws IOException 
+	 * @param range 时间范围yyyyMMddHH_yyyyMMddHH
+	 * @param timeFMT 时间在路径中的格式
+	 * @param pathFMT 完整的路径格式
 	 */
-	public static boolean setInput(String range, String timefmt, String fmt,
+	public static boolean setInput(String range, String timeFMT, String pathFMT,
 			Job job) throws IOException {
-		String[] datapath = DateParse.getRange(range, timefmt);
+		String[] datapath = DateParse.getRange(range, timeFMT);
 		String fpath;
 
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		FileStatus[] a_fs;
 		for (String s : datapath) {
-			fpath = String.format(fmt, s);
+			fpath = String.format(pathFMT, s);
 			try {  // 可能文件不存在
 				Path npi = new Path(fpath);
 				a_fs = fs.globStatus(npi);
@@ -156,9 +162,9 @@ public class HdfsIO {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
-		System.out.print("[Info] local file read size: " + localData.size()
-				+ "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
+//		List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
+//		System.out.print("[Info] local file read size: " + localData.size()
+//				+ "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
 
 		String s = "resource/classify/firstcate";
 		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);

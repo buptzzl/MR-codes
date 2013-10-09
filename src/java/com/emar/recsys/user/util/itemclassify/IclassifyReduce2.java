@@ -23,7 +23,6 @@ import com.emar.recsys.user.util.UtilObj;
 public class IclassifyReduce2 extends Reducer<Text, Text, Text, Text> {
 
 	// 定义Map & Reduce 中通用的对象
-//定义Map & Reduce 中通用的对象
 	private static final String SEPA = LogParse.SEPA, MRSEPA = LogParse.SEPA_MR,
 			PLAT = LogParse.PLAT, EMAR = LogParse.EMAR, MAGIC =LogParse.MAGIC;
 	private static final String MRKC = "C_";

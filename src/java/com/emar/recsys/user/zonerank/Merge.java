@@ -32,7 +32,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.LogParse;
-import com.emar.recsys.user.util.PriorPair;
+import com.emar.recsys.user.util.mr.PriorPair;
 
 /**
  * 将两个文件中 相同的key（比如： uid）， 按自定义方法合并交集部分， 差集分开保存。

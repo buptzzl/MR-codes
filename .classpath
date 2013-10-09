@@ -15,7 +15,7 @@
 	<classpathentry kind="lib" path="lib/UserAgentUtils-1.6.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-ant-1.0.4.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-client-1.0.4.jar"/>
-	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-core-1.0.4.jar"/>
+	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-core-1.0.4.jar" sourcepath="hadoop-1.0.4/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-examples-1.0.4.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-minicluster-1.0.4.jar"/>
 	<classpathentry kind="lib" path="hadoop-1.0.4/hadoop-test-1.0.4.jar"/>
@@ -33,5 +33,9 @@
 	<classpathentry kind="lib" path="lib/libsvm-3.17.jar"/>
 	<classpathentry kind="lib" path="lib/weka-3.6.jar" sourcepath="lib/weka-src-3.6.jar"/>
 	<classpathentry kind="lib" path="lib/weka-src-3.6.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.0-beta8-sources.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.0-beta8.jar" sourcepath="lib/log4j-1.2-api-2.0-beta8-sources.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-core-2.0-beta8-sources.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-core-2.0-beta8.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
