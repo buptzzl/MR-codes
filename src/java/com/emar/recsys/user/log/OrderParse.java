@@ -32,7 +32,7 @@ public class OrderParse extends BaseLog {
 			prod_name = atom[4];
 			prod_price = atom[5];
 			prod_cnt = atom[6];
-			orig_prod_type = atom[7];
+			orig_plat_type = atom[7];
 			prod_type_name = atom[8];
 			order_price = atom[9];
 			camp_id = atom[10];
@@ -54,7 +54,7 @@ public class OrderParse extends BaseLog {
 					+"\u0001orig_prod_type=%s\u0001prod_type_name=%s\u0001order_price=%s"
 					+"\u0001camp_id=%s\u0001time=%s\u0001domain=%s\u0001user_id=%s",
 					order_id,plat_user_id,order_no,prod_no,prod_name,prod_price,prod_cnt,
-					orig_prod_type,prod_type_name,order_price,camp_id,time,domain,user_id);
+					orig_plat_type,prod_type_name,order_price,camp_id,time,domain,user_id);
 		} else {
 			return null;
 		}

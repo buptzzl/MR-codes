@@ -4,13 +4,15 @@ package com.emar.recsys.user.log;
  * 解析日志文件的名称，抽取信息
  * 
  * @author zhoulm
- * 
+ * @Done UT.
  */
 public class LogNameParse {
 	public String source;
 //	public String plat;
 //	public String type;
+	/** 业务平台 */
 	public LOG_PLAT plat;
+	/** 日志的行为类型 */
 	public LOG_TYPE type;
 	public String date;
 	public String hour;
@@ -21,9 +23,9 @@ public class LogNameParse {
 	
 	public static enum LOG_TYPE {
 		pv, click, order, 
-		browse, event, // emarbox
+		browse, event, goodsview, // emarbox
 		search, // gouwuke 
-		bidreq, biddetail,
+		bidreq, bidsucc,
 		BAD_LTYPE;
 		
 		public static LOG_TYPE setType(String type) {
@@ -68,14 +70,14 @@ public class LogNameParse {
 	}
 
 	public void fill(String line) {
-		// TODO: 特殊格式处理
-		// 1. i_rtb_biddetail_11_20130606.dat 需要同时修改 toString().
 		this.reset();
 		if (line == null || line.trim().length() == 0) {
 			status = false;
 		} else {
 			status = true;
-
+			
+			String tmp;
+			int idxDot;
 			if (line.indexOf('/') != -1) {
 				line = line.substring(line.lastIndexOf('/') + 1);
 			}
@@ -84,10 +86,33 @@ public class LogNameParse {
 				status = false;
 			} else {
 				source = atom[0];
-				plat = LOG_PLAT.setPlat(atom[1]);
-				type = LOG_TYPE.setType(atom[2]);
+				atom[1] = atom[1].trim().toLowerCase();
+				atom[2] = atom[2].trim().toLowerCase();
+				if (line.contains("dsp_monitor") || line.contains("rtb_bidreq")) {
+					// 单独解析RTB的特殊格式 i_rtb_bidreq_10_20130909.dat
+					plat = LOG_PLAT.rtb;
+					type = LOG_TYPE.bidreq;
+					if (line.contains("dsp"))
+						type = LOG_TYPE.bidsucc;
+					tmp = atom[3];
+					
+					idxDot = atom[4].indexOf('.'); // 去掉.dat后缀
+					atom[3] = atom[4];
+					if (idxDot != -1)
+						atom[3] = atom[4].substring(0, idxDot);
+					
+					atom[4] = tmp;
+				} else {
+					plat = LOG_PLAT.setPlat(atom[1]);
+					type = LOG_TYPE.setType(atom[2]);
+					idxDot = atom[4].indexOf('.'); // 去掉.dat后缀
+					if (idxDot != -1)
+						atom[4] = atom[4].substring(0, idxDot);
+				}
 				date = atom[3];
-				hour = atom[4].substring(0, atom[4].indexOf('.'));
+				hour = atom[4];
+				if (hour.length() == 1) 
+					hour = "0" + hour;
 			}
 		}
 	}
@@ -100,6 +125,7 @@ public class LogNameParse {
 		type = null;
 		date = null;
 		hour = null;
+		moreinfo = null;
 	}
 
 	// 按收入格式输出

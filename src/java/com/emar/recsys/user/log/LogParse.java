@@ -18,7 +18,7 @@ import com.emar.recsys.user.log.LogNameParse.LOG_TYPE;
 /**
  * 通用日志解析类
  * @author zhoulm
- *
+ * @Done UT,  TYPE=[pv, click, order, browse, goodsview, bidreq, search].
  */
 public class LogParse {
 	public static String EMAR = "emar", PLAT = "plat", EQUEA = "=";
@@ -26,9 +26,6 @@ public class LogParse {
 			SEPA = "\u0001", SEPA_MR = "\t", SEPA_CAMPS = ",";
 	
 	public BaseLog base;
-//	private PVParse pv;
-//	private ClickParse click;
-//	private OrderParse order;
 	
 	public LogNameParse logpath;
 	
@@ -50,16 +47,10 @@ public class LogParse {
 	public LogParse() throws ParseException {
 		// 用无效内存创建对象
 		base =new BaseLog("");
-//		pv = new PVParse("");
-//		click = new ClickParse("");
-//		order = new OrderParse("");
 		logpath = new LogNameParse("");
 	}
 	public void reset() {
 		base.reset();
-//		pv.reset();
-//		click.reset();
-//		order.reset();
 //		logpath.reset();
 	}
 	/**
@@ -67,14 +58,36 @@ public class LogParse {
 	 * @return
 	 */
 	public String buildUidKey() {
+		if (!this.base.status) 
+			return null;
+		
 		String res;
-		if(base.user_id != null && base.user_id.length() > 5) 
-			res = EMAR + MAGIC + base.user_id + MAGIC + logpath.plat;
-		else if(base.plat_user_id != null && base.plat_user_id.length() > 5)
+		final int LenMin = 5;
+		if(base.user_id != null && base.user_id.length() > LenMin) 
+			res = EMAR + MAGIC + base.user_id + MAGIC + EMAR;//@Mod 不再区别平台
+		else if(base.plat_user_id != null && base.plat_user_id.length() > LenMin)
 			res = PLAT + MAGIC + base.plat_user_id + MAGIC + logpath.plat;
+		// 增加两种平台ID
+//		else if(base.user_cookieid != null && base.user_cookieid.length() > LenMin)
+//			res = PLAT + MAGIC + base.user_cookieid + MAGIC + logpath.plat;//解析时即合并为plat_user_id.
+		else if(base.ip != null && base.ip.split(".").length == 4)
+			res = PLAT + MAGIC + base.ip + MAGIC + logpath.plat;
 		else
 			res = null;
 		return res;
+	}
+	
+	public String getTime() {
+		if (!this.base.status) 
+			return null;
+		
+		String time = null;
+		time = this.base.time;
+		if (time.length() == 0)
+			time = null;  // 不容许为空串
+		if (time == null && this.logpath.status)
+			time = this.logpath.date + this.logpath.hour + "0000";
+		return time;
 	}
 	
 	public void parse(String line, String path) throws ParseException {
@@ -106,6 +119,18 @@ public class LogParse {
 				break;
 			case order:
 				this.base.OrderParse(line);
+				break;
+			case browse:
+				this.base.EmarboxBrowse(line);
+				break;
+			case goodsview:
+				this.base.EmarboxBProd(line);
+				break;
+			case bidreq:
+				this.base.BidRequest(line);
+				break;
+			case search:
+				this.base.Search(line);
 				break;
 //			case // other data.
 			default:  // all other data.
@@ -200,17 +225,9 @@ public class LogParse {
 		
 		try {
 			LogParse lparse = new LogParse();
-			
-			/*
-			for(String path: input) {
-				fs = FileSystem.get(URI.create(path), conf);
-				in = fs.open(new Path(path));
-				oneline.add(in.readLine());
-				in.close();
-			}
-			*/
+
 			for(int i = 0; i < oneline.size(); ++i) {
-				lparse.base.isdug = false;
+				lparse.base.isdebug = false;
 				lparse.parse(oneline.get(i), input[i]);
 				lparse.parse("86175b52-2432-4bd3-93a8-0db57dae4690\u000113704561999337850194\u00012013060606296932\u000128159303\u0001Zegda正大 夏装新品 都市休闲男条纹短袖POLO衫CB122H25\u000179.0\u00011\u00017\u00017\u000179.0\u00016954\u000120130606040041\u0001ule.com", "i_yiqifa_order_20130606_04.dat");
 				System.out.println("logpath-info:\t" + lparse.logpath.toString()
@@ -226,16 +243,4 @@ public class LogParse {
 		}
 	}
    
-	public static void testGetField() throws ParseException {
-		LogParse lparse = new LogParse();
-		Field field;
-		String fval, pval;
-//		field = LogParse.class.getField("SEPA"); // OK
-//		field = LogParse.class.getField("SEPA_"); // NoSuchFieldException
-//		field = BaseLog.class.getField("status"); // OK
-		
-		System.out.println("[reflect]\t SEPA=" + lparse.getField("SEPA")
-				+ "\t Base.status=" + lparse.getField("status") 
-				+ "\t File.plat=" + lparse.getField("plat"));
-	}
 }
