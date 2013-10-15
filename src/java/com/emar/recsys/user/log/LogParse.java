@@ -83,7 +83,7 @@ public class LogParse {
 		
 		String time = null;
 		time = this.base.time;
-		if (time.length() == 0)
+		if (time != null && time.length() == 0)
 			time = null;  // 不容许为空串
 		if (time == null && this.logpath.status)
 			time = this.logpath.date + this.logpath.hour + "0000";
