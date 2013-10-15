@@ -1,12 +1,12 @@
 /**
- * @desc Í¨ÓÃÊý¾Ý¿âÁ¬½Ó£¬ ²ÉÓÃµ¥ÀýÄ£Ê½
+ * @desc Í¨ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½Ó£ï¿½ ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½Ä£Ê½
  * @author emar.zlm
  * @ref http://www.eygle.com/digest/2008/05/java_oracle_procedure.html
  * @ref http://sunday132.iteye.com/blog/623439
  * 
  */
 
-package com.emar.recsys.user.db;
+package com.emar.recsys.user.services;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -87,12 +87,12 @@ public class Oracle {
 	}
 
 	/**
-	 * Ê¹ÓÃDBCP 1.4 ×öÊý¾Ý¿âÁ¬½Ó³Ø DBCP1.4Ö§³ÖJDK1.6
+	 * Ê¹ï¿½ï¿½DBCP 1.4 ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ DBCP1.4Ö§ï¿½ï¿½JDK1.6
 	 */
 	public static class Dbcp {
 		private BasicDataSource dataSource = null;
 
-		// ³õÊ¼»¯Êý¾ÝÁ¬½Ó
+		// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		public void initDataSource() {
 			if (dataSource != null) {
 				try {
@@ -116,12 +116,12 @@ public class Oracle {
 			}
 		}
 
-		// ´ÓÁ¬½Ó³ØÖÐ»ñµÃÊý¾Ý¿âÁ¬½Ó
+		// ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½
 		public Connection getConnection() throws SQLException {
 			if (dataSource != null) {
 				return dataSource.getConnection();
 			} else {
-				throw new SQLException("Êý¾Ý¿âÁªÁ¬½ÓÊ§°Ü");
+				throw new SQLException("ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½");
 			}
 		}
 
@@ -146,11 +146,11 @@ public class Oracle {
 	}
 
 	/**
-	 * @func test Ö´ÐÐÔ¤±àÒëSQLÓï¾ä
+	 * @func test Ö´ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½SQLï¿½ï¿½ï¿½
 	 * @throws SQLException
 	 */
 	static void preparedStatement() throws SQLException {
-		// SQL Óï¾ä±»Ô¤±àÒë²¢ÇÒ´æ´¢ÔÚ PreparedStatement ¶ÔÏóÖÐ¡£È»ºó¿ÉÒÔÊ¹ÓÃ´Ë¶ÔÏó¸ßÐ§µØ¶à´ÎÖ´ÐÐ¸ÃÓï¾ä¡£
+		// SQL ï¿½ï¿½ä±»Ô¤ï¿½ï¿½ï¿½ë²¢ï¿½Ò´æ´¢ï¿½ï¿½ PreparedStatement ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã´Ë¶ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ø¶ï¿½ï¿½Ö´ï¿½Ð¸ï¿½ï¿½ï¿½ä¡£
 		Connection conn = Oracle.getInstance().getConnection();
 		PreparedStatement prepStmt = conn
 				.prepareStatement("select * from gwkproduct where id=14195222");
@@ -166,7 +166,7 @@ public class Oracle {
 	}
 
 	/**
-	 * Javaµ÷ÓÃOracleµÄ´æ´¢¹ý³Ì
+	 * Javaï¿½ï¿½ï¿½ï¿½Oracleï¿½Ä´æ´¢ï¿½ï¿½ï¿½
 	 */
 	static void callableSatement() {
 		Connection con = null;
@@ -174,14 +174,14 @@ public class Oracle {
 
 		try {
 			con = Oracle.getInstance().getConnection();
-			System.out.println("´´½¨Á¬½Ó³É¹¦");
-			// µ÷ÓÃOralceµÄ´æ´¢¹ý³Ìluketest(?)
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³É¹ï¿½");
+			// ï¿½ï¿½ï¿½ï¿½Oralceï¿½Ä´æ´¢ï¿½ï¿½ï¿½luketest(?)
 			callStmt = con.prepareCall("{ call HYQ.TESTA(?,?) }"); // ("BEGIN luketest(?); END;");
 			callStmt.setInt(1, 682);
-			System.out.println("µ÷ÓÃOralceµÄ´æ´¢¹ý³Ì");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½Oralceï¿½Ä´æ´¢ï¿½ï¿½ï¿½");
 
-			callStmt.execute(); /* Èç¹ûÕâÀï×èÈûËµÃ÷ÉÏÃæµÄstore procedureÕý±»¶ÀÕ¼·ÃÎÊ/»òÕßÊÂÎñÃ»ÓÐÌá½» */
-			System.out.println("´æ´¢¹ý³ÌÖ´ÐÐ³É¹¦");
+			callStmt.execute(); /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½store procedureï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½á½» */
+			System.out.println("ï¿½æ´¢ï¿½ï¿½ï¿½Ö´ï¿½Ð³É¹ï¿½");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -197,10 +197,10 @@ public class Oracle {
 	}
 
 	/**
-	 * Ö´ÐÐSQL
+	 * Ö´ï¿½ï¿½SQL
 	 */
 	static void statement() {
-		// Ö´ÐÐ´óÁ¿µÄ²éÑ¯Óï¾ä
+		// Ö´ï¿½Ð´ï¿½ï¿½ï¿½ï¿½Ä²ï¿½Ñ¯ï¿½ï¿½ï¿½
 		for (int i = 0; i < 100; i++) {
 			Connection conn = null;
 			Statement stmt = null;

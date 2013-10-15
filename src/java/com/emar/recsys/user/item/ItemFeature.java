@@ -12,7 +12,7 @@ import com.emar.recsys.user.feature.FeatureType;
 public class ItemFeature {
 	
 	/**
-	 * @desc  价格特征抽取： 有无小数点， 小数点后|前的数字是否为8|9, 第一个数字，小数点前的位数，后面的位数
+	 * @desc  价格字符串的 特征抽取： 有无小数点， 小数点后|前的数字是否为8|9, 第一个数字，小数点前的位数，后面的位数
 	 */
 	public static boolean extractFPrice(String price, List<String> flist) {
 		// 暂无价格分段[5,10,20,30..100,200,300,500,1000,more]

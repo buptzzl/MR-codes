@@ -75,15 +75,21 @@ public class IclassifyMap2 extends Mapper<LongWritable, Text, Text, Text> {
 			context.getCounter(Counters.ErrParse).increment(1);
 			return;
 		}
-		if(this.logparse.base.prod_name == null || this.logparse.base.prod_name.trim().length()==0) {
+		if((this.logparse.base.prod_name == null)
+				&& (this.logparse.base.prod_type_name == null)){
 			context.getCounter(Counters.ErrPName).increment(1);
 			System.out.println("[Err] IclassifyMap2::map() path=" + path 
 					+ "\nparse-res=" + this.logparse + "\n" + this.logparse.base.isdebug  
 					+ "\nindata=" + line);
 			return;
 		}
-		this.logparse.base.prod_name.replace(", ", ","); //便于后续存储到数组中 使用, 做分割符
-		String[] pclass = this.ClassifyGoods(this.logparse.base.prod_name).split("\t");
+		this.logparse.base.prod_name.replaceAll(", ", ","); //便于后续存储到数组中 使用, 做分割符
+		this.logparse.base.prod_type_name.replaceAll(", ", ",");
+		String[] pclass;
+		pclass = this.ClassifyGoods(this.logparse.base.prod_name).split("\t");
+		if (pclass.length != 5 || pclass[IdxClass].equals(UnuseClass)) {
+			pclass = this.ClassifyGoods(this.logparse.base.prod_type_name).split("\t");
+		}
 		if (pclass.length != 5 || pclass[IdxClass].equals(UnuseClass)) {
 			context.getCounter(Counters.ErrClassify).increment(1);
 			try {

@@ -1,8 +1,8 @@
 /**
- * @func ²âÊÔ»ù±¾µÄÊý¾Ý¿âÁ¬½Ó
+ * @func ï¿½ï¿½ï¿½Ô»ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½
  * 
  */
-package com.emar.recsys.user.db;
+package com.emar.recsys.user.services;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

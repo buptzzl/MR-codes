@@ -42,7 +42,7 @@ public class ItemAttribute {
 	static {
 		debug = false;
 		// 瓶装 等词已经加入词典
-		Units = new HashSet<String>(Arrays.asList("元", "克", "千克", "斤", "公斤",
+		Units = new HashSet<String>(Arrays.asList("元", "$", "￥", "克", "千克", "斤", "公斤",
 				"盎司", "磅", // 重量
 				"升", "毫升", "加伦", "品脱", // 容积
 				"米", "分米", "厘米", "毫米", "寸", "英寸", "英尺", "英里", "千米", // 长度
