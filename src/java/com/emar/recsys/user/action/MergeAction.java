@@ -27,6 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.util.mr.CounterArray.EArray;
 import com.emar.util.HdfsIO;
 
 /**
@@ -41,13 +42,14 @@ public class MergeAction extends Configured implements Tool {
 			SEPA_MR = LogParse.SEPA_MR, PLAT = LogParse.PLAT,
 			EMAR = LogParse.EMAR, MAGIC = LogParse.MAGIC, 
 			nActMin = "minActionTimes";
-	// TODO. uid-[type, time, ip, url, url_ref, weigth, title+desc, 
-//	prod_name, price, prod_cnt, domain, ]
+	// 有效KEY 的集合。 仅仅在值非null与空串时插入JSON
 	private static final String[] ATOM_STR = new String[] {
-			"time", "ip", "type", "plat", "prod_name", "prod_price",
-			"page_url", "refer_url", "orig_media", "domain"
-		},  // 仅仅在值为null与空串时插入JSON
-		WordsPage = new String[] {
+			"time", "ip", "type", "plat", "prod_price", "domain",			
+		},  
+		PRIMARY_STR = { //
+			"prod_name", "page_url", "refer_url", "orig_media", 
+		},
+		WordsPage = new String[] { // 页面信息
 			"title", "desc", "keywords"
 		};
 	private static String j_WP = "pagewords";
@@ -62,7 +64,7 @@ public class MergeAction extends Configured implements Tool {
 		private JSONObject j_obj;
 
 		private enum CNT {
-			ErrMo, ErrParse, ErrParUid, ErrParTime
+			ErrMo, ErrParse, ErrParUid, ErrParTime, ErrParPrimay, 
 		};
 		
 		public void setup(Context  context) {
@@ -107,23 +109,6 @@ public class MergeAction extends Configured implements Tool {
 			}
 			okey.set(keyLog);
 			
-			j_obj = new JSONObject();
-			for (int i = 0; i < ATOM_STR.length; ++i) {
-				tmp = this.logparse.getField(ATOM_STR[i]);
-				if (tmp != null && tmp.toString().trim().length() != 0) 
-					j_obj.put(ATOM_STR[i], tmp);
-			}
-			StringBuffer keywords = new StringBuffer();
-			for (int i = 0; i < WordsPage.length; ++i) {
-				tmp = this.logparse.getField(WordsPage[i]);
-				if (tmp != null && tmp.toString().trim().length() != 0) 
-					keywords.append(tmp);
-				keywords.append(MAGIC);// 分隔符始终存在
-			}
-//			j_obj.put(j_WP, "");
-			if (MAGIC.length() * WordsPage.length < keywords.length())
-				j_obj.put(j_WP, keywords.toString());
-			
 			tmp = this.logparse.getTime();//固定的Reduce中排序的依据 
 			if (tmp == null || tmp.toString().trim().length() == 0) {
 				context.getCounter(CNT.ErrParTime).increment(1);
@@ -132,6 +117,33 @@ public class MergeAction extends Configured implements Tool {
 							+ "path=" + path + "\nline=" + line + "\nparse=" + logparse);
 				return;
 			}
+			
+			j_obj = new JSONObject();
+			StringBuffer keywords = new StringBuffer();
+			for (int i = 0; i < WordsPage.length; ++i) {
+				tmp = this.logparse.getField(WordsPage[i]);
+				if (tmp != null && tmp.toString().trim().length() != 0) 
+					keywords.append(tmp);
+				keywords.append(MAGIC);// 分隔符始终存在
+			}
+			for (int i = 0; i < PRIMARY_STR.length; ++i) {
+				tmp = this.logparse.getField(PRIMARY_STR[i]);
+				if (tmp != null && tmp.toString().trim().length() != 0) 
+					j_obj.put(PRIMARY_STR[i], tmp);
+			}
+			if (MAGIC.length() * WordsPage.length != keywords.length()) {
+				j_obj.put(j_WP, keywords.toString());
+			} else if (j_obj.length() == 0) {
+				context.getCounter(CNT.ErrParPrimay).increment(1);
+				return;
+			}
+			
+			for (int i = 0; i < ATOM_STR.length; ++i) {
+				tmp = this.logparse.getField(ATOM_STR[i]);
+				if (tmp != null && tmp.toString().trim().length() != 0) 
+					j_obj.put(ATOM_STR[i], tmp);
+			}
+			
 			oval.set(tmp + SEPA + j_obj);
 			
 			try {
@@ -151,6 +163,7 @@ public class MergeAction extends Configured implements Tool {
 			ErrRo 
 //			N1, N3, N5, N10, N20, N30
 		}
+		EArray enumArr;
 		
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
@@ -176,7 +189,7 @@ public class MergeAction extends Configured implements Tool {
 				j_arr.put(si);
 			}
 				
-			
+			context.getCounter(EArray.getElement(n)).increment(1);
 			try {
 				if (N_ACT_MIN < act_sort.size()) 
 					context.write(key, new Text(j_arr.toString()));
