@@ -2,7 +2,6 @@ package com.emar.recsys.user.demo;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.util.TreeSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.sun.xml.internal.stream.Entity;
 
 /**
  * 基于JSON 进行用户消费分层。 不处理用户消费兴趣对应的权重（单机版）。
@@ -52,7 +50,7 @@ public class UserConsumeHierary {
 		f_load = false;
 		debug = false;
 		
-		FileReader fr = new FileReader(pathIn);
+		FileReader fr = new FileReader(pathIn); //处理文件异常
 		fr.close();
 		FileWriter fw = new FileWriter(pathOut);
 		fw.close();
@@ -71,7 +69,7 @@ public class UserConsumeHierary {
 		rjson = new BufferedReader(new FileReader(pathIn));
 		while((line = rjson.readLine()) != null) {
 			cnt ++;
-			this.process(line, cnt);  // 不处理业务
+			this.process(line, cnt);  // 处理业务隔离出来
 		}
 		rjson.close();
 		this.f_load = true;
@@ -87,10 +85,10 @@ public class UserConsumeHierary {
 	public boolean process(String line, int index, String... args) {
 		final int idx_j = 1, idx_k = 0;
 		final String sepa = "\t";
+		UserConsumeHierary.setUid();// 使用前清理状态
 		JSONObject l_json = UtilDemo.parseJsonLine(line, kUid, sepa, idx_j, idx_k);
 		this.doSegment(l_json);
 		
-		UserConsumeHierary.setUid();// 清理状态
 		return true;
 	}
 	
@@ -152,7 +150,7 @@ public class UserConsumeHierary {
 			c_val[idx][i_info] = new String[]{ei.getKey(), ""};//class, emtpy-for-LEVEL_INFO.
 			idx ++;
 		}
-		this.cons_user.put(raw.getString(kUid.toString()), c_val);
+		this.cons_user.put(kUid.toString(), c_val);//kUid存储userid,处理完1行前未被清空
 		return;
 	}
 	
@@ -217,8 +215,10 @@ public class UserConsumeHierary {
 				j_cons.put(t3_arr[i][i_info][0], t3_arr[i][i_info][1]);//cid:[level-info]
 			}
 			j_root.put(UID_CONS_W, j_cons);
+			
 			wbuf.write(j_root.toString());
 			wbuf.newLine();
+			
 			cnt ++;
 		}
 		wbuf.close();

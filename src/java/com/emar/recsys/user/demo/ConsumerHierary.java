@@ -8,10 +8,10 @@ import java.util.TreeSet;
 import com.emar.recsys.user.util.UtilMath;
 
 /**
- * 用户消费能力分层代码
+ * 将数据集按大小分为4层.（1 用于用户消费能力分层）
  * 
  * @author zhoulm
- * ##UT Done ##
+ * @Done UT, 
  */
 public class ConsumerHierary implements IHierarchy {
 	private TreeSet prices;
