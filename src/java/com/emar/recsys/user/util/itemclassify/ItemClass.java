@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import com.emar.util.HdfsIO;
+import com.emar.recsys.user.util.mr.HdfsIO;
 
 /**
  * 淘宝4级分类信息

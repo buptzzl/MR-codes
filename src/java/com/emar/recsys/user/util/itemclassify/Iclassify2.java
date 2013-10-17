@@ -18,7 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import com.emar.util.HdfsIO;
+import com.emar.recsys.user.util.mr.HdfsIO;
 
 public class Iclassify2 {
 

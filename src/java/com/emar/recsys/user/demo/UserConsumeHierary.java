@@ -17,6 +17,8 @@ import java.util.TreeSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.emar.recsys.user.util.UtilJson;
+
 
 /**
  * 基于JSON 进行用户消费分层。 不处理用户消费兴趣对应的权重（单机版）。
@@ -86,7 +88,7 @@ public class UserConsumeHierary {
 		final int idx_j = 1, idx_k = 0;
 		final String sepa = "\t";
 		UserConsumeHierary.setUid();// 使用前清理状态
-		JSONObject l_json = UtilDemo.parseJsonLine(line, kUid, sepa, idx_j, idx_k);
+		JSONObject l_json = UtilJson.parseJsonLine(line, kUid, sepa, idx_j, idx_k);
 		this.doSegment(l_json);
 		
 		return true;

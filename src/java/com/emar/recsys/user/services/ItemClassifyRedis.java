@@ -1,15 +1,24 @@
 package com.emar.recsys.user.services;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import com.sun.istack.internal.FinalArrayList;
+import com.emar.recsys.user.demo.IKeywords;
+import com.emar.recsys.user.util.UtilJson;
+import com.ibm.icu.util.Calendar;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -19,6 +28,7 @@ import sun.misc.BASE64Encoder;
 
 /**
  * 商品名分词+分类。 基于 Redis服务端提供的消息队列机制，采用端口号的方式区别队列。
+ * 
  * @see 取队列中元素时须先清空。 突出的顺序不保证。
  * @author Administrator
  * 
@@ -80,7 +90,7 @@ public class ItemClassifyRedis {
 		}
 		jedis = null;
 	}
-	
+
 	public String get(final String key) {
 		jedis = jedisPool.getResource();
 		try {
@@ -93,6 +103,7 @@ public class ItemClassifyRedis {
 			throw new RuntimeException(e);
 		}
 	}
+
 	/** 删除若干指明名字 的队列 */
 	public void del(String... key) {
 		jedis = jedisPool.getResource();
@@ -104,6 +115,7 @@ public class ItemClassifyRedis {
 			throw new RuntimeException(e);
 		}
 	}
+
 	/** 返回全部的队列名 */
 	public Set<String> keys(String pattern) {
 		Jedis jedis = jedisPool.getResource();
@@ -203,7 +215,8 @@ public class ItemClassifyRedis {
 
 	/**
 	 * 从Redis队列取1个结果. 输出格式： 分类字符串\1index\1ClassID\1ClassName
-	 * @throws InterruptedException 
+	 * 
+	 * @throws InterruptedException
 	 * 
 	 */
 	public String get(int timeout) throws InterruptedException {
@@ -211,7 +224,7 @@ public class ItemClassifyRedis {
 		final BASE64Decoder b64Decoder = new BASE64Decoder();
 		final ItemClassifyRedis source = ItemClassifyRedis.getInstance();
 		int timeStep = timeout / 100;// 最大请求次数
-		timeStep = timeStep <= 0 ? 1000 : timeStep;
+		timeStep = timeStep <= 0 ? 100 : timeStep;
 
 		String result = null;
 		int timer = 0;
@@ -232,12 +245,94 @@ public class ItemClassifyRedis {
 	}
 
 	/**
+	 * 对一个文件调用 Redis分类接口.
+	 * 
+	 * @throws IOException
+	 */
+	public static boolean process(String path, String key, String opath)
+			throws IOException {
+		final String keyRedisOut = "QUEUEHTPP", S_MR = "\t", NoResult = "NIL", 
+				keyArr = IKeywords.RawLog, sVersion = "A_M_1"; 
+		final String[] keys = new String[] { "prod_name", "pagewords" };
+		final int order = -1, wMS = 100000;
+		ItemClassifyRedis source = ItemClassifyRedis.getInstance();
+		source.getJedisPool().getResource().del(keyRedisOut);
+		int NBad = 0, Nnil = 0;
+
+		String data, keyWords, id;
+		JSONArray jArr;
+		JSONObject jObj, jAtom;
+		String[] arr;
+		Map<String, Integer> Cid = new HashMap<String, Integer>();
+		
+		BufferedWriter wbuf = new BufferedWriter(new FileWriter(opath));
+		BufferedReader rbuf = new BufferedReader(new FileReader(path));
+		for (data = rbuf.readLine(); data != null; data = rbuf.readLine()) {
+			Cid.clear();
+			data = rbuf.readLine();
+			jObj = UtilJson.parseJson(data, S_MR, keyArr, 1, 0);
+			if (jObj == null)
+				continue;
+			jArr = jObj.getJSONArray(keyArr);
+			for (int i = 0; i < jArr.length(); ++i) {
+				
+				jAtom = new JSONObject(jArr.get(i).toString());
+				
+//				System.out.println("[info] " + jArr.get(i) + "\n" + jAtom);
+				for (int j = 0; j < keys.length; ++j) {
+					if (jAtom.has(keys[j])) {
+						source.push(jAtom.getString(keys[j]), order);
+						try {
+							id = source.get(wMS);
+							if (id.indexOf(NoResult) != -1)
+								Cid.put(id, Cid.containsKey(id) ? Cid.get(id)+1 : 1);
+							else
+								++Nnil;
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+							++NBad;
+						}
+						id = null;
+					}
+				}
+			}
+			wbuf.write(String.format("%s\t%s\t%s", jObj.get(IKeywords.KUid), 
+					Cid.toString(), sVersion));
+			wbuf.newLine();
+		}
+		rbuf.close();
+		wbuf.close();
+		
+		if (debug) 
+			System.out.println("[Info] process::Cnt_Bad=" + NBad
+					+ "\tUnclassify=" + NoResult);
+		return true;
+	}
+	
+	public static void main(String[] args) {
+		if (args.length < 0) { // 2) {
+			System.out.println("Usage: <input> <output> [sepa-str] ");
+			System.exit(2);
+		}
+		args = new String [] {
+				"D:/Data/MR-codes/data/test/act_merge.100", 
+				"D:/Data/MR-codes/data/test/act_merge.redis"
+				};
+		String sepa = args.length < 3 ? "\t" : args[2];  
+		try {
+			ItemClassifyRedis.getInstance().process(args[0], sepa, args[1]);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * URL\u0001主题\u0001面包屑\u0001显性属性块\u0001\描述\u0001评论
 	 * 
 	 * @param args
 	 * @throws FileNotFoundException
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main_test(String[] args) throws IOException {
 
 		final String keyRedisIn = "HTPPQUEUE", keyRedisOut = "QUEUEHTPP";
 		final Pattern regNoline = Pattern.compile("\\r\\n");
@@ -245,62 +340,39 @@ public class ItemClassifyRedis {
 
 		// String name = "稻草人新款欧美经典时尚金锁真皮单肩斜跨男士挎包MMD50034M-03 啡色(huadong)" ;
 		String name = "天谱乐食Tender Plus 澳洲120天谷饲西冷牛排 250g-天谱乐食 Tender Plus牛羊肉 【品牌 介绍 价格 图片 评论】 - 顺丰优选sfbest.com@@@顺丰优选(sfbest.com)提供澳大利亚天谱乐食 Tender Plus牛羊肉，天谱乐食Tender Plus 澳洲120天谷饲西冷牛排 250g价格最低，包括天谱乐食Tender Plus 澳洲120天谷饲西冷牛排 250g食用指南、健康知识以及天谱乐食Tender Plus 澳洲120天谷饲西冷牛排 250g图片、参数、评论、晒单、饮食文化等信息。选购天谱乐食 Tender Plus牛羊肉上顺丰优选，优选美食,顺丰到家！@@@天谱乐食Tender Plus 澳洲120天谷饲西冷牛排 250g,天谱乐食 Tender Plus,生鲜食品,精品肉类,牛羊肉,顺丰优选,进口食品@@@";
-
-		String value = "www.baidu.com\u0001妹妹好漂亮\u0001操\u0001\u0001\u0001www.baidu.com";
+		// String value =
+		// "www.baidu.com\u0001妹妹好漂亮\u0001操\u0001\u0001\u0001www.baidu.com";
 
 		BASE64Decoder b64Decoder = new BASE64Decoder();
 		BASE64Encoder b64Encoder = new BASE64Encoder();
 
 		// System.out.println(UUIDUtil.getBASE64(name));
 		name = b64Encoder.encode(name.getBytes());
-		System.out.println("[info] name-encode: " + name);
-		// name.replaceAll("\\r\\n", "");
+		System.out.println(Calendar.getInstance().getTime());
+		// + "[info] name-encode: " + name);
 		name = regNoline.matcher(name).replaceAll("");
-		System.out.println("[info] name-encode after replace: " + name);
 
 		ItemClassifyRedis source = ItemClassifyRedis.getInstance();
 		String data = null;
 
+		final String pname = "D:/Data/MR-codes/data/test/order_badclassify_1010_name.dat";
 		final int N = 100;
 		int nget = 0;
 		source.getJedisPool().getResource().del(keyRedisOut);
-		BufferedReader rbuf = new BufferedReader(new FileReader(
-				"D:/Data/order_badclassify_1010_name.dat"));
+		BufferedReader rbuf = new BufferedReader(new FileReader(pname));
 		// for(data = rbuf.readLine(); data != null; data = rbuf.readLine()) {
 		for (int i = 0; i < N; i++) {
 			data = rbuf.readLine();
-//			 String data = "\u0001"+UUIDUtil.getBASE64(name+"_"+i)
-			// +"\u0001\u0001\u0001\u0001"+UUIDUtil.getBASE64(value) ;
-			/*
-			data = b64Encoder.encode(data.getBytes());
-			name = regNoline.matcher(data).replaceAll("");
-			data = "\u0001" + name + "\u0001\u0001\u0001\u0001";
-			System.out.println("[info] input=" + data);
-
-			source.setData2Queue(keyRedisIn, data);
-			*/
-			source.push(data, i);
+//			source.push(data, i);
+			source.push("", i);
 			String result = null;
 			try {
-				result = source.get(10000);
+				result = source.get(100000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			System.out.println("[info] input=" + data + "\noutput=" + result);
-//			Jedis  jed = source.getJedisPool().getResource();
-			 /*
-			String result = source.getDataFromQueue(keyRedisOut);
-			// result =
-			// "5omL5py6IOiBlOaDsyBBMjk4VCDvvIjmt7HpgoPpu5HvvIkgM0cgVEQtU0NETUEvR1NNAShudWxsKQE1MDAyNTM4NQHmiYvmnLo=";
-			try {
-				if (result != null) {
-					result = new String(b64Decoder.decodeBuffer(result));
-					System.err.println("[info] result:" + result);
-					nget++;
-				}
-			} catch (IOException e) {
-			}
-			 */
+
 		}
 		// source.setData2Queue(keyRedisIn, data);
 		rbuf.close();
@@ -316,14 +388,10 @@ public class ItemClassifyRedis {
 					result = new String(b64Decoder.decodeBuffer(result));
 					String[] results = result.split("\u0001");
 					System.err.println("[info] result:" + result);
-					// +
-					// "\nresults:"+results[4]+"\u0001"+results[5].substring(0,
-					// results[5].indexOf("\\")));
 					nget++;
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-
 			}
 
 		}

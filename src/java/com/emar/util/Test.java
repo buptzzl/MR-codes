@@ -19,6 +19,7 @@ import org.apache.hadoop.io.Text;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.emar.recsys.user.util.UtilJson;
 import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
 
 public class Test {
@@ -63,11 +64,12 @@ public class Test {
 			jobj.put(testa[i]);
 		JSONArray jobj2 = new JSONArray();
 		jobj2.put(jobj); jobj2.put(jobj);
-		JSONArray jobj3 = jobj2.getJSONArray(0);
+		JSONArray jobj3 = new JSONArray();
+		jobj3.put(new JSONObject().put("a", 1).put("http", "value"));
 		
 		Object ot1 = 1.2, ot2 = "abc", ot3 = "1.23";
 		System.out.println("\n[test]"
-				+ new JSONArray(new String[]{"a", "b"}) + "\n" + jobj3
+				+ new JSONArray(new String[]{"a", "b"}) + "\n2" + jobj2 + "\n3=" + jobj3
 				+ "\n" + new HashSet<String>(Arrays.asList("1", "2")).toString()
 				+ "\n" + durl.contains("fanxian")
 				+ "\n" + smap.toString()

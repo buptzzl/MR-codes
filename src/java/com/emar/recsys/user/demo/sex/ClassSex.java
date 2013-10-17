@@ -17,7 +17,7 @@ import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.DateParse;
 import com.emar.recsys.user.util.UtilStr;
 import com.emar.recsys.user.util.itemclassify.ItemClass;
-import com.emar.util.HdfsIO;
+import com.emar.recsys.user.util.mr.HdfsIO;
 
 /**
  * 对每个已分的类别， 生成训练数据

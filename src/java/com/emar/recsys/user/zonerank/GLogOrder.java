@@ -34,8 +34,8 @@ import org.apache.hadoop.util.ToolRunner;
 import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
+import com.emar.recsys.user.util.mr.HdfsIO;
 import com.emar.recsys.user.util.mr.PriorPair;
-import com.emar.util.HdfsIO;
 import com.emar.util.Ip2AreaUDF;
 
 /**

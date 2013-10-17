@@ -23,7 +23,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.UtilObj;
-import com.emar.util.HdfsIO;
+import com.emar.recsys.user.util.mr.HdfsIO;
 
 /**
  * 将若干历史 用户的数据 合并到一起。

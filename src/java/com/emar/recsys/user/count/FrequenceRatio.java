@@ -32,8 +32,8 @@ import org.json.JSONArray;
 
 import com.emar.recsys.user.log.BaseLog;
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.util.mr.HdfsIO;
 import com.emar.recsys.user.util.mr.PairFloatInt;
-import com.emar.util.HdfsIO;
 
 /**
  * 
