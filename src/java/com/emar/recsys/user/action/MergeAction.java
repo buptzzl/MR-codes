@@ -9,6 +9,7 @@ import javax.sound.midi.SysexMessage;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -27,8 +28,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.util.mr.HdfsIO;
 import com.emar.recsys.user.util.mr.CounterArray.EArray;
-import com.emar.util.HdfsIO;
 
 /**
  * 归并用户的行为。
@@ -41,7 +42,7 @@ public class MergeAction extends Configured implements Tool {
 	private static final String SEPA = LogParse.SEPA,
 			SEPA_MR = LogParse.SEPA_MR, PLAT = LogParse.PLAT,
 			EMAR = LogParse.EMAR, MAGIC = LogParse.MAGIC, 
-			nActMin = "minActionTimes";
+			nActMin = "minActionTimes", nEnumSize = "nEnumSize";
 	// 有效KEY 的集合。 仅仅在值非null与空串时插入JSON
 	private static final String[] ATOM_STR = new String[] {
 			"time", "ip", "type", "plat", "prod_price", "domain",			
@@ -157,17 +158,18 @@ public class MergeAction extends Configured implements Tool {
 	}
 
 	public static class ReduceAction extends Reducer<Text, Text, Text, Text> {
-		private static int N_ACT_MIN = 3;
+		private static int N_ACT_MIN = 3, N_CNT_MAX = 50;
 		private enum CNT {
 			RoFewerK, 
 			ErrRo 
 //			N1, N3, N5, N10, N20, N30
 		}
-		EArray enumArr;
+		private EArray enumArr;
 		
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
 			N_ACT_MIN = conf.getInt(nActMin, N_ACT_MIN);
+			enumArr.setMax(conf.getInt(nEnumSize, N_CNT_MAX));
 			if (debug) 
 				System.out.println("MAction::Reduce setup() N_ACT_MIN=" + N_ACT_MIN);
 		}
@@ -207,11 +209,22 @@ public class MergeAction extends Configured implements Tool {
 		Configuration conf = new Configuration();
 		String[] oargs = new GenericOptionsParser(conf,args).getRemainingArgs();
 		if (oargs.length < 5) {
-			System.out.println("Usage: <out> <dataHour-Range> " +
-							"<dFMT> <inFMT> <Freq-Min> [<dFMT2> <inFMT2> ...]");
+			System.out.println("Usage:  <out> <dataHour-Range> " +
+					"<dFMT> <inFMT> <UserMinFreq_NCounter_NumRed> " +
+					"[<dFMT2> <inFMT2> ...] ");
 			System.exit(4);
 		}
-		conf.setInt(nActMin, Integer.parseInt(oargs[4]));
+		int NRed = 4;
+		if (oargs[4].indexOf('_') != -1) {
+			String[] tmp = oargs[4].split("_");
+			conf.setInt(nActMin, Integer.parseInt(tmp[0]));
+			if (1 < tmp.length)
+				conf.setInt(nEnumSize, Integer.parseInt(tmp[1]));
+			if (2 < tmp.length)
+				NRed = Integer.parseInt(tmp[2]);
+			System.out.println("[info] UserMinFreq="+conf.get(nActMin)+
+					"EnumSize="+conf.get(nEnumSize)+", NumRed"+NRed);
+		}
 
 		Job job = new Job(conf, "[merge users action]");
 		job.setJarByClass(MergeAction.class);
@@ -221,15 +234,17 @@ public class MergeAction extends Configured implements Tool {
 		job.setReducerClass(ReduceAction.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
-		job.setNumReduceTasks(4); // (16);
-
+		job.setNumReduceTasks(NRed); // (16);
+		
+		FileSystem fs = FileSystem.get(conf);
+		fs.delete(new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 		// FileInputFormat.addInputPaths(job, args[1]);
 		if (debug)
 			System.out.println(String.format("[Info] inpath-param:\t%s, %s, %s", 
 					oargs[1], oargs[2], oargs[3]));
 		boolean setin = HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
-		if (5 < oargs.length && (oargs.length - 5) % 2 == 0) {
+		if (5 < oargs.length && (oargs.length - 5) % 2 == 0) {// 添加输入路径
 			for (int i = 5; i < oargs.length; i+=2) {
 				if (debug)
 					System.out.println(String.format("[Info] inpath-param:\t%s, %s, %s", 
