@@ -7,6 +7,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.emar.recsys.user.util.UtilJson;
+
 
 public class UtilDemoTest {
 	private static String[][] t_parseJL = {
@@ -39,7 +41,7 @@ public class UtilDemoTest {
 //				if (tmp.charAt(j) != t_parseJL[i][1].charAt(j))
 //					System.out.print("i="+j+" s_t="+tmp.charAt(j)+" s_p="+t_parseJL[i][1].charAt(j));
 			Assert.assertEquals(t_parseJL[i][1], 
-					UtilDemo.parseJsonLine(t_parseJL[i][0], key, sepa, idx_j, idx_k)+"");
+					UtilJson.parseJsonLine(t_parseJL[i][0], key, sepa, idx_j, idx_k)+"");
 			Assert.assertEquals(key.toString(),
 					t_parseJL[i][2] == null ? key.toString():t_parseJL[i][2]);
 			key = new StringBuffer("Uid");
