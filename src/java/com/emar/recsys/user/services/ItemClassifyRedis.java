@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.demo.IKeywords;
@@ -224,7 +225,7 @@ public class ItemClassifyRedis {
 		final BASE64Decoder b64Decoder = new BASE64Decoder();
 		final ItemClassifyRedis source = ItemClassifyRedis.getInstance();
 		int timeStep = timeout / 100;// 最大请求次数
-		timeStep = timeStep <= 0 ? 100 : timeStep;
+		timeStep = (timeStep <= 0 || 100 < timeStep) ? 100 : timeStep;
 
 		String result = null;
 		int timer = 0;
@@ -257,7 +258,7 @@ public class ItemClassifyRedis {
 		final int order = -1, wMS = 100000;
 		ItemClassifyRedis source = ItemClassifyRedis.getInstance();
 		source.getJedisPool().getResource().del(keyRedisOut);
-		int NBad = 0, Nnil = 0;
+		int NBad = 0, Nnil = 0, NJsonErr = 0, N = 0;
 
 		String data, keyWords, id;
 		JSONArray jArr;
@@ -275,19 +276,25 @@ public class ItemClassifyRedis {
 				continue;
 			jArr = jObj.getJSONArray(keyArr);
 			for (int i = 0; i < jArr.length(); ++i) {
-				
-				jAtom = new JSONObject(jArr.get(i).toString());
-				
+				try {
+					jAtom = new JSONObject(jArr.get(i).toString());
+				} catch (JSONException e) {
+					++ NJsonErr;
+					if (debug) 
+						System.out.println("[ERR] process() "+e.getLocalizedMessage()
+								+"\n"+jArr.get(i).toString());
+					continue;
+				}
 //				System.out.println("[info] " + jArr.get(i) + "\n" + jAtom);
 				for (int j = 0; j < keys.length; ++j) {
 					if (jAtom.has(keys[j])) {
 						source.push(jAtom.getString(keys[j]), order);
 						try {
 							id = source.get(wMS);
-							if (id.indexOf(NoResult) != -1)
-								Cid.put(id, Cid.containsKey(id) ? Cid.get(id)+1 : 1);
-							else
+							if (id == null && id.indexOf(NoResult) == -1)
 								++Nnil;
+							else
+								Cid.put(id, Cid.containsKey(id) ? Cid.get(id)+1 : 1);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 							++NBad;
@@ -295,6 +302,9 @@ public class ItemClassifyRedis {
 						id = null;
 					}
 				}
+				++N;
+				if (debug && N % 1000 == 0)
+					System.out.println("[Info] N=" + N);
 			}
 			wbuf.write(String.format("%s\t%s\t%s", jObj.get(IKeywords.KUid), 
 					Cid.toString(), sVersion));
@@ -314,10 +324,10 @@ public class ItemClassifyRedis {
 			System.out.println("Usage: <input> <output> [sepa-str] ");
 			System.exit(2);
 		}
-		args = new String [] {
-				"D:/Data/MR-codes/data/test/act_merge.100", 
-				"D:/Data/MR-codes/data/test/act_merge.redis"
-				};
+//		args = new String [] { // unit test.
+//				"D:/Data/MR-codes/data/test/act_merge.100", 
+//				"D:/Data/MR-codes/data/test/act_merge.redis"
+//				};
 		String sepa = args.length < 3 ? "\t" : args[2];  
 		try {
 			ItemClassifyRedis.getInstance().process(args[0], sepa, args[1]);
