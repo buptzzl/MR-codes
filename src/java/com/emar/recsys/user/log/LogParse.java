@@ -1,7 +1,9 @@
 package com.emar.recsys.user.log;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,6 +142,20 @@ public class LogParse {
 			 
 		}
 		
+		base.landing_url = this.decodeURL(base.landing_url);
+		base.page_url = this.decodeURL(base.page_url);
+		base.refer_url = this.decodeURL(base.refer_url);
+	}
+	
+	private String decodeURL(final String url) {
+		if (url == null)
+			return null;
+		final String codes = "UTF-8";
+		try {
+			return URLDecoder.decode(url, codes);
+		} catch (UnsupportedEncodingException e) {
+		}
+		return url;
 	}
 	
 	public String toString() { 
