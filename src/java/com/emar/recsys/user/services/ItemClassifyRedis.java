@@ -30,8 +30,8 @@ import sun.misc.BASE64Encoder;
 /**
  * 商品名分词+分类。 基于 Redis服务端提供的消息队列机制，采用端口号的方式区别队列。
  * 
- * @see 取队列中元素时须先清空。 突出的顺序不保证。
- * @author Administrator
+ * @see 取队列中元素时须先清空。 读出的顺序不保证。
+ * @author zhoulm
  * 
  */
 public class ItemClassifyRedis {
@@ -231,7 +231,7 @@ public class ItemClassifyRedis {
 		int timer = 0;
 		result = source.getDataFromQueue(keyRedisOut);
 		while (result == null && timer < timeout) {
-			timer = timer + timeout;
+			timer = timer + timeStep;
 			Thread.sleep(timer); // 等待
 			result = source.getDataFromQueue(keyRedisOut);
 		}
