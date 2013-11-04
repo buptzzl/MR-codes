@@ -18,9 +18,12 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
+import com.emar.recsys.user.util.mr.HdfsDAO;
 import com.emar.recsys.user.util.mr.HdfsIO;
 
 public class Iclassify2 {
+	
+	
 
 	public static void main(String[] args) throws URISyntaxException,
 			IOException, InterruptedException, ClassNotFoundException {
@@ -31,64 +34,8 @@ public class Iclassify2 {
 		// DistributedCache.addCacheFile(new
 		// URI("hdfs://host116:9000/user/hadoop/wzcstop/stopword#stopword"),
 		// conf);//这个可以正确实现
-		final String pconf = "/recommend/user/zhouliaoming/conf/ItemClasses"; 
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/fourthdict#fourthdict"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/thirddict#thirddict"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/seconddict#seconddict"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/firstdict#firstdict"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/brandwords#brandwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/abcmap#abcmap"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/districtwords#districtwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/colorwords#colorwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/packwords#packwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/firstcate#firstcate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/secondcate#secondcate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/thirdcate#thirdcate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/fourthcate#fourthcate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/yanjingwords#yanjingwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/brand2cate#brand2cate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/combinewords#combinewords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/catewords#catewords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/code2catewords#code2catewords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/brandworddf2#brandworddf2"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/brandascate#brandascate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/landscapewords#landscapewords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/parentcate#parentcate"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/genderjudgewords#genderjudgewords"),
-				conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/genderwords#genderwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/adjwords#adjwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/wordprob#wordprob"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/nwords#nwords"), conf);// 这个也是可以的
-		DistributedCache.addCacheFile(new URI(
-				pconf + "/verbwords#verbwords"), conf);// 这个也是可以的
+//		addClassCacheFile(conf);
+		ItemSegmentClass.addClassCacheFile(conf);
 
 		String[] oargs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
@@ -107,8 +54,10 @@ public class Iclassify2 {
 
 		// FileInputFormat.addInputPath(job, new Path(args[0]));
 		HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
+		
+		HdfsDAO hdao = new HdfsDAO(conf);
+		hdao.rmr(oargs[0]);
 		FileOutputFormat.setOutputPath(job, new Path(oargs[0]));
-
 		MultipleOutputs.addNamedOutput(job, "userClassrank",
 				TextOutputFormat.class, Text.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, "userInfo", TextOutputFormat.class,
