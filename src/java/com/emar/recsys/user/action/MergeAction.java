@@ -24,6 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,6 +40,8 @@ import com.emar.recsys.user.util.mr.CounterArray.EArray;
  */
 public class MergeAction extends Configured implements Tool {
 	// 定义Map & Reduce 中通用的对象
+	private static Logger log = Logger.getLogger(MergeAction.class);
+	
 	private static final String SEPA = LogParse.SEPA,
 			SEPA_MR = LogParse.SEPA_MR, PLAT = LogParse.PLAT,
 			EMAR = LogParse.EMAR, MAGIC = LogParse.MAGIC, 
@@ -93,9 +96,8 @@ public class MergeAction extends Configured implements Tool {
 			}
 			if (!this.logparse.base.status) {
 				context.getCounter(CNT.ErrParse).increment(1);
-				if (debug) 
-					System.out.println("[ERR] MAction::map() in parse status." 
-							+ "path=" + path + "\nline=" + line + "\nparse=" + logparse);
+				log.error("parse log failed. hdfs-path=" + path + "\n\tline=" + line
+						+ "\n\tparse=" + logparse);
 				return;
 			}
 
@@ -103,9 +105,7 @@ public class MergeAction extends Configured implements Tool {
 			String keyLog = this.logparse.buildUidKey();
 			if (keyLog == null || keyLog.trim().length() == 0) {
 				context.getCounter(CNT.ErrParUid).increment(1);
-				if (debug)
-					System.out.println("[ERR] MAction::map() in get UID. "
-							+ "path=" + path + "\nline=" + line + "\nparse=" + logparse);
+				log.error("parse build key failed. keyLog="+keyLog+"\tparse="+logparse); 
 				return;
 			}
 			okey.set(keyLog);
@@ -113,9 +113,7 @@ public class MergeAction extends Configured implements Tool {
 			tmp = this.logparse.getTime();//固定的Reduce中排序的依据 
 			if (tmp == null || tmp.toString().trim().length() == 0) {
 				context.getCounter(CNT.ErrParTime).increment(1);
-				if (debug)
-					System.out.println("[ERR] MAction::map() in log parse time."
-							+ "path=" + path + "\nline=" + line + "\nparse=" + logparse);
+				log.error("parse time failed. time="+logparse.getTime()+"\tparse="+logparse);
 				return;
 			}
 			
@@ -170,8 +168,8 @@ public class MergeAction extends Configured implements Tool {
 			Configuration conf = context.getConfiguration();
 			N_ACT_MIN = conf.getInt(nActMin, N_ACT_MIN);
 			enumArr.setMax(conf.getInt(nEnumSize, N_CNT_MAX));
-			if (debug) 
-				System.out.println("MAction::Reduce setup() N_ACT_MIN=" + N_ACT_MIN);
+			
+			log.info("reduce configue N_ACT_MIN=" + N_ACT_MIN);
 		}
 		
 		public void reduce(Text key, Iterable<Text> values, Context context) {
@@ -222,8 +220,8 @@ public class MergeAction extends Configured implements Tool {
 				conf.setInt(nEnumSize, Integer.parseInt(tmp[1]));
 			if (2 < tmp.length)
 				NRed = Integer.parseInt(tmp[2]);
-			System.out.println("[info] UserMinFreq="+conf.get(nActMin)+
-					"EnumSize="+conf.get(nEnumSize)+", NumRed"+NRed);
+			log.info("setup nActMin="+conf.get(nActMin)
+					+"\tnEnumSize="+conf.get(nEnumSize)+"\tNRed="+NRed);
 		}
 
 		Job job = new Job(conf, "[merge users action]");
@@ -240,15 +238,11 @@ public class MergeAction extends Configured implements Tool {
 		fs.delete(new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[0]));
 		// FileInputFormat.addInputPaths(job, args[1]);
-		if (debug)
-			System.out.println(String.format("[Info] inpath-param:\t%s, %s, %s", 
-					oargs[1], oargs[2], oargs[3]));
+		log.info("main input-para:" + oargs[1]+"\t"+oargs[2]+"\t"+oargs[3]);
 		boolean setin = HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
 		if (5 < oargs.length && (oargs.length - 5) % 2 == 0) {// 添加输入路径
 			for (int i = 5; i < oargs.length; i+=2) {
-				if (debug)
-					System.out.println(String.format("[Info] inpath-param:\t%s, %s, %s", 
-							oargs[1], oargs[i], oargs[i+1]));
+				log.info("main input-paras: "+oargs[1]+"\t"+oargs[i]+"\t"+oargs[i+1]);
 				setin = setin && HdfsIO.setInput(oargs[1], oargs[i], oargs[i+1], job);
 			}
 		}

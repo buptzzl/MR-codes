@@ -28,7 +28,7 @@ public class CombineFilesInputFormat extends
 		// 使用自定义的 CombineFilesRecordReader
 		CombineFileRecordReader<LongWritable, BytesWritable> recordReader = 
 				new CombineFileRecordReader<LongWritable, BytesWritable>(
-				combineFileSplit, context, CombineFilesRecordReader.class);
+				combineFileSplit, context, CombineRecordReader.class);
 		try {
 			recordReader.initialize(combineFileSplit, context);
 		} catch (InterruptedException e) {
