@@ -1,6 +1,9 @@
 package com.emar.recsys.user.util.mr;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+import javax.management.RuntimeErrorException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -17,12 +20,22 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 /**
- * 合并多个 小文件 做 Map 输入的示例。 
+ * 合并多个 小文件 做 Map 输入的示例代码。 
  * @author zhoulm
  *
  */
 public class CombineSmallFilesMR {
 	public static boolean debug = true;
+	private static final String UTF8 = "UTF-8";
+	private static final byte[] newline;
+	
+	static {
+		try {
+			newline = "\n".getBytes(UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e.getMessage());
+		} 
+	}
 	
 	public static class CombineSmallfileMapper 
 			extends Mapper<LongWritable, BytesWritable, Text, BytesWritable> {
@@ -51,6 +64,8 @@ public class CombineSmallFilesMR {
 			for (BytesWritable value : values) {
 				bytes = value.getBytes();
 				oval.set(bytes);
+				oval.append(newline, 0, newline.length);// 恢复换行
+				
 				context.write(key, oval);
 			}
 		}
