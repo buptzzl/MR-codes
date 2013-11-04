@@ -1,26 +1,50 @@
 package com.emar.util;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 import org.apache.log4j.Logger;
-import org.apache.log4j.*;
+import org.apache.log4j.PropertyConfigurator;
 
 /**
  * log4j的测试
  * @author zhoulm 
- *
+ * TODO 基于日期分割文件的功能。
+ *  
  */
 public class TLog4j {
-	/**
-	 * 日志分等级：在该等级及以上的才记录。
-	 * 默认继承最近的祖先的级别。包com.foo.bar中创建的Logger 会继承com.foo 中的存在日志；
-	 * 没有则继承root 的级别（默认为 DEBUG）。
-	 */
-//	Logger.getRootLogger();
-	static Logger logger = Logger.getLogger(TLog4j.class);  // 静态的全局日志记录器:
-//	logger.setLevel((Level)Level.WARN);
+	
+	static {
+		String filePath = "libs/log4j.properties";
+		Properties props = new Properties(); 
+        System.out.println("[Test]\t" + filePath);
+//        System.err.println("[err]" + filePath);
+        Logger logger = Logger.getLogger(TLog4j.class);  
+        
+        try { 
+            FileInputStream log4jStream = new FileInputStream(filePath); 
+            props.load(log4jStream); 
+            log4jStream.close(); 
+            String logFile = props.getProperty("log4j.appender.A1.File"); //设置路径 
+
+            System.out.println(logFile); 
+//            props.setProperty("log4j.appender.A1.File", logFile); 
+//            PropertyConfigurator.configure(props); //装入log4j配置信息
+//            PropertyConfigurator.configure(filePath);
+        } catch (IOException e) { 
+            e.printStackTrace(); 
+        } 
+        logger.info("Initializing, end My Init"); 
+	}
 	
 	public static void main(String[] args) {
-//		SimpleLayout layout = new SimpleLayout();
-		
+        Logger logger = Logger.getLogger(TLog4j.class);  
+
+		logger.debug("[deb]");
+		logger.info("info leave!");  
+        logger.warn("warn leave!");  
+		logger.error("[err]");
 	}
 	
 }

@@ -9,7 +9,7 @@ import java.util.*;
 import junit.framework.Assert;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.examples.PiEstimator.PiReducer;
+//import org.apache.hadoop.examples.PiEstimator.PiReducer;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;

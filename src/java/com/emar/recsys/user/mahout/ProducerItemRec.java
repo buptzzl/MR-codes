@@ -41,7 +41,7 @@ import com.emar.recsys.user.util.mr.HdfsIO;
 
 public class ProducerItemRec extends Configured implements Tool {
 
-	private static boolean debug = true;
+	private static boolean debug = false;
 
 	public static class Map extends Mapper<LongWritable, Text, Text, Text> {
 
@@ -88,10 +88,8 @@ public class ProducerItemRec extends Configured implements Tool {
 							+ logparse);
 				return;
 			}
-			if ((logparse.base.user_id == null || logparse.base.user_id
-					.length() == 0)
-					&& (logparse.base.plat_user_id == null || logparse.base.plat_user_id
-							.length() == 0)) {
+			stmp = logparse.buildUidKey();
+			if (stmp == null) {
 				context.getCounter(Counters.ErrPUid).increment(1);
 				if (debug)
 					System.out.println("[ERROR] ProducerItemRec::map() "
@@ -162,7 +160,7 @@ public class ProducerItemRec extends Configured implements Tool {
 				}
 				*/
 			}
-			stmp = logparse.buildUidKey();
+			
 			okey.set(String.format("%d,%d, %s, %s, %s, ", stmp.hashCode(), 
 					prodInfo[0].hashCode(), stmp, prodInfo[0], prodInfo[1]));
 
@@ -208,7 +206,8 @@ public class ProducerItemRec extends Configured implements Tool {
 				.getRemainingArgs();
 		if (oargs.length < 4) {
 			System.out
-					.println("Usage:<out> <data-range> <time-FMT-in-path> <path-fmt>");
+					.println("Usage:<out> <data-range> <time-FMT-in-path> <path-fmt>"
+							+ " [<dFMT2> <inFMT2> ...]");
 			System.exit(4);
 		}
 
@@ -218,7 +217,14 @@ public class ProducerItemRec extends Configured implements Tool {
 		job.setReducerClass(Reduce.class);
 		job.setNumReduceTasks(0);
 
-		HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
+		boolean setin = HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
+		for (int i = 2; i < oargs.length; i+=2) {
+			if (debug)
+				System.out.println(String.format("[Info] inpath-param:\t%s, %s, %s", 
+						oargs[1], oargs[i], oargs[i+1]));
+			setin = setin && HdfsIO.setInput(oargs[1], oargs[i], oargs[i+1], job);
+		}
+		
 		HdfsDAO hdao = new HdfsDAO(conf);
 		hdao.rmr(oargs[0]);
 		FileOutputFormat.setOutputPath(job, new Path(oargs[0]));
@@ -234,8 +240,6 @@ public class ProducerItemRec extends Configured implements Tool {
 
 	/**
 	 * 
-	 * @param args
-	 *            input,output,LEN,key-list(order by importance)
 	 */
 	public static void main(String[] args) {
 		int res;

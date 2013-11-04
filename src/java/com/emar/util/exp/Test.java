@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.util.UtilJson;
+import com.google.common.collect.TreeMultiset;
 import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
 
 public class Test {
@@ -81,7 +82,12 @@ public class Test {
 				'十', '百', '千', '拾', '佰', '仟', '万', '亿'));
 		String snum = "一2的故事";
 		boolean b = Nums.contains(snum.charAt(2)); 
+		
+		TreeMultiset<String> tmset = TreeMultiset.create();
+		tmset.addAll(Arrays.asList("1", "2",  "3", "3", "3", "2", "4"));
+		
 		System.out.println("\n[test]" 
+				+ tmset.size()+"|"+tmset.lastEntry().getCount() +"|"+ tmset.toString() +"\t"+ tmset.entrySet() + "\t" + Arrays.asList(tmset.toArray(new String[0]))
 				+ new JSONArray(new String[]{"a", "b"}) + "\n2" + jobj2 + "\n3=" + jobj3
 				+ "\n" + new HashSet<String>(Arrays.asList("1", "2")).toString()
 				+ "\n" + durl.contains("fanxian")

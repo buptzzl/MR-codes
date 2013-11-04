@@ -138,10 +138,11 @@ public class UtilStr {
 	 * 统计字符串中 中文、英文、数字、其他字符 的个数
 	 */
 	public static int[] strCharCnt(String str) {
-		if (str == null) {
-			return null;
-		}
 		int[] res = new int[] { 0, 0, 0, 0 };
+		if (str == null) {
+			return res;
+		}
+		
 		char ctmp;
 		for (int i = 0; i < str.length(); ++i) {
 			ctmp = str.charAt(i);

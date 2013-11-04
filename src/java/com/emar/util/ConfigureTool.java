@@ -43,8 +43,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
+//import org.apache.commons.logging.Log;
+//import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.w3c.dom.Comment;
@@ -65,7 +66,8 @@ import com.emar.recsys.user.util.StringUtils;
  * @UT 添加新方法时同步添加
  */
 public class ConfigureTool implements Iterable<Map.Entry<String, String>> {
-	private static final Log LOG = LogFactory.getLog(ConfigureTool.class);
+//	private static final Log LOG = LogFactory.getLog(ConfigureTool.class);
+	private static final Logger LOG = Logger.getLogger(ConfigureTool.class);
 	private static final String defaultPath = "prop.conf";
 	/** 安静模式， 找不到配置时不报错，直接返回。  */
 	public boolean quietmode = false; // true;

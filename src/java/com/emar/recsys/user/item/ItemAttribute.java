@@ -16,7 +16,8 @@ import com.webssky.jcseg.core.JcsegException;
 
 /**
  * TODO 按TB 商品名挖掘流程， 实现商品名切分 item属性： 属性有对应的优先级别；每识别一个属性，对应的内容即被删除 Order:
- * ItemShop, ItemSize, ItemProducer, ItemCategory, ItemDescribe.
+ * ItemShop, ItemSize, ItemProducer, ItemCategory, ItemDescribe. 注：
+ * 各属性抽取时，默认采用先序优先。
  * 
  * @author zhoulm
  * 
@@ -36,6 +37,7 @@ public class ItemAttribute {
 					+ "num", POS_SH = POS_ + "shop", POS_PRO = POS_ + "prod";
 	public static final int KGram = 3; // 单字生成ngram的最大值
 	public static boolean debug;
+	private static IItemFilter myfiler; // 分词过滤器
 	/** 标示量： 是否已完成分词； 是否执行单子词的kgram拼接 */
 	private boolean fsegment, kgram;
 
@@ -60,6 +62,8 @@ public class ItemAttribute {
 				"大码", "中码", "小码", "条", "件", "套", "双", // 衣服
 				"包", "盒", "箱", "袋", "片", "枚", "次"));
 		UnitEs = new HashSet<String>(Arrays.asList("g", "kg", "ml", "l"));
+
+		myfiler = new ItemFilter();
 		try {
 			ws = WordSegment.getInstance();
 			isWS = true;
@@ -75,21 +79,19 @@ public class ItemAttribute {
 	private List<String> sword; // 分词结果
 	private List<String> spos; // 所有词的词性类别
 	private List<String> size; // 是否有容量字符串出现
-	private IItemFilter myfiler; // 分词过滤器
 	/** cate: 类目{keyword, id}，prod: 产品{name, info} */
 	private String[] cate, prod; // name,type pair.
 	/** 按标点等切分开的语义边界点。 */
 	private List<Integer> segmentWordIndex;
 	/** 基本语义片段 */
-	private List<String> segments;
+	private String[] segments;
 
 	public ItemAttribute(String item) throws ParseException {
 		if (!isWS || item == null) {
 			throw new ParseException("initial ItemAttribute with NULL",
 					IUserException.ErrADItemNull);
 		}
-		this.myfiler = new ItemFilter();
-		this.item = this.myfiler.prefilter(item);
+		this.item = myfiler.prefilter(item);
 
 		fsegment = false;
 		kgram = false;
@@ -101,11 +103,10 @@ public class ItemAttribute {
 		cate = new String[] { "", "" };
 		prod = new String[] { "", "" };
 		segmentWordIndex = new ArrayList<Integer>();
-		segments = new ArrayList<String>();
 	}
 
 	/** 预处理： 去除无效字符 小写化。 后处理： null */
-	public class ItemFilter implements IItemFilter {
+	public static class ItemFilter implements IItemFilter {
 		@Override
 		public String prefilter(String line) {
 			String[] items = ItemAttribute.unwordPatt.split(line);
@@ -130,44 +131,72 @@ public class ItemAttribute {
 
 	public List<String> getWord() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
 		return sword;
 	}
 
 	public List<String> getPos() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
 		return spos;
 	}
 
 	public List<String> getSize() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
 		return size;
 	}
 
 	public String[] getCate() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
 		return cate;
 	}
 
+	/** 返回产品名 与POS|索引； 失败时返回空串"". */
 	public String[] getProd() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
+		String si;
+		int icate = -1;
+
+		if (this.prod[0].length() == 0) {
+			for (int i = 0; i < this.spos.size(); ++i) {
+				si = this.spos.get(i);
+				if (si != null && si.equals(POS_PRO)) {
+					prod[0] = this.sword.get(i);
+					prod[1] = i + ""; // 记录索引信息
+					break;
+				}
+				if (icate == -1 && si != null && si.length() != 0
+						&& !si.equals("null"))
+					icate = i;
+
+			}
+			if (prod[0].length() == 0 && icate != -1) {
+				prod[0] = this.sword.get(icate);
+				prod[1] = icate + "";
+			}
+		}
 		return prod;
 	}
 
 	/** 抽取全部属性。 */
 	public List<String> getAttribute() {
 		if (!fsegment)
-			fsegment = this.ItemSegment();
+			// fsegment = this.ItemSegment();
+			this.FeatureExtract();
 
-		// this.ItemShop();
-		// this.ItemCategory();
-		this.ItemDescs();
-		// this.ItemProducer();
-		this.ItemBaseInfo();
+		this.getWord();
+		this.getPos();
+		this.getSize();
+		this.getCate();
+		this.getProd();
 		// raw info.
 		this.attributes.addAll(this.sword);
 		this.attributes.addAll(this.spos);
@@ -180,22 +209,22 @@ public class ItemAttribute {
 			return false;
 
 		List<String> info = new ArrayList<String>(); // 临时存储分词结果，调试用
-		String w;
+		String w, si;
 		String[] pos = null;
 		IWord word = null;
 
 		int pbeg = 0, pend = sword.size(), plast = -1;
-		String[] sitem = cpatt.split(this.item); // 基于正则做粗切分
-		for (String si : sitem) {
-			// ws.Jcseg.reset(new StringReader(this.item));
-			segments.add(si);
+		segments = cpatt.split(this.item); // 基于正则做粗切分
+		for (int i = 0; i < segments.length; ++i) {
+			si = segments[i];
 			try {
 				ws.Jcseg.reset(new StringReader(si));
 				while ((word = ws.Jcseg.next()) != null) {
 					pos = word.getPartSpeech();
 					w = word.getValue();
 					sword.add(w.trim());
-					spos.add(pos == null ? EMP : pos[0]); // 每个词都有对应的词性
+					spos.add((pos == null || pos[0].equals("null")) ? POS_EMP
+							: pos[0].toLowerCase()); // 每个词都有对应的词性
 					if (debug)
 						info.add(w + "/" + spos.get(spos.size() - 1));
 
@@ -208,7 +237,7 @@ public class ItemAttribute {
 				segmentWordIndex.add(pbeg);
 				segmentWordIndex.add(pend);
 				plast = pbeg;
-				pbeg = pend + 1;
+				pbeg = pend;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -230,15 +259,15 @@ public class ItemAttribute {
 
 		List<String> item = new ArrayList<String>(); // 单子词临时空间
 		List<String> info = new ArrayList<String>(); // 临时存储分词结果，调试用
-		String w;
+		String w, si;
 		String[] pos = null;
 		IWord word = null;
 
 		int pbeg = 0, pend = sword.size(), plast = -1;
-		String[] sitem = cpatt.split(this.item); // 基于正则做粗切分
-		for (String si : sitem) {
+		segments = cpatt.split(this.item); // 基于正则做粗切分
+		for (int i = 0; i < segments.length; ++i) {
+			si = segments[i];
 			// ws.Jcseg.reset(new StringReader(this.item));
-			segments.add(si);
 			try {
 				ws.Jcseg.reset(new StringReader(si));
 				while ((word = ws.Jcseg.next()) != null) {
@@ -417,8 +446,10 @@ public class ItemAttribute {
 
 	/** 抽取 数量大小 特征. 要求单位在最后。 结果写入 words列表 */
 	private boolean ItemSize(int pbeg, int pend) {
+		boolean res = false;
 		if (pbeg < 0 || pend <= pbeg || this.sword.size() < pend)
-			return false;
+			return res;
+		
 		// TODO 模式： num+unit; 价格+num; +num; 原价+num; 100g中英混合； 不处理"盒装"等。
 		final Set<String> Prices = new HashSet<String>(Arrays.asList("原价",
 				"特价", "价值", "价格"));
@@ -455,18 +486,21 @@ public class ItemAttribute {
 				if (pfind) {
 					this.sword.set(i, s);
 					this.spos.set(i, POS_NUM);
+					res = true;
 				}
 				// this.spos.set(i, POS_NUM);// 一般数量词
 			}
 
 		}
-		return true;
+		return res;
 	}
 
 	/** 产品名抽取。 按优先级识别，并在最终结果中进行最终筛选 */
 	private boolean ItemProducer(int pbeg, int pend) {
-		if (pbeg < 0 || pend <= pbeg || sword.size() < pend)
-			return false;
+		boolean res = false;
+		if (pbeg < 0 || pend <= pbeg || sword.size() < pend
+				|| prod[0].length() != 0)
+			return res;
 
 		final Set<String> Book = new HashSet<String>(Arrays.asList("出版", "标准",
 				"手册", "著", "词典", "考试", "修订", "新版", "旧版", "阅读", "人文", "教辅",
@@ -476,7 +510,7 @@ public class ItemAttribute {
 		String prodClass = null, prodPatt = null; // 类目 词>模式 词>末尾词
 		int idxClass = -1, idxPatt = -1;
 		StringBuffer sbuf = new StringBuffer();
-		boolean PGra = false, PBef = false, PLat = false; // 有效的词性
+		boolean PGra = false, PBef = false, PLat = false; // 无效的标志词性
 
 		for (int i = pbeg; i < pend; ++i) {
 			s = this.sword.get(i);
@@ -492,9 +526,10 @@ public class ItemAttribute {
 					System.out.println("[info] ItemProducer() " + sbuf);
 				break;
 			}
-			PLat = (this.spos.get(i).length() != 0 && this.spos.get(i).indexOf(
-					"nul") == -1);
-			if (this.spos.get(i).toLowerCase().indexOf(cstr) != -1) {
+			tmp = this.spos.get(i);
+			PLat = s.length() < 2 || tmp.equals(POS_UNIT) || tmp.equals(POS_NUM)
+					|| tmp.equals(POS_SH);
+			if (tmp.toLowerCase().indexOf(cstr) != -1) {
 				prodClass = s;
 				idxClass = i;
 				if (pbeg < i && 2 < this.spos.get(i - 1).length()
@@ -502,36 +537,42 @@ public class ItemAttribute {
 					prodClass = this.sword.get(i - 1) + prodClass;
 			}
 
-			if (prodClass == null) {// 描述则末序优先
+			if (prodClass == null && (pbeg < i)) {// 描述则末序优先
 				if (PGra && !PBef && PLat) {
 					prodPatt = this.sword.get(i - 1);
 					idxPatt = i - 1;
 				} else if (prodPatt == null) {
 					if (!PLat && PBef) {
-						prodPatt = this.sword.get(i - 1);
-						idxPatt = i - 1;
-					} else if (!PBef && PLat) {
-						prodPatt = this.sword.get(i);
 						idxPatt = i;
+						prodPatt = this.sword.get(idxPatt);
+					} else if (!PBef && PLat) {
+						idxPatt = i - 1;
+						prodPatt = this.sword.get(idxPatt);
 					}
 				}
 			}
-			PGra = PBef; PBef = PLat; // 状态更新
+			PGra = PBef;
+			PBef = PLat; // 状态更新
 		}
 		if (prodClass != null) {
-			this.spos.set(idxClass, POS_PRO);
-		} else if (prodPatt != null) {
-			this.spos.set(idxClass, POS_PRO);
+			// this.spos.set(idxClass, POS_PRO); //
+			prod[0] = prodClass;
+			prod[1] = this.spos.get(idxClass);
+			res = true;
 		}
-		return true;
+		if (prodPatt != null) {
+			this.spos.set(idxPatt, POS_PRO);
+		}
+		return res;
 	}
 
 	/** 抽取商品类目信息， 无类目则在最后一次时用 signN 个特殊词拼接。 */
 	private boolean ItemCategory(int pbeg, int pend, boolean last) {
 		// TODO 厂家， 品牌PINPAI 根据商品分类器识别 空格分隔开的全英文 为品牌
+		boolean res = false;
 		if (pbeg < 0 || pend <= pbeg || sword.size() < pend
 				|| cate[0].length() != 0)
-			return false;
+			return res;
 
 		final String c = "c_", NULL = "null";
 		final int signN = 3;
@@ -560,59 +601,82 @@ public class ItemAttribute {
 		if (last && cate[0] == null) {
 			cate[0] = sword.get(sword.size() - 1);
 			cate[1] = spos.get(spos.size() - 1);
+			res = true;
 		}
 
-		return true;
+		return res;
 	}
 
 	// TODO sex,time,功效,产地,制材,颜色,外观特征
 	private boolean ItemDescs() {
 		// 家用
+		boolean res = false;
 
-		return true;
+		return res;
 	}
 
 	/** 抽取商家信息。 更新方式： 将第1个词替换为修正词，并更新POS；将余下的值写为NULL；保证不改变元素个数。 */
 	private boolean ItemShop(int pbeg, int pend) {
 		// TODO 商家：优惠、资质、活动、服务
+		boolean res = false;
 		if (pbeg < 0 || pend <= pbeg || this.sword.size() < pend)
-			return false;
+			return res;
 
 		final Set<String> keySet = new HashSet<String>(Arrays.asList("正品",
 				"进口", "行货", "原装", "正宗", // 描述
-				"打折", "换购", "促销", "大促", "包邮", "免邮费", "赠品", "优惠", "清仓", "团购")), keyPre = new HashSet<String>(
-				Arrays.asList("送", "赠")), keySub = new HashSet<String>(
-				Arrays.asList("折"));
+				"打折", "换购", "促销", "大促", "包邮", "免邮费", "赠品", "优惠", "清仓", "团购")), 
+				keyPre = new HashSet<String>(Arrays.asList("送", "赠", "赠送", 
+						"仅", "仅仅", "享", "享受")), 
+				keySub = new HashSet<String>(Arrays.asList("折"));
 		final String[] keyStr = new String[] { "日销千件", "冲三冠", "冲钻价" };
 
-		int ibeg = pbeg, iend = pend;
+		int ibeg = pbeg, iend = pend, iupdate = -1;
 		String s, tmp;
-		String segment = segments.get(segments.size() - 1);
+		StringBuffer sbuf = new StringBuffer();
+		boolean Fpre = false, Flast = false;
 
 		List<String> words = new ArrayList<String>();
 		for (int i = pbeg; i < pend; ++i) { //
+			iupdate = -1;
 			s = this.sword.get(i);
+			sbuf.append(s);
 			if (keySet.contains(s)) {
 				words.add(s);
 				this.spos.set(i, POS_SH);
 			} else if (keyPre.contains(s) && i < (pend - 1)) {
-				// TODO
-
+				// word+Num
+				if (this.sword.get(i + 1).length() < 5) {
+					if ((pend - i) == 3) {
+						this.sword.set(i + 1, 
+								this.sword.get(i+1) + this.sword.get(i + 2));
+						this.sword.set(i + 2, EMP);
+						this.spos.set(i+2, POS_SH);
+					}
+					this.sword.set(i, s + this.sword.get(i+1));
+					this.spos.set(i, POS_SH);
+					this.sword.set(i+1, EMP);
+					this.spos.set(i+1, POS_SH);
+					continue;
+				}
 			} else if (keySub.contains(s) && pbeg < i) {
 				// Num+word.
 				s = this.sword.get(i - 1);
 				if (Nums.contains(s)
 						|| ('0' <= s.charAt(0) && s.charAt(0) <= '9')) {
+					iupdate = i - 1;
 					s = this.sword.get(i - 1) + this.sword.get(i);
 					this.sword.set(i, EMP);
-					this.spos.set(i, EMP);
+					this.spos.set(i, POS_SH);
 					this.sword.set(i - 1, s);
 					this.spos.set(i - 1, POS_SH);
+					res = true;
+					continue;
 				}
 			}
 		}
 
-		StringBuffer sbuf = new StringBuffer();
+		String segment = sbuf.toString(); // segments[segments.length - 1];
+		sbuf.delete(0, sbuf.length());
 		for (int i = 0; i < keyStr.length; ++i) { // 多个词组成的串
 			if (segment.indexOf(keyStr[i]) != -1) {
 				s = keyStr[i];
@@ -628,10 +692,11 @@ public class ItemAttribute {
 						if (s.equals(sbuf.toString().trim())) {
 							for (int l = k - 1; j <= l; --l) {
 								this.sword.set(l, EMP);
-								this.spos.set(l, EMP);
+								this.spos.set(l, POS_SH);
 							}
 							this.sword.set(j, s);
 							this.spos.set(j, POS_SH);
+							res = true;
 							break;
 						}
 						j = k;
@@ -641,7 +706,7 @@ public class ItemAttribute {
 			}
 		}
 
-		return true;
+		return res;
 	}
 
 	private boolean ItemNumber() {
