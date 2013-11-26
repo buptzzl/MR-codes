@@ -1,4 +1,4 @@
-package com.emar.recsys.user.count;
+package com.emar.recsys.user.log;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -30,8 +30,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.json.JSONArray;
 
-import com.emar.recsys.user.log.BaseLog;
-import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.mr.HdfsIO;
 import com.emar.recsys.user.util.mr.PairFloatInt;
 

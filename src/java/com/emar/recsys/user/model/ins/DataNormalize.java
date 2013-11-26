@@ -1,4 +1,4 @@
-package com.emar.recsys.user.model;
+package com.emar.recsys.user.model.ins;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -15,7 +15,6 @@ import java.util.Map.Entry;
 
 import weka.classifiers.functions.LinearRegression;
 
-import com.emar.recsys.user.model.ins.IAttrParser;
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 import com.sun.xml.internal.stream.Entity;
