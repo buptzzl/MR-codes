@@ -1,5 +1,8 @@
 package com.emar.recsys.user.util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.*;
 
 import javax.swing.JPopupMenu.Separator;
@@ -8,6 +11,52 @@ import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
 
 public class UtilStr {
+	
+	public static void testdecodeURL() { 
+		String[][] t_urls = new String[][] { 
+				{"aaa.aspx?tag=.net%bc%bc%ca%f5", "aaa.aspx?tag=.net技术"},
+				{"aaa.aspx?tag=.net%e6%8a%80%e6%9c%af", ""},
+				{"aaa.aspx?tag=.net%bc%bc%ca%f5&.net%bc%bc%ca%f5", ""},
+				{"%D6%D0%CE%C4%B9%FA%BC%CA", "中文国际"}, // gbk
+				{"%E4%B8%AD%E6%96%87%E5%9B%BD%E9%99%85", ""}, // utf8
+				{"http://taobao.egou.com/product/k.html?f=head&sh=http%253A%252F%252Fju.taobao.com%252Fthttp%253A%252F%252Fdetail.tmall.com%252Fitem.htm%25253Fid%253D18579235085%252526%252526tracelog%253Djubuyitnow%252526_u%253D9nr9r7b064%252526spm%253D608.1000566.12315.1024g%252Fhome.htm%25253Fspm%253D608.6654957.11.d5.wfqgiA%252526item_id%253D18579235085%252526id%253D10000000596587%252526act_sign_id%253D237502", ""},
+		};
+		for (int i = 0; i < t_urls.length; ++i) 
+			System.out.println(decodeURL(t_urls[i][0]));
+	}
+	
+	/** 解码URL 尝试[utf8, gbk]两者解码方式。  */
+	public static String decodeURL(final String myurl) {
+		if (myurl == null)
+			return null;
+		final String UTF8 = "UTF-8", GBK = "GBK";
+		String tmp = null, res = myurl, url = myurl.toLowerCase();
+		int i = 0;
+		try {
+			res = URLDecoder.decode(url, UTF8); // UTF8优先
+			for (i = 0; i < res.length(); ++i) {
+				if (res.charAt(i) != url.charAt(i))
+					break;
+			}
+			tmp = URLEncoder.encode(res.charAt(i)+"", UTF8).toLowerCase();//编码1个字
+			if (!url.substring(i).startsWith(tmp)) {
+				throw new UnsupportedEncodingException();// 激发子代码
+			}
+		} catch (UnsupportedEncodingException e) {
+			try {
+				res = URLDecoder.decode(url, GBK);
+				for (i = 0; i < res.length(); ++i) {
+					if (res.charAt(i) != url.charAt(i))
+						break;
+				}
+				tmp = URLEncoder.encode(res.charAt(i)+"", GBK).toLowerCase(); 
+			} catch (UnsupportedEncodingException e1) {
+			}
+		}
+		if (tmp != null && !url.substring(i).startsWith(tmp)) 
+			return myurl;
+		return res;
+	}
 
 	/**
 	 * 将字符串切成1gram的子串； 英文or数字串不分开
@@ -505,7 +554,8 @@ public class UtilStr {
 	public static void main(String[] args) {
 		// testXgram();
 		// UtilStr.testStr2arr();
-		UtilStr.testStr2List();
+		UtilStr.testdecodeURL();
 	}
 
 }
+

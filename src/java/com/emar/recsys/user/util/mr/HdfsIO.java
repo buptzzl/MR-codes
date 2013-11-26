@@ -27,6 +27,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.log4j.Logger;
 
 import com.emar.recsys.user.util.DateParse;
 import com.emar.util.Ip2AreaUDF;
@@ -36,6 +37,7 @@ import com.emar.util.Ip2AreaUDF;
  * @author zhou 重用常见 IO 操作
  */
 public class HdfsIO {
+	private static Logger log = Logger.getLogger(HdfsIO.class);
 
 	/**
 	 * @param path
@@ -106,50 +108,57 @@ public class HdfsIO {
 			fsystem = p.getFileSystem(job.getConfiguration());
 			if (fsystem.isFile(p)) {
 				fcnt += 1;
-				System.out.println("[Info] inPath:" + p.toString());
+				log.info("input path: " + p);
 			} else {
 				FileStatus[] input_fs = fsystem.globStatus(p);
 				if (input_fs == null) {
-					System.err.println("[Error] badPath:" + p);
+					log.warn("bad input path: " + p);
 					continue;
 				}
 				for (FileStatus ps : input_fs) {
 					fcnt += 1;
-					System.out.println("[Info] inPath:" + ps.getPath());
+					log.info("input path: " + ps.getPath());
 				}
 			}
 			// } catch (IOException e) {
 			// }
 		}
-		System.out.println("[Info3] total-input-file=" + fcnt);
+		log.info("total input file number=" + fcnt);
 		return;
 	}
 
 	/**
 	 * 设置 MR 的输入文件路径
-	 * @throws IOException 
-	 * @param range 时间范围yyyyMMddHH_yyyyMMddHH
-	 * @param timeFMT 时间在路径中的格式
-	 * @param pathFMT 完整的路径格式
+	 * 
+	 * @throws IOException
+	 * @param range
+	 *            时间范围yyyyMMddHH_yyyyMMddHH
+	 * @param timeFMT
+	 *            时间在路径中的格式
+	 * @param pathFMT
+	 *            完整的路径格式
 	 */
-	public static boolean setInput(String range, String timeFMT, String pathFMT,
-			Job job) throws IOException {
+	public static boolean setInput(String range, String timeFMT,
+			String pathFMT, Job job) throws IOException {
 		String[] datapath = DateParse.getRange(range, timeFMT);
-		String fpath;
+		if (datapath == null) {
+			throw new IOException("date range parse failed.");
+		}
 
+		String fpath;
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		FileStatus[] a_fs;
 		for (String s : datapath) {
 			fpath = String.format(pathFMT, s);
-			try {  // 可能文件不存在
+			try { // 可能文件不存在
 				Path npi = new Path(fpath);
 				a_fs = fs.globStatus(npi);
 				if (a_fs != null && a_fs.length != 0) {
 					FileInputFormat.addInputPath(job, npi);
-					System.out.println("[setInput::Add] " + fpath);
+					log.info("set input path pattern: " + fpath);
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (IOException e) {
+				log.error("JOB add input exception. [MSG]: " + e.getMessage());
 			}
 		}
 		printInput(job);
@@ -157,13 +166,32 @@ public class HdfsIO {
 		return true;
 	}
 
+	/** 删除当前目录|文件， 如果父级目录不存在则创建。 */
+	public static boolean removeDir(String path, Job job) throws IOException {
+		FileSystem fs = FileSystem.get(job.getConfiguration());
+		Path testPath = new Path(path);
+		try {
+			if (fs.getFileStatus(testPath).isDir() || fs.isFile(testPath)) {
+				fs.delete(testPath, true);
+				log.info("remove path: " + testPath);
+			} else if (!fs.getFileStatus(testPath.getParent()).isDir()) {
+				fs.mkdirs(testPath); // 父目录不存在则创建目录结构
+				fs.delete(testPath, true);
+				log.info("create parent dir before path: " + testPath);
+			}
+		} catch (IOException e) {
+			log.error("HDFS path operator failed. [MSG]: " + e.getMessage());
+		}
+		return true;
+	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
-//		System.out.print("[Info] local file read size: " + localData.size()
-//				+ "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
+		// List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
+		// System.out.print("[Info] local file read size: " + localData.size()
+		// + "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
 
 		String s = "resource/classify/firstcate";
 		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);

@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -20,6 +21,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 
 import com.emar.recsys.user.log.LogParse;
 import com.emar.recsys.user.util.UtilObj;
@@ -32,6 +34,7 @@ import com.emar.recsys.user.util.mr.HdfsIO;
  * 
  */
 public class KVCombiner extends Configured implements Tool {
+	private static Logger log = Logger.getLogger(KVCombiner.class);
 	// 定义Map & Reduce 中通用的对象
 	private static final String SEPA = LogParse.SEPA,
 			SEPA_MR = LogParse.SEPA_MR, PLAT = LogParse.PLAT,
@@ -55,6 +58,7 @@ public class KVCombiner extends Configured implements Tool {
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
 			PType = conf.get(CIsFirst);
+			log.info("map::setup PType=" + PType);
 		}
 
 		public void map(LongWritable key, Text val, Context context) {
@@ -66,7 +70,7 @@ public class KVCombiner extends Configured implements Tool {
 				context.write(okey, oval);
 				context.getCounter(Counters.Mo).increment(1);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("map write out failed." + e.getMessage());
 				context.getCounter(Counters.ErrMo).increment(1);
 			}
 		}
@@ -93,22 +97,25 @@ public class KVCombiner extends Configured implements Tool {
 			s_wrap = conf.get(S_Wrap, "[]{}");
 			s_kv = conf.get(S_KV, "=");
 			s_kvPair = conf.get(S_KVPair, ",");
+			log.info("reduce::setup MAP structure parse separator of wrap="
+					+ s_wrap + ", s_kv" + s_kv + ", s_kvPair=" + s_kvPair);
 		}
 
 		@Override
 		public void reduce(Text key, Iterable<Text> values, Context context) {
 			String tmp, m_key;
 
-			HashMap<String, Float> kvTmp = null, 
-					idWeight = new HashMap<String, Float>(16, 0.9f);
-			for (Text t : values) {  // 合并MAP 格式的结果
+			HashMap<String, Float> kvTmp = null, idWeight = new HashMap<String, Float>(
+					16, 0.9f);
+			for (Text t : values) { // 合并MAP 格式的结果
 				try {
-				kvTmp = (HashMap<String, Float>) UtilObj.Str2Map(t.toString(),
-						s_wrap, s_kvPair, s_kv);
-				} catch(Exception e) {
-					e.printStackTrace();
-					System.out.println("[ERR] Reduce s_wrap="+s_wrap+" s_kv="+s_kv
-							+" s_kvPair="+s_kvPair+" out="+kvTmp+" in="+t);
+					kvTmp = (HashMap<String, Float>) UtilObj.Str2Map(
+							t.toString(), s_wrap, s_kvPair, s_kv);
+					if (kvTmp == null)
+						throw new NullPointerException("null data.");
+				} catch (Exception e) {
+					log.error("convert str to map failed. MSG="
+							+ e.getMessage() + "\t input=" + t);
 					continue;
 				}
 				for (Map.Entry<String, Float> ei : kvTmp.entrySet()) {
@@ -118,14 +125,17 @@ public class KVCombiner extends Configured implements Tool {
 									+ ei.getValue() : ei.getValue());
 				}
 			}
-			
-			List<Entry<String, Float>> lrank = UtilObj.entrySortFloat(idWeight, true);
+			if (idWeight.size() == 0) {
+				return;
+			}
+			List<Entry<String, Float>> lrank = UtilObj.entrySortFloat(idWeight,
+					true);
 			try {
 				context.write(key, new Text(lrank.toString()));
 			} catch (Exception e) {
 				context.getCounter(Counters.ErrRo).increment(1);
+				log.error("reduce::write failed." + e.getMessage());
 			}
-
 		}
 
 		public void cleanup(Context context) {
@@ -138,7 +148,8 @@ public class KVCombiner extends Configured implements Tool {
 		String[] oargs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
 		if (oargs.length < 5) {
-			System.out.println("Usage: <out> <time-range> <time-FMT> <path-FMT>"
+			System.out
+					.println("Usage: <out> <time-range> <time-FMT> <path-FMT>"
 							+ " <num-reduce> [<s_wrap> <s_kvpair> <s_kv>]");
 			System.exit(5);
 		}
@@ -158,7 +169,8 @@ public class KVCombiner extends Configured implements Tool {
 		job.setNumReduceTasks(Integer.parseInt(oargs[4]));
 
 		HdfsIO.setInput(oargs[1], oargs[2], oargs[3], job);
-		FileInputFormat.setMinInputSplitSize(job, 134217728*2);// 128MB
+		FileInputFormat.setMinInputSplitSize(job, 134217728 * 2);// 128MB
+		HdfsIO.removeDir(oargs[0], job);
 		FileOutputFormat.setOutputPath(job, new Path(oargs[0]));
 
 		Date startTime = new Date();

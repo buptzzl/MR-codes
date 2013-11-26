@@ -32,6 +32,7 @@ import com.emar.recsys.user.feature.FeatureDriver;
  * 基于PV&Click日志抽取 LR训练用数据
  * @author zhoulm
  * 
+ * @deprecated
  */
 public class DateTrain {
 	private HashMap<String, String> clickid;

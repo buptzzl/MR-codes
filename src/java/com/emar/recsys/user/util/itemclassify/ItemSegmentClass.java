@@ -16,14 +16,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.log4j.Logger;
 
 /**
  * 基于Hadoop 平台实现 商品名的分词 + 类目识别。
  * @author LiuZC, ZhouLM
- *
+ * @tips 必须在 JOB启动前 调用 ItemSegmentClass.addClassCacheFile() 
  */
 public class ItemSegmentClass {
-
+	private static Logger log = Logger.getLogger(ItemSegmentClass.class);
 	private HashSet<String> keyWord;
 	private static Vector<String> vec_config; // 保存配置文件内容
 	private Path[] localFiles;
@@ -154,17 +155,22 @@ public class ItemSegmentClass {
 		loadcontent(vec_config.elementAt(0), vec_line);
 		LoadWord23(vec_line, "ca", hsCate2IdPid, Diction);// 加载四级类目词语
 		vec_line.clear();
+		log.info("cate-4 load. dict size=" + Diction.size());
 		loadcontent(vec_config.elementAt(1), vec_line);
 		LoadWord23(vec_line, "ca", hsCate2IdPid, Diction);// 加载三级类目词语
 		vec_line.clear();
+		log.info("cate-3 load. dict size=" + Diction.size());
 		loadcontent(vec_config.elementAt(2), vec_line);
 		LoadWord23(vec_line, "ca", hsCate2IdPid, Diction);// 加载二级类目词语
 		vec_line.clear();
+		log.info("cate-2 load. dict size=" + Diction.size());
 		loadcontent(vec_config.elementAt(3), vec_line);
 		LoadWord23(vec_line, "ca", hsCate2IdPid, Diction);// 加载一级类目词语
 		vec_line.clear();
+		log.info("cate-1 load. dict size=" + Diction.size());
 		loadcontent(vec_config.elementAt(4), vec_line);
 		LoadWord23(vec_line, "ba", hsCate2IdPid, Diction);// 加载品牌词语
+		log.info("PinPai load. dict size=" + Diction.size());
 
 		vec_line.clear();
 		loadcontent(vec_config.elementAt(5), vec_line);
@@ -240,18 +246,16 @@ public class ItemSegmentClass {
 		LoadWord3(vec_line, "a", Diction);// 加载形容词
 		vec_line.clear();
 		loadcontent(vec_config.elementAt(26), vec_line);
-		// System.out.println("Diction.size() ="+Diction.size());
 		LoadWord3(vec_line, "n", Diction);// 加载名词
 		vec_line.clear();
 		loadcontent(vec_config.elementAt(27), vec_line);
-		// System.out.println("Diction.size() ="+Diction.size());
 		LoadWord3(vec_line, "v", Diction);// 加载动词
-		// System.out.println("Diction.size() ="+Diction.size());
 		Vector<String> vec_con = new Vector<String>();
 		loadcontent(vec_config.elementAt(25), vec_con);
 		LoadCateProb(vec_con, hsCateProbInfo); // 加载词语概率文件
-		// System.out.println("hsCateProbInfo.size() ="+hsCateProbInfo.size());
 		LoadCateInfo();
+		
+		log.info("dict load finish. size=" + Diction.size());
 	}
 
 	// 这样加载文件也可以
@@ -547,7 +551,7 @@ public class ItemSegmentClass {
 		return false;
 	}
 
-	// 判断是否是右书名号
+	/** 判断是否是右书名号  */
 	public boolean isRightShumingHao(String inputstr) {
 
 		if (inputstr.equals("》"))
@@ -563,7 +567,7 @@ public class ItemSegmentClass {
 			String newstr = inputstr.substring(i, i + 1);
 			if (isRightShumingHao(newstr))
 				return i + 1;
-			System.out.println("newstr =" + newstr);
+//			System.out.println("newstr =" + newstr);
 		}
 		return i;
 
@@ -950,7 +954,7 @@ public class ItemSegmentClass {
 		for (int i = 1; i < vec_con.size(); i++) {
 			String[] array = vec_con.elementAt(i).split("\t");
 			if (array.length != 4) {
-				System.out.println(" the is " + vec_con.elementAt(i));
+//				System.out.println(" the is " + vec_con.elementAt(i));
 				System.exit(1);
 			}
 			String cateid = array[0]; // 类目编号

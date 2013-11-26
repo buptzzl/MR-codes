@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.emar.recsys.user.log.LogNameParse.LOG_PLAT;
 import com.emar.recsys.user.log.LogNameParse.LOG_TYPE;
+import com.emar.recsys.user.util.UtilStr;
 
 /**
  * 通用日志解析类
@@ -93,6 +95,7 @@ public class LogParse {
 	}
 	
 	public void parse(String line, String path) throws ParseException {
+		this.reset();
 		logpath.fill(path);
 		
 		if(logpath.status) { 
@@ -142,20 +145,9 @@ public class LogParse {
 			 
 		}
 		
-		base.landing_url = this.decodeURL(base.landing_url);
-		base.page_url = this.decodeURL(base.page_url);
-		base.refer_url = this.decodeURL(base.refer_url);
-	}
-	
-	private String decodeURL(final String url) {
-		if (url == null)
-			return null;
-		final String codes = "UTF-8";
-		try {
-			return URLDecoder.decode(url, codes);
-		} catch (UnsupportedEncodingException e) {
-		}
-		return url;
+		base.landing_url = UtilStr.decodeURL(base.landing_url);
+		base.page_url = UtilStr.decodeURL(base.page_url);
+		base.refer_url = UtilStr.decodeURL(base.refer_url);
 	}
 	
 	public String toString() { 
