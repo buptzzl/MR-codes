@@ -29,12 +29,12 @@ import org.apache.hadoop.util.ToolRunner;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.emar.recsys.user.count.FrequenceRatio;
-import com.emar.recsys.user.count.FrequenceRatio.MapFreq;
-import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq;
-import com.emar.recsys.user.count.FrequenceRatio.ReduceFreq.Cnts;
 import com.emar.recsys.user.demo.IKeywords;
+import com.emar.recsys.user.log.FrequenceRatio;
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.log.FrequenceRatio.MapFreq;
+import com.emar.recsys.user.log.FrequenceRatio.ReduceFreq;
+import com.emar.recsys.user.log.FrequenceRatio.ReduceFreq.Cnts;
 import com.emar.recsys.user.util.mr.HdfsIO;
 import com.emar.recsys.user.util.mr.PairTInt;
 

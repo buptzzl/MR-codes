@@ -19,7 +19,7 @@ import com.emar.recsys.user.util.UtilStr;
 import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
 
 /**
- * 训练数据的字段解析类 集合. 解析 订单中的部分关键字。
+ * 解析 订单数据，生成性别相关的训练集。
  * 
  * @func 不处理null的情况
  * @author zhoulm

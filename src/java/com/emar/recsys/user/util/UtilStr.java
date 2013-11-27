@@ -122,6 +122,9 @@ public class UtilStr {
 		if (s == null || Mxgram < 1)
 			return res;
 
+		List<String> PlaceHolder = new ArrayList<String>();
+		for (int i = 0; i < Mxgram; ++i) 
+			PlaceHolder.add("");
 		for (int i = 0; i < Mxgram; ++i)
 			res.add(new ArrayList<String>());
 		int begUnchi = 0;
@@ -143,12 +146,21 @@ public class UtilStr {
 			if (unchi) {
 				unchi = false;
 				subtmp = s.substring(begUnchi, i);
-				if (filter == null || !filter.contains(subtmp)) // 不被过滤
+				if (filter == null) // 不被过滤
 					words.add(subtmp);
+				else if (!filter.contains(subtmp)) 
+					words.add(subtmp);
+				else 
+					words.addAll(PlaceHolder);
 			}
 			subtmp = String.format("%c", ctmp);
-			if (filter == null || !filter.contains(subtmp))
+			if (filter == null) // 不被过滤
 				words.add(subtmp);
+			else if (!filter.contains(subtmp)) 
+				words.add(subtmp);
+			else 
+				words.addAll(PlaceHolder);
+			
 		}
 
 		return Xgram(words, Mxgram);
