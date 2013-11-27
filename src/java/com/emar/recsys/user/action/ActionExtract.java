@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,40 +42,52 @@ import com.mathworks.toolbox.javabuilder.external.org.json.JSONException;
  * @TODO unit test.
  */
 public class ActionExtract {
-	static private Logger log = Logger.getLogger(ActionExtract.class);
+	static private java.util.logging.Logger log = Logger
+			.getLogger(ActionExtract.class);
 	static private final String CONF = "user.conf", SEPA = "\t";
 
 	private BufferedReader input;
 	private BufferedWriter output;
-	
+
 	protected final static Set<String> UKeys = new HashSet<String>(
 			Arrays.asList(IKeywords.UserMergeAction));
 	protected ConfigureTool configure_;
-	protected String[] UserKey, WordsBlack, WordsWrite;
-	/** 行为单位存储的数据 */
+	protected String[] UserKey, WordsBlack, WordsWhite;
+	/** 行为单位存储的数据 对在其基础上更新，不容许外界对其有改写机会。 */
 	protected List<String> data;
+	protected BitSet flags;
 	protected String userID;
 	protected JSONArray userAction;
 
-	/** 单用户处理，不加载配置的文件路径信息。  */
+	/** 采用单用户（单行）处理，不加载配置的文件路径信息。 */
 	public ActionExtract() {
 		this.init(new String[] { "", "" });
 		input = null;
 		output = null;
 		log.info("build a single user extractor.");
 	}
-	/** 基于配置中文件的批量处理  */
+
+	/** 采用基于配置文件的批量处理 */
 	public ActionExtract(String[] args) throws FileNotFoundException {
 		this.init(args);
-		input = new BufferedReader(new FileReader(configure_.get("extract.input")));
+		input = new BufferedReader(new FileReader(
+				configure_.get("extract.input")));
 		output = null; // 在使用前再生成。
-		log.info("build a batch extractor. [input]=" 
-				+ configure_.get("extract.input") + " [output]=" 
+		log.info("build a batch extractor. [input]="
+				+ configure_.get("extract.input") + " [output]="
 				+ configure_.get("extract.output"));
 	}
 
+	/** 采用批加载，单独处理1个。 */
+	public ActionExtract(List<String> mydata) {
+		this.init(new String[] { "", "" });
+		this.data = mydata;
+		log.info("");
+	}
+
 	/**
-	 * 通用对象初始化方法。 
+	 * 通用对象初始化方法。
+	 * 
 	 * @throws FileNotFoundException
 	 */
 	private void init(String[] args) {
@@ -89,17 +102,19 @@ public class ActionExtract {
 
 		UserKey = configure_.getStrings("extract.user_keys", "");
 		WordsBlack = configure_.getStrings("extract.black_list", "");
-		WordsWrite = configure_.getStrings("extract.white_list", "");
+		WordsWhite = configure_.getStrings("extract.white_list", "");
 		data = new ArrayList<String>();
-		userID = null; 
+		flags = new BitSet();
+		userID = null;
 		userAction = null;
 		log.info("init: configure path=" + pconf + ", UserKey=" + UserKey
-				 + ", WordsBlack=" + Arrays.asList(WordsBlack) 
-				 + ", WordsWrite=" + Arrays.asList(WordsWrite));
+				+ ", WordsBlack=" + Arrays.asList(WordsBlack) + ", WordsWrite="
+				+ Arrays.asList(WordsWhite));
 	}
 
 	/**
 	 * 批处理(一个文件)过滤，处理结果都存文件。 读取全部内容，暂时不支持分批处理。
+	 * 
 	 * @USE 不建议重写该方法。
 	 * @throws IOException
 	 */
@@ -114,16 +129,18 @@ public class ActionExtract {
 
 		for (; (line = extractor.input.readLine()) != null;) {
 			extractor.data.add(line);
-			counter ++;
+			counter++;
 		}
 		extractor.input.close();
 		log.info("batch read finish. file-size=" + counter);
-		
+
 		extractor.BatchFormat();
 		for (int i = 0; i < extractor.data.size(); ++i) {
-			extractor.output.write(extractor.data.get(i));
-			extractor.output.newLine();
-			-- counter;
+			if (extractor.flags.get(i)) {
+				extractor.output.write(extractor.data.get(i));
+				extractor.output.newLine();
+				--counter;
+			}
 		}
 		extractor.output.close();
 		extractor.data.clear();
@@ -137,38 +154,42 @@ public class ActionExtract {
 			return res;
 
 		extractor.data.add(line);
-		int index = extractor.data.size() - 1; 
-		if(extractor.format(index)) {
+		int index = extractor.data.size() - 1;
+		if (extractor.format(index)) {
 			res = extractor.data.get(index);
 			extractor.data.remove(index);
 		}
 		return res;
 	}
 
-	/**  自定义批处理输出. 默认调用单用户的输出  */
+	/** 自定义批处理输出. 默认调用单用户的输出 */
 	public boolean BatchFormat() {
-		for (int i = 0; i < this.data.size(); ++i) 
+		for (int i = 0; i < this.data.size(); ++i)
 			this.format(i);
 		return true;
 	}
-	/** 自定义单个用户数据的输出。 默认抽取字段并执行默认过滤。  */
+
+	/** 自定义单个用户数据的输出。 默认抽取字段并执行默认过滤 @FMT: uid\nAct1, Act2...。 */
 	public boolean format(int index) {
-		if (!this.Filter(index) || !this.parse(index)) { 
+		if (!this.Filter(index) || !this.parse(index)) {
 			this.data.set(index, null);
+			this.flags.clear(index);
 			return false;
 		}
+
 		StringBuffer sbuf = new StringBuffer();
+		sbuf.append(this.userID + "\n"); // newline.
 		JSONObject jObj;
 		String key;
 		for (int i = 0; i < userAction.length(); ++i) {
 			try {
 				jObj = new JSONObject(userAction.getString(i));
 			} catch (JSONException e) {
-				log.error("userAction's " + i + "'th element bad. [MSG]: " 
+				log.error("userAction's " + i + "'th element bad. [MSG]: "
 						+ e.getMessage());
 				continue;
 			}
-			sbuf.append(this.userID + "\n"); // newline.
+
 			for (String ukey : UserKey) {
 				if (jObj.has(ukey)) {
 					sbuf.append(ukey + "=");
@@ -177,16 +198,18 @@ public class ActionExtract {
 			}
 		}
 		this.data.set(index, sbuf.toString());
+		this.flags.set(index);
 		log.info("one user format, [data]=" + sbuf.toString());
-		
+
 		return true;
 	}
-	/**  自定义过滤格式, 默认不过滤。  */
+
+	/** 自定义过滤格式, 默认不过滤。 */
 	public boolean Filter(int index) {
 		return true;
 	}
-	
-	/** 默认用户数据解析方法 */
+
+	/** 默认用户数据解析方法 @FMT uid\t[ACT-arr] */
 	protected boolean parse(int index) {
 		userID = null;
 		userAction = null;
@@ -195,23 +218,23 @@ public class ActionExtract {
 			log.warn("data not separate by TAB. [data]=" + this.data.get(index));
 			return false;
 		}
-		
+
 		userID = atom[0];
 		try {
 			userAction = new JSONArray(atom[1]);
 		} catch (JSONException e) {
-			log.error("bad user JSON action str. [STR]: " + atom[1] + 
-					", [MSG]: " + e.getMessage());
-			userAction = new JSONArray(); 
+			log.error("bad user JSON action str. [STR]: " + atom[1]
+					+ ", [MSG]: " + e.getMessage());
+			userAction = new JSONArray();
 		}
 		return true;
 	}
-	
+
 	/** 自定义白名单过滤. 默认全通过 */
 	protected boolean whiteFilter(int index) {
 		return true;
 	}
-	
+
 	/** 自定义黑名单过滤. 默认全不通过 */
 	protected boolean blackFilter(int index) {
 		return true;
@@ -221,27 +244,28 @@ public class ActionExtract {
 	public BufferedReader getInput() {
 		return this.input;
 	}
-	public List getData() {
-		return this.data;
+
+	public String getData(int index) {
+		return this.data.get(index);
 	}
-	public void setData(List<String> idata) {
-		this.data = idata;
-	}
+
+	// public void setData(String idata, int index) {
+	// this.data.set(index, idata);
+	// }
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		ActionExtract act;
 		try {
-			act = new ActionExtract(new String[]{"", ""});
+			act = new ActionExtract(new String[] { "", "" });
 			ActionExtract.batchExtract(act);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
-		
+
 	}
 
 }
