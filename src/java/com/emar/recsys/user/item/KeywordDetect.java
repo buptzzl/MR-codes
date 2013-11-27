@@ -9,22 +9,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import com.emar.recsys.user.demo.sex.SexWord;
 import com.emar.recsys.user.util.UtilStr;
 import com.emar.util.ConfigureTool;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * 字符串的关键词集合 识别工具。 识别对象基于配置文件实现， 对应字段集： 
  * 1 目标关键词集合. item.keyword.target;
  * 1.1 目标关键词对应的标志 item.keyword.label
  * 2 噪声关键词集合(对1的修正) item.keyword.noise
- * 
+ * @see ActionViewPages 功能有重复。
  * @author zhou
  * @Ref demo.sex.SexWord.java
  * TODO unit test.
  */
 public class KeywordDetect {
-	private Logger log = Logger.getLogger(KeywordDetect.class);
+	private static Logger log = Logger.getLogger(KeywordDetect.class);
 	private static Set<String> PUNCS;
 	private static final String PCONF = "user.conf", 
 			KEY_TARGET = "item.keyword.target", KEY_LABEL = "item.keyword.label",
@@ -41,18 +45,18 @@ public class KeywordDetect {
 	}
 
 	public String label; // 外界调用。
+	public Multimap<String, Integer> kwordsInfo; // 记录命中的关键词信息
 	private boolean noNoise;
 	private int MaxKeys, MaxNoise; // 关键词集、噪声词集中词的最大字数
 	private Set<String> targetWords;
 	private Set<String> noiseWords;
-	private Map<String, Integer> kwordsInfo; // 记录命中的关键词信息 
 	private List<String> words; 
 	private ConfigureTool conf;
 	
 	public KeywordDetect() {
 		init();
 	}
-	private boolean init() {
+	private void init() {
 		conf = new ConfigureTool();
 		conf.addResource("user.conf");
 		String[] arr = conf.getStrings(KEY_TARGET);
@@ -79,7 +83,7 @@ public class KeywordDetect {
 						|| 'z' < arr[i].toLowerCase().charAt(0))) 
 					MaxNoise = arr[i].length();
 		}
-		kwordsInfo = new HashMap<String, Integer>();
+		kwordsInfo = ArrayListMultimap.create();
 		log.info("inital DONE. targetWords=" + targetWords + ", label=" + label
 				+ ", noiseWords=" + noiseWords + ", max keywords length=" + MaxKeys
 				+ ", max noise length=" + MaxNoise);
@@ -110,14 +114,14 @@ public class KeywordDetect {
 	}
 	// 对搜索结果过滤噪声。
 	protected boolean isnoise() {
-		Map<String, Integer> mTmp = new HashMap<String, Integer>();
+		Multimap<String, Integer> mTmp = ArrayListMultimap.create();
 		return this.ismatch(words, noiseWords, mTmp);
 	}
-	private boolean ismatch(Collection coll, Collection filter, Map info) {
+	private boolean ismatch(Collection coll, Collection filter, Multimap info) {
 		info.clear();
 		for (int i = 0; i < coll.size(); ++i) {
 			if (filter.contains(words.get(i))) {
-				info.put(, value)// TODO 使用Guava 的multimap 记录位置。
+				info.put(words.get(i), i);// TODO 使用Guava 的multimap 记录位置。
 			}
 		}
 		return info.size() != 0;

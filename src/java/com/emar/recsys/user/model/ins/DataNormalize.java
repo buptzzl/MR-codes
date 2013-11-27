@@ -13,11 +13,8 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.Map.Entry;
 
-import weka.classifiers.functions.LinearRegression;
-
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
-import com.sun.xml.internal.stream.Entity;
 
 /**
  * 转换字符串表达的特征 为 binary特征， 类别标示写在最后一列，生成 arff文件。
