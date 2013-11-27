@@ -6,9 +6,11 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.ibm.icu.lang.UCharacter.WordBreak;
+
 /**
  * 抽取用户有对应关键字出现时的数据 和上方的K个样本
- * 
+ * 支持黑白名单关键词集，关系：在白名单成功时再执行黑名单否决。
  * @author zhoulm
  * 
  */
@@ -23,14 +25,20 @@ public class ActionViewPages extends ActionExtract {
 
 	public ActionViewPages() {
 		super();
-		iRange = this.configure_.getInt("extract.iRange", DEF_K);
-		hitWhite = new ArrayList<String>();
-		hitBlack = new ArrayList<String>();
-		log.warn("init iRange=" + iRange);
+		this.init();
 	}
 
 	public ActionViewPages(String[] args) throws FileNotFoundException {
 		super(args);
+		this.init();
+	}
+	
+	public ActionViewPages(List<String> mydata) {
+		super(mydata);
+		this.init();
+	}
+	
+	private void init() {
 		iRange = this.configure_.getInt("extract.iRange", DEF_K);
 		hitWhite = new ArrayList<String>();
 		hitBlack = new ArrayList<String>();
@@ -40,21 +48,16 @@ public class ActionViewPages extends ActionExtract {
 	@Override
 	public boolean BatchFormat() {
 		int i = 0, j = 0;
-		for (i = 0; i < this.data.size();) {
-			this.format(i);
-			if (this.whiteFilter(i)) {
+		for (i = 0; i < this.data.size();++i) {
+			if (this.format(i) && this.whiteFilter(i) && !this.blackFilter(i)) {
 				this.data.set(i, this.data.get(i) + ", " + this.hitWhite);
-				this.flags.set((i - iRange) < 0 ? 0 : (i - iRange), i);
-//				for (j = i + 1; (j - i) < iRange; ++j) // 向下加入K 个
-//					this.format(j); 
-//				i = j - 1;
+				this.flags.set((i - iRange) < 0 ? 0 : (i - iRange), i); //向上加入K个
 			} else {
 				this.flags.clear(i);
 			}
-			++i;
 		}
 
-		return false;
+		return true;
 	}
 
 //	@Override
@@ -79,8 +82,28 @@ public class ActionViewPages extends ActionExtract {
 				this.hitWhite.add(WordsWhite[i]);
 			}
 		}
-		return unfind;
+		return (!unfind);
 	}
+	
+	@Override
+	protected boolean blackFilter(int index) {
+		boolean unfind = true;
+		this.hitBlack.clear();
+		String tmp = this.data.get(index);
+		for (int i = 0; i < WordsBlack.length; ++i) {
+			if (tmp.indexOf(WordsBlack[i]) != -1) {
+				unfind = false;
+				this.hitBlack.add(WordsBlack[i]);
+			}
+		}
+		return (!unfind);
+	}
+	
+	public int getRange() {
+		return this.iRange;
+	}
+	
+	
 
 	/**
 	 * @param args

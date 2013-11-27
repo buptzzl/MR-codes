@@ -26,32 +26,31 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.emar.recsys.user.demo.IKeywords;
 import com.emar.util.ConfigureTool;
-import com.mathworks.toolbox.javabuilder.external.org.json.JSONArray;
-import com.mathworks.toolbox.javabuilder.external.org.json.JSONException;
 
 /**
  * 抽取用户聚合日志后key 对应的内容， 结果输出为每个用户的字符串。 抽取参数采用配置文件设置。 两种处理方式： 1 每次一个用户（一行）； 2
  * 每次一个文件。
- * 
+ * 不容许用null, 使用空串“”表示。
  * @author zhoulm
  * 
- * @TODO unit test.
  */
 public class ActionExtract {
-	static private java.util.logging.Logger log = Logger
-			.getLogger(ActionExtract.class);
-	static private final String CONF = "user.conf", SEPA = "\t";
+	static private Logger log = Logger.getLogger(ActionExtract.class);
+	static private final String CONF = "user.conf", SEPA = "\t", NULL = "", 
+			SUFFIX = ".rest";
 
 	private BufferedReader input;
-	private BufferedWriter output;
+	private BufferedWriter output, outRest; // 没有过滤成功的输出，output后增加.rest 后缀
 
+	public ConfigureTool configure_;
 	protected final static Set<String> UKeys = new HashSet<String>(
 			Arrays.asList(IKeywords.UserMergeAction));
-	protected ConfigureTool configure_;
 	protected String[] UserKey, WordsBlack, WordsWhite;
 	/** 行为单位存储的数据 对在其基础上更新，不容许外界对其有改写机会。 */
 	protected List<String> data;
@@ -63,7 +62,6 @@ public class ActionExtract {
 	public ActionExtract() {
 		this.init(new String[] { "", "" });
 		input = null;
-		output = null;
 		log.info("build a single user extractor.");
 	}
 
@@ -72,7 +70,6 @@ public class ActionExtract {
 		this.init(args);
 		input = new BufferedReader(new FileReader(
 				configure_.get("extract.input")));
-		output = null; // 在使用前再生成。
 		log.info("build a batch extractor. [input]="
 				+ configure_.get("extract.input") + " [output]="
 				+ configure_.get("extract.output"));
@@ -82,7 +79,10 @@ public class ActionExtract {
 	public ActionExtract(List<String> mydata) {
 		this.init(new String[] { "", "" });
 		this.data = mydata;
-		log.info("");
+		for (int i = mydata.size() - 1; 0 <= i; --i) 
+			if (mydata.get(i) == null) 
+				this.data.remove(i);
+		log.info("build a single user extractor. size=" + this.data.size());
 	}
 
 	/**
@@ -107,7 +107,9 @@ public class ActionExtract {
 		flags = new BitSet();
 		userID = null;
 		userAction = null;
-		log.info("init: configure path=" + pconf + ", UserKey=" + UserKey
+		output = null; // 在使用前再生成。
+		outRest = null;
+		log.info("init: configure path=" + pconf + ", UserKey=" + Arrays.asList(UserKey)
 				+ ", WordsBlack=" + Arrays.asList(WordsBlack) + ", WordsWrite="
 				+ Arrays.asList(WordsWhite));
 	}
@@ -124,6 +126,8 @@ public class ActionExtract {
 
 		extractor.output = new BufferedWriter(new FileWriter(
 				extractor.configure_.get("extract.output")));
+		extractor.outRest = new BufferedWriter(new FileWriter(
+				extractor.configure_.get("extract.output") + SUFFIX));
 		String line = null;
 		int counter = 0;
 
@@ -140,16 +144,20 @@ public class ActionExtract {
 				extractor.output.write(extractor.data.get(i));
 				extractor.output.newLine();
 				--counter;
+			} else {
+				extractor.outRest.write(extractor.data.get(i));
+				extractor.outRest.newLine();
 			}
 		}
 		extractor.output.close();
+		extractor.outRest.close();
 		extractor.data.clear();
 		log.info("batch format finish and save. unused-counter=" + counter);
 	}
 
 	/** 单独处理一个用户行为序列. 不改变原始数据 */
 	public static String singleExtract(ActionExtract extractor, String line) {
-		String res = "";
+		String res = NULL;
 		if (extractor == null || line == null || line.trim().length() == 0)
 			return res;
 
@@ -172,7 +180,7 @@ public class ActionExtract {
 	/** 自定义单个用户数据的输出。 默认抽取字段并执行默认过滤 @FMT: uid\nAct1, Act2...。 */
 	public boolean format(int index) {
 		if (!this.Filter(index) || !this.parse(index)) {
-			this.data.set(index, null);
+			this.data.set(index, NULL);
 			this.flags.clear(index);
 			return false;
 		}
@@ -244,9 +252,16 @@ public class ActionExtract {
 	public BufferedReader getInput() {
 		return this.input;
 	}
-
+	// 获取某个字符串
 	public String getData(int index) {
 		return this.data.get(index);
+	}
+	// 获取全部数据量
+	public int size() {
+		return this.data.size();
+	}
+	public boolean getFlag(int index) {
+		return this.flags.get(index);
 	}
 
 	// public void setData(String idata, int index) {
