@@ -5,16 +5,24 @@ import java.io.StringReader;
 
 import com.webssky.jcseg.core.ADictionary;
 import com.webssky.jcseg.core.DictionaryFactory;
+import com.webssky.jcseg.core.ILexicon;
 import com.webssky.jcseg.core.ISegment;
 import com.webssky.jcseg.core.IWord;
 import com.webssky.jcseg.core.JcsegException;
 import com.webssky.jcseg.core.JcsegTaskConfig;
 import com.webssky.jcseg.core.SegmentFactory;
 
+/**
+ * 基于全局单例模式的分词器。
+ * @author zhoulm
+ *
+ */
 public class WordSegment {
 
 		public ISegment Jcseg = null;
 		public static WordSegment wordsegment = null;
+		private ADictionary dic;  
+		private JcsegTaskConfig config;
 		
 		public static WordSegment getInstance() throws JcsegException, IOException {
 			if(wordsegment == null) {
@@ -23,8 +31,7 @@ public class WordSegment {
 			return wordsegment;
 		}
 		private WordSegment() throws JcsegException, IOException {
-			
-			JcsegTaskConfig config = new JcsegTaskConfig();
+			config = new JcsegTaskConfig();
 			// 指定文件的路径
 			//JcsegTaskConfig config = new JcsegTaskConfig("/java/JavaSE/jcseg/jcseg.properties"); 
 			//JcsegTaskConfig config = new JcsegTaskConfig(null);
@@ -32,7 +39,7 @@ public class WordSegment {
 			//config.resetFromPropertyFile("/java/JavaSE/jcseg/jcseg.properties");
 			
 			// 基于配置文件创建词典对象， isAutoload()决定是否同步更新词库
-			ADictionary dic = DictionaryFactory.createDefaultDictionary(config);
+			dic = DictionaryFactory.createDefaultDictionary(config);
 			//two ways to load lexicons
 			//dic.loadFromLexiconDirectory(config.getLexiconPath());
 			//dic.loadFromLexiconFile("/java/lex-main.lex");
@@ -44,7 +51,18 @@ public class WordSegment {
 			//append pinyin
 			//config.setAppendCJKPinyin(true);
 		}
-		
+		/** 返回词典路径  */
+		public String getLexiPath() {
+			return config.getLexiconPath();
+		}
+		public boolean add(final String word) {
+			if (word != null && word.length() != 0 
+					&& null == dic.get(ILexicon.CJK_WORDS, word)) {
+				dic.add(ILexicon.CJK_WORDS, word, IWord.T_CJK_WORD);
+				return true;
+			}
+			return false;
+		}
 		public void segment(String str) throws IOException {
 			
 			StringBuffer sb = new StringBuffer();

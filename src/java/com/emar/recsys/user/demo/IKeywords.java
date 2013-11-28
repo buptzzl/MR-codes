@@ -36,7 +36,7 @@ public interface IKeywords {
 	public static final String PSex = "SEX";  // sex's predict res.
 	public static final String SSexDist = "SEX_DIST";  // sex distribution. 
 	
-	/** 用户行为聚合字段集合 */
+	/** 用户行为聚合字段集合. 增加项目时添加在末尾。 */
 	public static final String[] UserMergeAction = new String[] {
 		"time", "ip", "type", "plat", "prod_price", "domain", // ATOM_STR
 		"prod_name", "page_url", "refer_url", "orig_media",  // PRIMARY_STR

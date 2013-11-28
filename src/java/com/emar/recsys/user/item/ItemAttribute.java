@@ -24,7 +24,7 @@ import com.webssky.jcseg.core.JcsegException;
  */
 public class ItemAttribute {
 	private static boolean isWS;
-	private static WordSegment ws;
+	public static WordSegment ws;
 	private static final Pattern cpatt = Pattern
 			.compile("\\(|\\)|（|）|\\[|\\]|【|】|\\{|\\}| |,|\\?|;|\"|\\t|，|。|；|？|“|”|、|…|—|！|￥"),
 			unwordPatt = Pattern.compile("\\&[A-Za-z]+;");
