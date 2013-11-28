@@ -179,23 +179,21 @@ public class ActionExtract {
 
 	/** 自定义单个用户数据的输出。 默认抽取字段并执行默认过滤 @FMT: uid\nAct1, Act2...。 */
 	public boolean format(int index) {
-		if (!this.Filter(index) || !this.parse(index)) {
+		if (!this.parse(index) || !this.Filter(index)) {
 			this.data.set(index, NULL);
 			this.flags.clear(index);
 			return false;
 		}
 
-//		StringBuffer sbuf = new StringBuffer();
-//		sbuf.append(this.userID + "\n"); // newline.
 		JSONObject jObj, jTmp;
 		JSONArray jAction;
 		jAction = new JSONArray();
 		for (int i = 0; i < userAction.length(); ++i) {
 			try {
-				jObj = new JSONObject(userAction.getString(i));
+				jObj = userAction.getJSONObject(i);
 				jTmp = new JSONObject();
 			} catch (JSONException e) {
-				log.error("userAction's " + i + "'th element bad. [MSG]: "
+				log.error("userAction's " + i + "'th element is't json. [MSG]: "
 						+ e.getMessage());
 				continue;
 			}
@@ -203,16 +201,12 @@ public class ActionExtract {
 			for (String ukey : UserKey) {
 				if (jObj.has(ukey)) {
 					jTmp.put(ukey, jObj.get(ukey));
-//					sbuf.append(ukey + "=");
-//					sbuf.append(jObj.getString(ukey) + ", ");
 				}
 			}
 			jAction.put(jTmp);
 		}
 		this.data.set(index, formatUserActions(userID, jAction));
-//		this.data.set(index, sbuf.toString());
 		this.flags.set(index);
-//		log.info("one user format, [data]=" + sbuf.toString());
 		log.info("one user default action, [data]=" + this.data.get(index));
 
 		return true;
@@ -231,7 +225,7 @@ public class ActionExtract {
 		return sbuf.toString();
 	}
 
-	/** 自定义过滤格式, 默认不过滤。 */
+	/**  原始数据解析parse()后 的过滤, [默认]:通过  */
 	public boolean Filter(int index) {
 		return true;
 	}
@@ -239,7 +233,8 @@ public class ActionExtract {
 	/** 默认用户数据解析方法 @FMT uid\t[ACT-arr] */
 	protected boolean parse(int index) {
 		userID = null;
-		userAction = null;
+		userAction = new JSONArray();
+		JSONArray jArrs;
 		String[] atom = this.data.get(index).split(SEPA);
 		if (atom.length != 2) {
 			log.warn("data not separate by TAB. [data]=" + this.data.get(index));
@@ -248,7 +243,9 @@ public class ActionExtract {
 
 		userID = atom[0];
 		try {
-			userAction = new JSONArray(atom[1]);
+			jArrs = new JSONArray(atom[1]);
+			for (int i = 0; i < jArrs.length(); ++i) 
+				userAction.put(new JSONObject(jArrs.getString(i)));
 		} catch (JSONException e) {
 			log.error("bad user JSON action str. [STR]: " + atom[1]
 					+ ", [MSG]: " + e.getMessage());
@@ -257,7 +254,7 @@ public class ActionExtract {
 		return true;
 	}
 
-	/** 自定义白名单过滤. 默认全通过 */
+	/** 自定义白名单过滤. 默认全通过；建议在format()中调用 */
 	protected boolean whiteFilter(int index) {
 		return true;
 	}
@@ -277,6 +274,15 @@ public class ActionExtract {
 	}
 	public boolean getFlag(int index) {
 		return this.flags.get(index);
+	}
+	public BufferedReader getInput() {
+		return this.input;
+	}
+	public int getWhiteSize() {
+		return this.WordsWhite.length;
+	}
+	public int getBlackSize() {
+		return this.WordsBlack.length;
 	}
 
 	// public void setData(String idata, int index) {

@@ -14,7 +14,7 @@ public class ActionExtractTest {
 			{ "", "", "false" }, // input, fmt-out, fmt-status
 			{
 					"emar@@@123@@@emar\t[\"{\\\"plat\\\":\\\"emarbox\\\",\\\"time\\\":\\\"20131124205720\\\",\\\"prod_name\\\":\\\"排放\\\"}\",\"{\\\"time\\\":\\\"20131124205721\\\",\\\"pagewords\\\":\\\"早孕试纸\\\"}\"]",
-					"emar@@@123@@@emar\nprod_name=排放, time=20131124205720, pagewords=早孕试纸, time=20131124205721, ",
+					"emar@@@123@@@emar\ntime=20131124205720, prod_name=排放, time=20131124205721, pagewords=早孕试纸, ",
 					"true" }, };
 	private static ActionExtract tObj;
 

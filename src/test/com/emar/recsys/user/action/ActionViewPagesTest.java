@@ -35,11 +35,9 @@ public class ActionViewPagesTest {
 		tObj = new ActionViewPages(t_data);
 		Field tField = UtilAccess.getField(ActionViewPages.class, tObj, "WordsWhite");
 		String[] words = (String[])tField.get(tObj);
-//		words.clear();
 		words[0] = "早孕";
 		tField = UtilAccess.getField(ActionViewPages.class, tObj, "WordsBlack");
 		words = (String[])tField.get(tObj);
-//		words.clear();
 		words[0] = "早孕派";
 	}
 	@AfterClass
