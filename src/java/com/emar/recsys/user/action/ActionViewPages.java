@@ -6,8 +6,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.ibm.icu.lang.UCharacter.WordBreak;
-
 /**
  * 抽取用户有对应关键字出现时的数据 和上方的K个样本
  * 支持黑白名单关键词集，关系：在白名单成功时再执行黑名单否决。

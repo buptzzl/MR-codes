@@ -7,13 +7,14 @@ import java.text.ParseException;
 import com.emar.recsys.user.util.UrlSlice;
 
 /**
+ * 定义过滤规则、 若干数据格式化规则的子类。方便主类进行调用。
  * 抽取聚合用户的关键内容、目标行为（关键词） 作为候选训练集。
  * 
  * @author zhoulm
  *
  * @FMT class,feature.
  */
-public class ActionFeatureExtract extends ActionViewPages {
+public final class ActionFeatureExtract extends ActionExtract {
 	
 	private static String DESC_SEPA = "@@@";
 	/**  URL的host与Query之间的空白字符数 */
@@ -28,8 +29,9 @@ public class ActionFeatureExtract extends ActionViewPages {
 		
 	};
 	
+	@Deprecated
 	public String getClassify() {
-		// TODO 生成类别信息。
+		// TODO 生成类别信息。仅仅完成正负后续样本集生成，
 		
 	}
 	

@@ -185,13 +185,15 @@ public class ActionExtract {
 			return false;
 		}
 
-		StringBuffer sbuf = new StringBuffer();
-		sbuf.append(this.userID + "\n"); // newline.
-		JSONObject jObj;
-		String key;
+//		StringBuffer sbuf = new StringBuffer();
+//		sbuf.append(this.userID + "\n"); // newline.
+		JSONObject jObj, jTmp;
+		JSONArray jAction;
+		jAction = new JSONArray();
 		for (int i = 0; i < userAction.length(); ++i) {
 			try {
 				jObj = new JSONObject(userAction.getString(i));
+				jTmp = new JSONObject();
 			} catch (JSONException e) {
 				log.error("userAction's " + i + "'th element bad. [MSG]: "
 						+ e.getMessage());
@@ -200,16 +202,33 @@ public class ActionExtract {
 
 			for (String ukey : UserKey) {
 				if (jObj.has(ukey)) {
-					sbuf.append(ukey + "=");
-					sbuf.append(jObj.getString(ukey) + ", ");
+					jTmp.put(ukey, jObj.get(ukey));
+//					sbuf.append(ukey + "=");
+//					sbuf.append(jObj.getString(ukey) + ", ");
 				}
 			}
+			jAction.put(jTmp);
 		}
-		this.data.set(index, sbuf.toString());
+		this.data.set(index, formatUserActions(userID, jAction));
+//		this.data.set(index, sbuf.toString());
 		this.flags.set(index);
-		log.info("one user format, [data]=" + sbuf.toString());
+//		log.info("one user format, [data]=" + sbuf.toString());
+		log.info("one user default action, [data]=" + this.data.get(index));
 
 		return true;
+	}
+	/** 默认的用户行为的输出格式  */
+	public String formatUserActions(String uid, JSONArray action) {
+		StringBuffer sbuf = new StringBuffer();
+		sbuf.append(uid + "\n");
+		JSONObject jObj;
+		for (int i = 0; i < action.length(); ++i) {
+			jObj = action.getJSONObject(i);
+			for (String k : (Set<String>)jObj.keySet()) {
+				sbuf.append(k + "=" + jObj.get(k) + ", ");
+			}
+		}
+		return sbuf.toString();
 	}
 
 	/** 自定义过滤格式, 默认不过滤。 */
@@ -248,10 +267,6 @@ public class ActionExtract {
 		return true;
 	}
 
-	// 增加测试用的开放接口。
-	public BufferedReader getInput() {
-		return this.input;
-	}
 	// 获取某个字符串
 	public String getData(int index) {
 		return this.data.get(index);
