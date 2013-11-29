@@ -11,11 +11,14 @@ import org.junit.Test;
 
 public class ActionExtractTest {
 	private static String[][] t_action = new String[][] {
-			{ "", "", "false" }, // input, fmt-out, fmt-status
-			{
-					"emar@@@123@@@emar\t[\"{\\\"plat\\\":\\\"emarbox\\\",\\\"time\\\":\\\"20131124205720\\\",\\\"prod_name\\\":\\\"排放\\\"}\",\"{\\\"time\\\":\\\"20131124205721\\\",\\\"pagewords\\\":\\\"早孕试纸\\\"}\"]",
-					"emar@@@123@@@emar\ntime=20131124205720, prod_name=排放, time=20131124205721, pagewords=早孕试纸, ",
-					"true" }, };
+			{  // input, fmt-out, fmt-status
+				"", "", "false" 
+			}, {
+				"emar@@@123@@@emar\t[\"{\\\"plat\\\":\\\"emarbox\\\",\\\"time\\\":\\\"20131124205720\\\",\\\"prod_name\\\":\\\"排放\\\"}\",\"{\\\"time\\\":\\\"20131124205721\\\",\\\"pagewords\\\":\\\"早孕试纸\\\"}\"]",
+				"emar@@@123@@@emar\t[{\"time\":\"20131124205720\",\"prod_name\":\"排放\"},{\"time\":\"20131124205721\",\"pagewords\":\"早孕试纸\"}]",
+				"true" 
+			}, 
+	};
 	private static ActionExtract tObj;
 
 	@BeforeClass

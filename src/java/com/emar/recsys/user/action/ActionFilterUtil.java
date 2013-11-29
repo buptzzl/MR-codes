@@ -24,7 +24,7 @@ public class ActionFilterUtil {
 			URL pageUrl = new URL(url);
 			int phost = url.indexOf(pageUrl.getHost()) + pageUrl.getHost().length();
 			if ((url.length() <= (phost + Nuseless)) 
-					|| ((url.length() <= (phost + pageUrl.getQuery().length() + Nuseless)))) {
+					|| (pageUrl.getQuery() != null && (url.length() <= (phost + pageUrl.getQuery().length() + Nuseless)))) {
 				return true;
 			}
 		} catch (MalformedURLException e) {

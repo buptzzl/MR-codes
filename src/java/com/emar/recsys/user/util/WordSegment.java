@@ -63,6 +63,18 @@ public class WordSegment {
 			}
 			return false;
 		}
+		/** 
+		 * 词库类别： CJK_WORDS = 0;CJK_UNITS = 1;EC_MIXED_WORD = 2;CN_LNAME = 3;CN_SNAME = 4;CN_DNAME_1 = 5;CN_DNAME_2 = 6;CN_LNAME_ADORN = 7;EN_PUN_WORDS = 8;STOP_WORD = 9;CE_MIXED_WORD = 10;UNMATCH_CJK_WORD = 10;
+		 * 词类别： T_CJK_WORD = 1;T_MIXED_WORD = 2;T_CN_NAME = 3;T_CN_NICKNAME = 4;T_BASIC_LATIN = 5;T_LETTER_NUMBER = 6;T_OTHER_NUMBER = 7;T_CJK_PINYIN = 8;T_CN_NUMERIC = 9;T_UNREGNIZE_WORD = 10;
+		 */
+		public boolean add(final int ctype, final String word, int wtype) {
+			if (word != null && word.length() != 0 
+					&& null == dic.get(ILexicon.CJK_WORDS, word)) {
+				dic.add(ILexicon.CJK_WORDS, word, IWord.T_CJK_WORD);
+				return true;
+			}
+			return false;
+		}
 		public void segment(String str) throws IOException {
 			
 			StringBuffer sb = new StringBuffer();
