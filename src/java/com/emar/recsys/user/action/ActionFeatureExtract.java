@@ -83,33 +83,31 @@ public final class ActionFeatureExtract extends ActionExtract {
 	public void initWords() throws JcsegException, IOException {
 		hitWhite = ArrayListMultimap.create();
 		hitBlack = ArrayListMultimap.create();
-		fastWhite = new HashSet<String>();
-		fastBlack = new HashSet<String>();
+		fastWhite = new HashSet<String>(Arrays.asList(WordsWhite));
+		fastBlack = new HashSet<String>(Arrays.asList(WordsBlack));
 		
-		// 拓展识别的 关键词
 		WordSegment ws = iattribute.ws;
 		ws = WordSegment.getInstance();
 		for (int i = 0; i < WordsBlack.length; ++i) 
 			ws.add(WordsBlack[i]);
 		for (int i = 0; i < WordsWhite.length; ++i)
 			ws.add(WordsWhite[i]);
+		// 拓展识别的 关键词
 		List<String> moreWhite = new ArrayList<String>();
 		List<String> moreBlack = new ArrayList<String>();
 		if (checkDictWords) {
 			moreWhite.addAll(checkDictKeywords(ws, WordsWhite));
 			moreBlack.addAll(checkDictKeywords(ws, WordsBlack));
+			fastBlack.addAll(moreBlack);
+			fastWhite.addAll(moreWhite);
+			fastWhite.removeAll(fastBlack); // 去重。
 		}
-
-		fastBlack.addAll(moreBlack);
-		fastWhite.addAll(moreWhite);
-		WordsWhite = fastWhite.toArray(new String[fastWhite.size()]);
+		WordsWhite = fastWhite.toArray(new String[fastWhite.size()]);//更新内容
 		WordsBlack = fastBlack.toArray(new String[fastBlack.size()]);
-		fastWhite.addAll(Arrays.asList(WordsWhite));
-		fastBlack.addAll(Arrays.asList(WordsBlack));
 		
 		log.info("build ActionFeatureExtract object. "
-				+ "Add black words to dict: " + Arrays.asList(WordsBlack)+moreBlack
-				+ ", white words to dict: " + Arrays.asList(WordsWhite)+moreWhite);
+				+ "\nAdd black words to dict: " + Arrays.asList(WordsBlack)
+				+ "\nwhite words to dict: " + Arrays.asList(WordsWhite));
 	}
 	
 	private List<String> checkDictKeywords (WordSegment ws, String[] keywords) {
@@ -150,7 +148,7 @@ public final class ActionFeatureExtract extends ActionExtract {
 					}
 				}
 				fbuf.close();
-				log.info("load dict [path]: " + fi);
+				log.info("load dict [path]: " + fi + "\tsize=" + res.size());
 			} catch (IOException e) {
 				log.error("dict file load error. [path]: " + fi 
 						+ "\t[MSG]: " + e.getMessage());
@@ -224,7 +222,10 @@ public final class ActionFeatureExtract extends ActionExtract {
 		if (flag && this.whiteFilter(index) && !this.blackFilter(index)) {
 			this.data.set(index, formatUserActions(userID, userAction));
 			this.flags.set(index);
+		} else {
+			this.flags.clear(index);
 		}
+		
 
 		return (true == flag);
 	}
@@ -298,8 +299,8 @@ public final class ActionFeatureExtract extends ActionExtract {
 		// TODO Auto-generated method stub
 		ActionFeatureExtract actionExtract = null;
 		try {
-			actionExtract = new ActionFeatureExtract();
-			actionExtract.BatchFormat();
+			actionExtract = new ActionFeatureExtract(new String[]{"", ""});
+			ActionFeatureExtract.batchExtract(actionExtract);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

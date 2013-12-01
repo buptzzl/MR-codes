@@ -41,15 +41,11 @@ public class ActionFeatureExtractTest {
 		List<String> tData = new ArrayList<String>();
 		for (int i = 0; i < tAction.length; ++i)
 			tData.add(tAction[i][0]);
-//		tObj = new ActionFeatureExtract(tData);
 		ActionExtract tAct = new ActionExtract(tData);
 		Field tField = UtilAccess.getField(ActionFeatureExtract.class, tAct, "WordsWhite");
-		String[] words = (String[])tField.get(tAct);
-//		words[0] = "早孕";
 		tField.set(tAct, new String[] {"早孕", "妈妈", "宝宝"});
 		tField = UtilAccess.getField(ActionFeatureExtract.class, tAct, "WordsBlack");
-		words = (String[])tField.get(tAct);
-		words[0] = "早孕派";
+		tField.set(tAct, new String[] {"早孕派"});
 		tObj = new ActionFeatureExtract(tAct);
 		tField = UtilAccess.getField(ActionFeatureExtract.class, tObj, "N_ACT_MIN");
 		tField.set(tObj, 0);
@@ -60,8 +56,8 @@ public class ActionFeatureExtractTest {
 
 	@Test
 	public void testinitWords() {
-		Assert.assertEquals(tObj.getBlackSize(), tObj.fastBlack.size());
-		Assert.assertEquals(tObj.getWhiteSize(), tObj.fastWhite.size());
+		Assert.assertEquals(1, tObj.fastBlack.size());
+		Assert.assertEquals(40, tObj.fastWhite.size());
 		Assert.assertEquals(0, tObj.hitBlack.size());
 		Assert.assertEquals(0, tObj.hitWhite.size());
 	}

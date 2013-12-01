@@ -114,8 +114,8 @@ public class ActionExtract {
 		configure_.addResource(pconf);
 
 		UserKey = configure_.getStrings("extract.user_keys", "");
-		WordsBlack = configure_.getStrings("extract.black_list", "");
-		WordsWhite = configure_.getStrings("extract.white_list", "");
+		WordsBlack = configure_.getStrings("extract.black_list", new String[]{});
+		WordsWhite = configure_.getStrings("extract.white_list", new String[]{});
 		data = new ArrayList<String>();
 		flags = new BitSet();
 		userID = null;
