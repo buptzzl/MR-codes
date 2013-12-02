@@ -149,7 +149,7 @@ public class ActionExtract {
 			counter++;
 		}
 		extractor.input.close();
-		log.info("batch read finish. file-size=" + counter);
+		log.debug("batch read finish. file-size=" + counter);
 
 		extractor.BatchFormat();
 		for (int i = 0; i < extractor.data.size(); ++i) {
@@ -165,7 +165,7 @@ public class ActionExtract {
 		extractor.output.close();
 		extractor.outRest.close();
 		extractor.data.clear();
-		log.info("batch format finish and save. unused-counter=" + counter);
+		log.debug("batch format finish and save. unused-counter=" + counter);
 	}
 
 	/** 单独处理一个用户行为序列. 不改变原始数据 */
@@ -181,7 +181,7 @@ public class ActionExtract {
 			extractor.data.remove(index);
 		}
 		
-		log.info("success finished.");
+		log.debug("success finished.");
 		return res;
 	}
 
@@ -190,7 +190,7 @@ public class ActionExtract {
 		for (int i = 0; i < this.data.size(); ++i)
 			this.format(i);
 		
-		log.info("success finished.");
+		log.debug("success finished.");
 		return true;
 	}
 
@@ -225,7 +225,7 @@ public class ActionExtract {
 		this.data.set(index, formatUserActions(userID, jAction));
 		this.flags.set(index);
 		
-		log.info("one user default action, [data]=" + this.data.get(index));
+		log.debug("one user default action, [data]=" + this.data.get(index));
 		return true;
 	}
 	/** 默认的用户行为的输出格式 : 按原有格式uid\t[json] */
@@ -234,13 +234,13 @@ public class ActionExtract {
 		sbuf.append(uid + "\t");
 		sbuf.append(action);
 		
-		log.info("success fininshed.");
+		log.debug("success fininshed.");
 		return sbuf.toString();
 	}
 
 	/**  原始数据解析parse()后 的过滤, [默认]:通过  */
 	public boolean Filter(int index) {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return true;
 	}
 
@@ -251,7 +251,7 @@ public class ActionExtract {
 		JSONArray jArrs;
 		String[] atom = this.data.get(index).split(SEPA);
 		if (atom.length != 2) {
-			log.warn("data not separate by TAB. [data]=" + this.data.get(index));
+			log.info("data not separate by TAB. [data]=" + this.data.get(index));
 			return false;
 		}
 
@@ -266,46 +266,46 @@ public class ActionExtract {
 			userAction = new JSONArray();
 		}
 		
-		log.info("success finished.");
+		log.debug("success finished.");
 		return true;
 	}
 
 	/** 自定义白名单过滤. 默认全通过；建议在format()中调用 */
 	protected boolean whiteFilter(int index) {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return true;
 	}
 
 	/** 自定义黑名单过滤. 默认全不通过 */
 	protected boolean blackFilter(int index) {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return true;
 	}
 
 	// 获取某个字符串
 	public String getData(int index) {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.data.get(index);
 	}
 	// 获取全部数据量
 	public int size() {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.data.size();
 	}
 	public boolean getFlag(int index) {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.flags.get(index);
 	}
 	public BufferedReader getInput() {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.input;
 	}
 	public int getWhiteSize() {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.WordsWhite.length;
 	}
 	public int getBlackSize() {
-		log.info("success finished.");
+		log.debug("success finished.");
 		return this.WordsBlack.length;
 	}
 
@@ -325,7 +325,7 @@ public class ActionExtract {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		log.info("success finished.");
+		log.debug("success finished.");
 	}
 
 }

@@ -105,9 +105,9 @@ public final class ActionFeatureExtract extends ActionExtract {
 		WordsWhite = fastWhite.toArray(new String[fastWhite.size()]);//更新内容
 		WordsBlack = fastBlack.toArray(new String[fastBlack.size()]);
 		
-		log.info("build ActionFeatureExtract object. "
-				+ "\nAdd black words to dict: " + Arrays.asList(WordsBlack)
-				+ "\nwhite words to dict: " + Arrays.asList(WordsWhite));
+		log.warn("build ActionFeatureExtract object. "
+				+ "\tAdd black words to dict: " + Arrays.asList(WordsBlack)
+				+ "\twhite words to dict: " + Arrays.asList(WordsWhite));
 	}
 	
 	private List<String> checkDictKeywords (WordSegment ws, String[] keywords) {
@@ -136,8 +136,6 @@ public final class ActionFeatureExtract extends ActionExtract {
 				fbuf = new BufferedReader(new FileReader(fi));
 				for (; (line = fbuf.readLine()) != null;) {
 					atom = line.split("/");
-//					if (atom[0].equals("早孕检测"))
-//						System.out.println(atom[0]);
 					if (1 <= atom.length) {
 						for (int i = 0; i < keywords.length; ++i) {
 							if (!atom[0].equals(keywords[i]) 
@@ -197,7 +195,7 @@ public final class ActionFeatureExtract extends ActionExtract {
 					iattribute = new ItemAttribute(atoms[i]);
 					words.addAll(iattribute.getWord());
 					pos.addAll(iattribute.getPos());
-					if (atoms.length != 1) {
+					if (atoms.length != (i + 1)) {
 						words.add(LogParse.MAGIC);  // 保留特殊边界符
 						pos.add(LogParse.MAGIC);
 					}
@@ -211,8 +209,16 @@ public final class ActionFeatureExtract extends ActionExtract {
 				sbuf.append(s + SEPA_WORD);
 			jObj.put(key, sbuf.toString());
 			log.info("wordsegment. [input]:" + tmp
-					+ "\n[output]:" + words + "\n[pos]:" + pos);
+					+ "\t[output]:" + words + "\t[pos]:" + pos);
 		} 
+		return true;
+	}
+	
+	public boolean BatchFormat() {
+		for (int i = 0; i < this.data.size(); ++i)
+			this.format(i);
+		
+		log.info("success finished.");
 		return true;
 	}
 	
@@ -220,12 +226,12 @@ public final class ActionFeatureExtract extends ActionExtract {
 	public boolean format(int index) {
 		boolean flag = super.format(index);
 		if (flag && this.whiteFilter(index) && !this.blackFilter(index)) {
-			this.data.set(index, formatUserActions(userID, userAction));
 			this.flags.set(index);
+			this.data.set(index, this.data.get(index) + "\t" + this.hitWhite.keySet());
+			this.hitWhite.clear();
 		} else {
 			this.flags.clear(index);
 		}
-		
 
 		return (true == flag);
 	}
@@ -244,8 +250,10 @@ public final class ActionFeatureExtract extends ActionExtract {
 			jObj = userAction.getJSONObject(i);
 			fastFilter.clear();
 			// 行为有效性过滤
-			if (jObj.has(KEY_PURL) && ActionFilterUtil.isBadUrl(jObj.getString(KEY_PURL)))
+			if (jObj.has(KEY_PURL) && ActionFilterUtil.isBadUrl(jObj.getString(KEY_PURL), configure_)) {
+				log.info("bad url: " + jObj.getString(KEY_PURL));
 				continue;
+			}
 			// 白名单关键词过滤 
 			if (jObj.has(KEY_PROD)) {
 				atoms = jObj.getString(KEY_PROD).split(SEPA_WORD);
@@ -255,9 +263,14 @@ public final class ActionFeatureExtract extends ActionExtract {
 				fastKeys.retainAll(fastWhite);
 				for (String s : fastKeys) 
 					this.hitWhite.putAll(s, fastFilter.get(s));
+				log.info("hit white words: " + fastKeys + "\tdata=" + jObj.getString(KEY_PROD));
 			} 
 			if (jObj.has(KEY_PAGE_DESC)) {
 				atoms = jObj.getString(KEY_PAGE_DESC).split(DESC_SEPA);
+				if (0 == atoms.length){
+					log.warn("unnormal user page action format. [data]: "
+							+ jObj.getString(KEY_PAGE_DESC));
+				}
 				if (1 <= atoms.length) {
 					fastFilter.clear();
 					atoms = atoms[0].split(SEPA_WORD);
@@ -267,15 +280,13 @@ public final class ActionFeatureExtract extends ActionExtract {
 					fastKeys.retainAll(fastWhite);
 					for (String s : fastKeys) 
 						this.hitWhite.putAll(s, fastFilter.get(s));
+					if (fastKeys.size() !=0) 
+						log.info("hit white words: " + fastKeys + "\tdata=" + jObj.getString(KEY_PAGE_DESC));
 				} 
-				if (3 != atoms.length){
-					log.error("user page action format unuseful. [data]: "
-							+ jObj.getString(KEY_PAGE_DESC));
-				}
 			}
 		}
 		log.info("white keywords detect [res]:" + this.hitWhite);
-		return true;
+		return (this.hitWhite.size() != 0);
 	}
 	
 	@Override
@@ -283,13 +294,6 @@ public final class ActionFeatureExtract extends ActionExtract {
 		
 		log.info("black keywords detect [res]:" + this.hitBlack);
 		return false; // 全部通过
-	}
-
-	@Override
-	public String formatUserActions(String uid, org.json.JSONArray action) {
-		String fmt = super.formatUserActions(uid, action);
-		fmt = fmt + "\t" + this.hitWhite;
-		return fmt;
 	}
 
 	/**

@@ -13,6 +13,8 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import com.emar.recsys.user.util.UtilObj;
 import com.emar.recsys.user.util.UtilStr;
 
@@ -22,7 +24,7 @@ import com.emar.recsys.user.util.UtilStr;
  * 
  */
 public class DataNormalize {
-
+	private static Logger log = Logger.getLogger(DataNormalize.class);
 	private HashMap<String, Integer> features;
 //	private static final String infof = "% ARF file for the user-behave-targeting\n";
 	private static final String relationf = "\n@relation user-behavoir-targeting\n";
@@ -256,11 +258,23 @@ public class DataNormalize {
 				cnt += 1;
 			}
 		}
+		
 		if(debug) {
 			System.out.printf("[Info] DataNormalize::featureTrim() " +
 					"fmin=%d\tfmax=%d\tcnt_total=%d\tbad_key=%d\tcnt_remove=%d\tcnt_retail=%d\n", 
 					fmin, fmax, cnt_tot, cnt_badkey, cnt_rm, cnt);
 		}
+	}
+	/** 增加1个特征,用于外部操作  */
+	public boolean updateFeature(String word) {
+		if (word == null || word.trim().length() == 0)
+			return false;
+		if (!features.containsKey(word))
+			features.put(word, features.size());
+		return true;
+	}
+	public Set<String> getFeatures() {
+		return features.keySet();
 	}
 
 	/**
