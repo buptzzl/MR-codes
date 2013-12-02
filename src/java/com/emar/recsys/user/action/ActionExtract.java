@@ -38,7 +38,7 @@ import com.emar.util.ConfigureTool;
  * 每次一个文件。
  * 不容许用null, 使用空串“”表示。
  * @author zhoulm
- * 
+ * @desc 继承体系中的基类，每一个可能覆盖的方法都应该有日志记录，以便后续跟进函数的调用。
  */
 public class ActionExtract {
 	static private Logger log = Logger.getLogger(ActionExtract.class);
@@ -180,6 +180,8 @@ public class ActionExtract {
 			res = extractor.data.get(index);
 			extractor.data.remove(index);
 		}
+		
+		log.info("success finished.");
 		return res;
 	}
 
@@ -187,6 +189,8 @@ public class ActionExtract {
 	public boolean BatchFormat() {
 		for (int i = 0; i < this.data.size(); ++i)
 			this.format(i);
+		
+		log.info("success finished.");
 		return true;
 	}
 
@@ -220,8 +224,8 @@ public class ActionExtract {
 		}
 		this.data.set(index, formatUserActions(userID, jAction));
 		this.flags.set(index);
+		
 		log.info("one user default action, [data]=" + this.data.get(index));
-
 		return true;
 	}
 	/** 默认的用户行为的输出格式 : 按原有格式uid\t[json] */
@@ -229,11 +233,14 @@ public class ActionExtract {
 		StringBuffer sbuf = new StringBuffer();
 		sbuf.append(uid + "\t");
 		sbuf.append(action);
+		
+		log.info("success fininshed.");
 		return sbuf.toString();
 	}
 
 	/**  原始数据解析parse()后 的过滤, [默认]:通过  */
 	public boolean Filter(int index) {
+		log.info("success finished.");
 		return true;
 	}
 
@@ -258,37 +265,47 @@ public class ActionExtract {
 					+ ", [MSG]: " + e.getMessage());
 			userAction = new JSONArray();
 		}
+		
+		log.info("success finished.");
 		return true;
 	}
 
 	/** 自定义白名单过滤. 默认全通过；建议在format()中调用 */
 	protected boolean whiteFilter(int index) {
+		log.info("success finished.");
 		return true;
 	}
 
 	/** 自定义黑名单过滤. 默认全不通过 */
 	protected boolean blackFilter(int index) {
+		log.info("success finished.");
 		return true;
 	}
 
 	// 获取某个字符串
 	public String getData(int index) {
+		log.info("success finished.");
 		return this.data.get(index);
 	}
 	// 获取全部数据量
 	public int size() {
+		log.info("success finished.");
 		return this.data.size();
 	}
 	public boolean getFlag(int index) {
+		log.info("success finished.");
 		return this.flags.get(index);
 	}
 	public BufferedReader getInput() {
+		log.info("success finished.");
 		return this.input;
 	}
 	public int getWhiteSize() {
+		log.info("success finished.");
 		return this.WordsWhite.length;
 	}
 	public int getBlackSize() {
+		log.info("success finished.");
 		return this.WordsBlack.length;
 	}
 
@@ -308,7 +325,7 @@ public class ActionExtract {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
+		log.info("success finished.");
 	}
 
 }

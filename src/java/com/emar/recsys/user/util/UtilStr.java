@@ -5,9 +5,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
-import javax.swing.JPopupMenu.Separator;
-
-import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
 
 public class UtilStr {

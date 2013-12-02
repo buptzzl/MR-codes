@@ -44,10 +44,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.Logger;
-//import org.apache.commons.logging.Log;
-//import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
+//import org.codehaus.jackson.JsonFactory;
+//import org.codehaus.jackson.JsonGenerator;
 import org.w3c.dom.Comment;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -1443,9 +1441,11 @@ public class ConfigureTool implements Iterable<Map.Entry<String, String>> {
 	 * @param out
 	 *            the Writer to write to
 	 * @throws IOException
+	 * @deprecated 使用时加入头部被注释掉的相应JAR包。 
 	 */
 	public static void dumpConfigureTool(ConfigureTool config, Writer out)
 			throws IOException {
+		/*
 		JsonFactory dumpFactory = new JsonFactory();
 		JsonGenerator dumpGenerator = dumpFactory.createJsonGenerator(out);
 		dumpGenerator.writeStartObject();
@@ -1468,6 +1468,7 @@ public class ConfigureTool implements Iterable<Map.Entry<String, String>> {
 		dumpGenerator.writeEndArray();
 		dumpGenerator.writeEndObject();
 		dumpGenerator.flush();
+		*/
 	}
 
 	/**
