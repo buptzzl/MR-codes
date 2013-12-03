@@ -50,6 +50,16 @@ public class DataMerge {
 	public DataMerge() throws Exception {
 		configure = new ConfigureTool();
 		configure.addResource(PATH_CONF);
+		this.init();
+	}
+	/** 指定配置文件  */
+	public DataMerge(String[] args) throws Exception {
+		configure = new ConfigureTool();
+		configure.addResource(args[0]);
+		this.init();
+	}
+	
+	private void init() throws Exception {
 		inputs = configure.getStrings(KEY_IN);
 		inparsers = configure.getStrings(KEY_PARSE);
 		parsers = new IAttrParser[inputs.length];
