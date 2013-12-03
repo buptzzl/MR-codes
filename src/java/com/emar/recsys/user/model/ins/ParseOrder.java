@@ -290,12 +290,12 @@ public final class ParseOrder implements IAttrParser {
 	@Override
 	public String toString() {
 		if (features == null || classes == null)
-			return "ParseOrder\t" + getAttribute() + "\nfeature=" + features
+			return "ParseOrder[" + getAttribute() + "\nfeature=" + features
 					+ "\nclass=" + classes + "\nuid=" + uid + "\tdebug="
 					+ debug + "\tconfidence=" + confidence + "\tOperType=" + OperType
-					+ "\tweight_type=" + fweight;
+					+ "\tweight_type=" + fweight + "]";
 		return String.format(
-				"%s%s\t%s\nclass=%s\nuser=%s\ndebug=%s\tconfidence=%f\tOperType=%s\tweight_type=%s",
+				"ParseOrder:[%s%s\t%s\nclass=%s\nuser=%s\ndebug=%s\tconfidence=%f\tOperType=%s\tweight_type=%s]",
 				getAttribute(), getClassify(), Arrays.asList(getFeatures()),
 				classes.toString(), uid, debug + "", confidence, OperType.toString(), fweight.toString());
 	}

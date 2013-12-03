@@ -23,12 +23,12 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.emar.recsys.user.model.ins.IAttrParser;
 import com.emar.recsys.user.util.UtilJson;
 import com.google.common.collect.TreeMultiset;
 // Matlab JAR test.
 /** @REF http://www.cnblogs.com/allanyz/archive/2009/05/04/1449081.html */
 import com.mathworks.toolbox.javabuilder.*;
-import javapkg.myjava;
 import javapkg.*;
 
 public class Test {
@@ -46,8 +46,22 @@ public class Test {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	public static void main(String[] args) throws ParseException, IOException {
-		
+	public static void main(String[] args) {
+		String []tRefStr = new String[] {
+				"com.emar.recsys.user.model.ins.ParseOrder",
+				"com.emar.recsys.user.model.ins.ParseAction",
+		};
+		try {
+			IAttrParser tAttr1 = (IAttrParser)Class.forName(tRefStr[0]).newInstance();
+			Class<? extends IAttrParser> tTest = Class.forName(tRefStr[1]).asSubclass(IAttrParser.class);
+			Constructor<? extends IAttrParser> tAttr3 = tTest.getConstructor(String.class);
+			Constructor<? extends IAttrParser> tAttr4 = tTest.getConstructor();
+			IAttrParser tIns = tAttr3.newInstance("user.conf"),
+					tIns2 = tAttr4.newInstance();
+			System.out.println("info: " + tIns + "\n" + tIns2);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		try {
 			myjava t_matlab = new myjava();
@@ -56,13 +70,6 @@ public class Test {
 					+ "\t" + t_res[0]);
 		} catch (MWException e) {
 		}
-		
-
-		Logger mylog = Logger.getLogger(Test.class);
-		mylog.warn("warning!");
-		mylog.debug("debug");
-		mylog.error("error!");
-		mylog.fatal("fatal!");
 
 		HashMap<String, Integer> smap = new HashMap<String, Integer>();
 		smap.put("aa", 1);
@@ -80,8 +87,8 @@ public class Test {
 				.split("a,b;c\"d\te，f。g；h？i“j”k、l——m……n(o)p[q]r{s}t【u】v wxyz");
 		System.out.println("[Info] for pattern=" + Arrays.asList(res_patt));
 
-		String urls = "http://fanxian.egou.com/oauthcallback.do?from=qq&bind=1&source=http%3A%2F%2Fwww.egou.com%2Fghs%2Fshop4529292.htm%3Fchn%3Dgdt%26tag%3Dghs%26utm_source%3Dgdt%26etc_n%3Ddirectad%26etc_m%3Dgdt%26etc_c%3Dkyp%26etc_g%3Dkyp%26etc_t%3Dqianxi%26tanceng%3D1%26qz_gdt%3Dc96WvF8aQioKViSxLas_gOI0vGv1Ns6T4cZWH6sw26kNu5p3jItqSKec_I0lhFxPkcPuUbG50aU&code=926191221712AC8B33DF7D8E53B7B75D";
-		String durl = URLDecoder.decode(urls, "utf8");
+//		String urls = "http://fanxian.egou.com/oauthcallback.do?from=qq&bind=1&source=http%3A%2F%2Fwww.egou.com%2Fghs%2Fshop4529292.htm%3Fchn%3Dgdt%26tag%3Dghs%26utm_source%3Dgdt%26etc_n%3Ddirectad%26etc_m%3Dgdt%26etc_c%3Dkyp%26etc_g%3Dkyp%26etc_t%3Dqianxi%26tanceng%3D1%26qz_gdt%3Dc96WvF8aQioKViSxLas_gOI0vGv1Ns6T4cZWH6sw26kNu5p3jItqSKec_I0lhFxPkcPuUbG50aU&code=926191221712AC8B33DF7D8E53B7B75D";
+//		String durl = URLDecoder.decode(urls, "utf8");
 		String tmptest = "shangchangdazhe/";
 		String[] testa = "【两盒 包邮】仅18.7元，享我买价,49元	的海南妃子笑荔枝;盒装（1000克）！核小、肉厚"
 				.split("\\(|\\)|（|）|\\[|\\]|【|】| |\t|，|、|；|。|！|,|;|!");
@@ -115,12 +122,9 @@ public class Test {
 				+ new JSONArray(new String[] { "a", "b" }) + "\n2" + jobj2
 				+ "\n3=" + jobj3 + "\n"
 				+ new HashSet<String>(Arrays.asList("1", "2")).toString()
-				+ "\n" + durl.contains("fanxian") + "\n" + smap.toString()
 				+ "5\t\t".split("\t").length + "\t" + s.split("\u0001").length
 				+ "\n" + Float.valueOf("123.02"));
 
-		URL aURL = new URL("http://www.doubn.com/group/echofans");
-		Test.compare(new Text("abc"), new Text("ced"));
 	}
 
 }

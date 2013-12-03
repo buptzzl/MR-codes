@@ -53,7 +53,7 @@ public class ParseAction implements IAttrParser {
 	
 	public ParseAction() {
 		configure = new ConfigureTool();
-		configure.addResource("user.conf");
+		configure.addResource("learn.conf");
 		this.init();
 	}
 	public ParseAction(String confPath) {
@@ -66,10 +66,10 @@ public class ParseAction implements IAttrParser {
 	public boolean init(String... args) {
 		MinActPerUser = configure.getInt("extract.instance.minactperuser", 50);
 		MaxActPerUser = configure.getInt("extract.instance.maxactperuser", 1000);
-		MaxUser = configure.getInt("extract.instance.maxuser", 10000);
+//		MaxUser = configure.getInt("extract.instance.maxuser", Integer.MAX_VALUE);
 		labelAttribute = configure.get("extract.instance.attribute");
 		labelValue = configure.get("extract.instance.labelvalue", DEF_LABEL);
-		cindex = configure.getInt("extract.instance.classindex", 1);
+//		cindex = configure.getInt("extract.instance.classindex", 1);
 		pageFilter = configure.getBoolean("extract.instance.pagefilter", true);
 		KEY_WORDS = configure.getStrings("extract.instance.keyword", DEF_KEY_WORDS);
 		KEY_ATOM = configure.getStrings("extract.instance.keyatom", DEF_KEY_ATOM);
@@ -101,6 +101,7 @@ public class ParseAction implements IAttrParser {
 
 	@Override
 	public Boolean parseLine(String line) {
+		this.clear();
 		if (!this.parse(line))
 			return false;
 		if (!this.Filter())
@@ -129,6 +130,12 @@ public class ParseAction implements IAttrParser {
 			featureCounter[0]++;
 		log.info("parse a user's action.");
 		return true;
+	}
+	
+	private void clear() {
+		user = null;
+		action = null;
+		features.clear();
 	}
 
 	@Override
@@ -159,10 +166,33 @@ public class ParseAction implements IAttrParser {
 
 	@Override
 	public String getStaticInfo() {
+		List<Integer> actCnt = new ArrayList<Integer>();
+		for (int i = 0; i < actionCounter.length; ++i)
+			actCnt.add(actionCounter[i]);
+		List<Integer> feaCnt = new ArrayList<Integer>();
+		for (int i = 0; i < featureCounter.length; ++i)
+			feaCnt.add(featureCounter[i]);
 		return String.format("total user=%d, action-distribution=%s," +
-				"feature-distribution=", userCounter, 
-				Arrays.asList(actionCounter)+"", Arrays.asList(featureCounter)+"");
+				"feature-distribution=%s", userCounter, actCnt, feaCnt);
 	}
+	public int getMinAction() {
+		return MinActPerUser;
+	}
+	public String[] getKeywords() {
+		return KEY_WORDS.clone();
+	}
+	public String[] getKeyatoms() {
+		return KEY_ATOM.clone();
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("ParseAction:{labelAttribute=%s, labelValue=%s, " +
+				"action range:[%d,%d], pageFilter=%s, KEY_WORDS=%s, KEY_ATOM=%s}",
+				labelAttribute, labelValue, MinActPerUser, MaxActPerUser,
+				pageFilter+"", Arrays.asList(KEY_WORDS), Arrays.asList(KEY_ATOM));
+	}
+	
 	/** 从原始日志抽取元数据： user,action  */
 	protected boolean parse(String line) {
 		JSONArray jArrs;
@@ -176,8 +206,14 @@ public class ParseAction implements IAttrParser {
 		user = atom[0];
 		try {
 			jArrs = new JSONArray(atom[1]);
-			for (int i = 0; i < jArrs.length(); ++i) 
+			for (int i = 0; i < jArrs.length(); ++i) {
+				try {
 				action.put(new JSONObject(jArrs.getString(i)));
+				} catch (JSONException e) { // 处理可能直接为object 的情况
+					if (e.getMessage().endsWith("not a string."))
+						action.put(jArrs.getJSONObject(i));
+				}
+			}
 		} catch (JSONException e) {
 			log.error("bad user JSON action str. [STR]: " + atom[1]
 					+ ", [MSG]: " + e.getMessage());
@@ -198,27 +234,34 @@ public class ParseAction implements IAttrParser {
 		} else {
 			actionCounter[0]++;
 		}
-		if (MinActPerUser > action.length() && action.length() >= MaxActPerUser) {
+		if (MinActPerUser > action.length() || action.length() >= MaxActPerUser) {
 			log.info("action size unnormal." + action.length());
 			return false;
 		}
 		
 		JSONObject jobj = null;
 		Set<String> kfilter = null;
-		String[] atoms;
+		String[] atoms = null, remKeys = null;
+		List<String> kRetain = new ArrayList<String>();
+		kRetain.addAll(Arrays.asList(KEY_ATOM));
+		kRetain.addAll(Arrays.asList(KEY_WORDS));
+//		for (int i = 0; i <KEY_ATOM.length; ++i) 
+//			kRetain.add(KEY_ATOM[i]);
 		for (int i = 0; i < action.length(); ++i) {
 			jobj = action.getJSONObject(i);
 			kfilter = jobj.keySet();
-			kfilter.removeAll(Arrays.asList(KEY_WORDS));
-			kfilter.removeAll(Arrays.asList(KEY_ATOM));
-			for (String ki : kfilter) {
-				jobj.remove(ki);
-			}
-			if (pageFilter) {
+			kfilter.retainAll(kRetain);
+//			kfilter.removeAll(Arrays.asList(KEY_WORDS));
+//			kfilter.removeAll(Arrays.asList(KEY_ATOM));
+//			remKeys = kfilter.toArray(new String[kfilter.size()]);
+//			for (String ki : remKeys) {
+//				jobj.remove(ki);
+//			}
+			if (pageFilter && jobj.has(KEY_WORDS[0])) {
 				// 对PageWord 进行清洗
 				atoms = jobj.getString(KEY_WORDS[0]).split(SEP_PAG);
 				if (1 <= atoms.length)
-				jobj.put(KEY_WORDS[0], atoms[0]);
+					jobj.put(KEY_WORDS[0], atoms[0]);
 			}
 		}
 		log.debug("action after filter: " + action);

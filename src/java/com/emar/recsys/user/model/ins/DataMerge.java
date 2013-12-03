@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,9 +19,11 @@ import com.emar.util.ConfigureTool;
 /**
  * 合并多个 唯一类别raw-vector样本文件为一个多类别的arff文件：基于DataNormalize
  * 要求类别属性的名称相同、值不同。
+ * 配置字段支持设置各个IAttrParser 的配置文件路径。
  * @author zhoulm
- *
+ * 
  * @TODO UT
+ * @deprecated 建议使用两步法： S.1 DataNormalize 生成若干arff； S.2 ArffMerge 合并为1个arff.
  */
 public class DataMerge {
 	private static Logger log = Logger.getLogger(DataMerge.class);
@@ -28,7 +31,7 @@ public class DataMerge {
 	private static final String PATH_CONF = "learn.conf", PATH_DEF_OUT = "merge.arff", 
 			KEY_IN = "ins.merge.inputs",	KEY_PARSE = "ins.merge.parsers",
 			KEY_OUT = "ins.merge.output", KEY_CLA_ATTR = "ins.merge.class",
-			KEY_CLA_VAL = "ins.merge.classlabel",
+			KEY_CLA_VAL = "ins.merge.classlabel", KEY_PAR_PARAM = "ins.merge.param",
 			SEP_ARFF = ", ";
 	
 	private ConfigureTool configure;
@@ -36,7 +39,7 @@ public class DataMerge {
 	/** 各样本类别文件对应的解析类，如果不够默认使用第1个解析  */
 	private String[] inparsers;
 	private IAttrParser[] parsers;
-	/** 各文件对应的类别值 */
+	/** 各文件对应的类别标签；解决公用相同的解析类的标签问题 */
 	private String[] classLabel;
 	private String output;
 //	private DataNormalize[] insset;  // 多个文件解析类=> 
@@ -47,46 +50,48 @@ public class DataMerge {
 	/** 统一的类别属性名称 */
 	private String classAttribute;
 	
+	public String toString() {
+		return String.format("DataMerge:[configure: %s, input paths: %s, parsers: %s, "
+				+ "class labels: %s, output path: %s]", configure, 
+				Arrays.asList(inputs), Arrays.asList(inparsers), 
+				Arrays.asList(classLabel),output);
+	}
+	
 	public DataMerge() throws Exception {
 		configure = new ConfigureTool();
 		configure.addResource(PATH_CONF);
 		this.init();
 	}
 	/** 指定配置文件  */
-	public DataMerge(String[] args) throws Exception {
+	public DataMerge(String arg) throws Exception {
 		configure = new ConfigureTool();
-		configure.addResource(args[0]);
+		configure.addResource(arg);
 		this.init();
 	}
 	
 	private void init() throws Exception {
 		inputs = configure.getStrings(KEY_IN);
 		inparsers = configure.getStrings(KEY_PARSE);
+		String[] parserParas = configure.getStrings(KEY_PAR_PARAM);
 		parsers = new IAttrParser[inputs.length];
-		for (int i = 0; i < inparsers.length && i < inputs.length; ++i) {
-			parsers[i] = (IAttrParser)Class.forName(inparsers[i]).newInstance();
-		}
-		if (inputs.length > inparsers.length) { 
-			log.warn("parser is fewer than data, use first parser to fill.");
-			IAttrParser[] tmpParsers = new IAttrParser[inputs.length];
-			System.arraycopy(parsers, 0, tmpParsers, 0, parsers.length);
-			for (int i = inparsers.length; i < inputs.length; ++i)
-				tmpParsers[i] = parsers[0];  // 采用浅拷贝。
-			parsers = tmpParsers;
+		Class<? extends IAttrParser> iclass = null;
+		Constructor<? extends IAttrParser> iconstructor = null;
+		for (int i = 0; i < inputs.length; ++i) {
+			iclass = Class.forName(inparsers[i]).asSubclass(IAttrParser.class);
+			if (parserParas != null) {
+				iconstructor = iclass.getConstructor(String.class);
+				parsers[i] = iconstructor.newInstance(parserParas[i]);
+			} else {
+				iconstructor = iclass.getConstructor();
+				parsers[i] = iconstructor.newInstance();
+			}
 		}
 		classLabel = configure.getStrings(KEY_CLA_VAL);
-		if (inputs.length > classLabel.length) {
-			log.warn("classify label is fewer, user first label to fill");
-			String[] tLabel = new String[inputs.length];
-			System.arraycopy(classLabel, 0, tLabel, 0, classLabel.length);
-			for (int i = classLabel.length; i < inputs.length; ++i)
-				tLabel[i] = classLabel[0];  // 采用浅拷贝
-			classLabel = tLabel;
-		}
 		
 		output = configure.get(KEY_OUT, PATH_DEF_OUT);
 		classAttribute = configure.get(KEY_CLA_ATTR);
 		insmerge = new DataNormalize(output, inputs[0], inparsers[0]);
+		insmerge.init(false);
 		
 		unuseIndex = 1; 
 		log.info("build object, prepare to parse file.");
@@ -131,8 +136,8 @@ public class DataMerge {
 		return true;
 	}
 	
-	/**  解析第index个文件中的一个样本为稀疏向量。 解析失败时返回“”  */
-	private String parseLine(String line, int index) {
+	/**  基于IAttrParser 解析第index个文件中的一个样本为稀疏向量。 解析失败时返回“”  */
+	public String parseLine(String line, int index) {
 		if (line == null) {
 			return "";
 		}
@@ -155,7 +160,8 @@ public class DataMerge {
 			if(tmp != null) {
 				arrSet.add(tmp);
 			} else {
-				log.warn("uncatched feature: " + s);
+				insmerge.updateFeature((String)s);
+				log.warn("add feature: " + s);
 			}
 		}
 			
@@ -201,7 +207,7 @@ public class DataMerge {
 			}
 		}
 		log.info("add all feature words, size: " + insmerge.getFeatureSize());
-		return 0;
+		return cnt;
 	}
 	
 
