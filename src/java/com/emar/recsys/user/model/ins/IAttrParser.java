@@ -3,7 +3,7 @@ package com.emar.recsys.user.model.ins;
 /**
  * model训练前的实例生成接口，注意： 所有实现必须定义无参的默认构造函数。
  * @author zhoulm
- * 
+ * @tips 非线程安全
  */
 public interface IAttrParser {
 	

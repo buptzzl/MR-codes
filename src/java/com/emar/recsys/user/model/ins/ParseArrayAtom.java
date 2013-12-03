@@ -53,7 +53,7 @@ public final class ParseArrayAtom implements IAttrParser {
 	}
 
 	@Override
-	public boolean init(String[] args) {
+	public boolean init(String... args) {
 		return true;
 	}
 

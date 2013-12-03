@@ -273,8 +273,16 @@ public class DataNormalize {
 			features.put(word, features.size());
 		return true;
 	}
+	public Integer getFeature(String key) {
+		if (key == null || key.trim().length() == 0) 
+			return null; // 无效
+		return features.get(key);
+	}
 	public Set<String> getFeatures() {
 		return features.keySet();
+	}
+	public int getFeatureSize() {
+		return features.size();
 	}
 
 	/**
