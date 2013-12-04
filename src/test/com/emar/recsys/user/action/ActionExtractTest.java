@@ -1,5 +1,6 @@
 package com.emar.recsys.user.action;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,8 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.emar.util.UtilAccess;
 
 public class ActionExtractTest {
 	private static String[][] t_action = new String[][] {
@@ -22,11 +25,13 @@ public class ActionExtractTest {
 	private static ActionExtract tObj;
 
 	@BeforeClass
-	public static void Init() {
+	public static void Init() throws IllegalAccessException, NoSuchFieldException {
 		List<String> t_data = new ArrayList<String>();
 		for (int i = 0; i < t_action.length; ++i)
 			t_data.add(t_action[i][0]);
 		tObj = new ActionExtract(t_data);
+		Field tField = UtilAccess.getField(ActionFeatureExtract.class, tObj, "ActMinSize");
+		tField.set(tObj, 1);
 	}
 
 	@AfterClass
@@ -59,6 +64,7 @@ public class ActionExtractTest {
 
 	@Test
 	public void testFilter() {
+		Assert.assertEquals(true, tObj.Filter(0));
 	}
 
 	@Test

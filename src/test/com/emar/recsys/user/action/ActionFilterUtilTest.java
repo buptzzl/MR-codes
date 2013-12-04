@@ -20,6 +20,7 @@ public class ActionFilterUtilTest {
 	};
 	private static String[][] t_url2 = new String[][] {
 		{"http://www.womai.com/index-0-0.htm", "true"},
+		{"http://www.epetbar.com/goods/113470.html", "true"},
 	};
 	private static ConfigureTool conf;
 

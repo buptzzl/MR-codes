@@ -93,9 +93,9 @@ public final class ActionFeatureExtract extends ActionExtract {
 		for (int i = 0; i < WordsWhite.length; ++i)
 			ws.add(WordsWhite[i]);
 		// 拓展识别的 关键词
-		List<String> moreWhite = new ArrayList<String>();
-		List<String> moreBlack = new ArrayList<String>();
 		if (checkDictWords) {
+			List<String> moreWhite = new ArrayList<String>();
+			List<String> moreBlack = new ArrayList<String>();
 			moreWhite.addAll(checkDictKeywords(ws, WordsWhite));
 			moreBlack.addAll(checkDictKeywords(ws, WordsBlack));
 			fastBlack.addAll(moreBlack);
@@ -155,17 +155,6 @@ public final class ActionFeatureExtract extends ActionExtract {
 		return res;
 	}
 
-	@Override
-	public boolean Filter(int index) {
-		// 当前用户的行为是否完整 & 足够多
-		if (this.userID == null) 
-			this.parse(index);
-		if (this.userID == null || this.userAction.length() < N_ACT_MIN) {
-			return false;
-		}
-		return true;
-	}
-	
 	@Override
 	protected boolean parse(int index) {
 		// 执行分词， 使用固定分隔符。 

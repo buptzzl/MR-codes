@@ -52,11 +52,14 @@ public class ActionExtract {
 
 	public ConfigureTool configure_;
 	protected String[] UserKey, WordsBlack, WordsWhite;
+	private Set<String> keyRetain; // 存储有效行为的KEY
 	/** 行为单位存储的数据 对在其基础上更新，不容许外界对其有改写机会。 */
 	protected List<String> data;
 	protected BitSet flags;
 	protected String userID;
+	/** 用户行为集合，每个行为是一个JSON对象。  */
 	protected JSONArray userAction;
+	private int ActMinSize;
 
 	/** 采用单用户（单行）处理，不加载配置的文件路径信息。 */
 	public ActionExtract() {
@@ -106,7 +109,7 @@ public class ActionExtract {
 	private void init(String[] args) {
 		if (args != null && args[0].equals("-h")) {
 			System.out.println("Usage:-c myname.conf or please set user.conf.");
-			return;
+			System.exit(1);
 		}
 
 		configure_ = new ConfigureTool();
@@ -114,15 +117,18 @@ public class ActionExtract {
 		configure_.addResource(pconf);
 
 		UserKey = configure_.getStrings("extract.user_keys", "");
+		keyRetain = new HashSet<String>(Arrays.asList(UserKey));
 		WordsBlack = configure_.getStrings("extract.black_list", new String[]{});
 		WordsWhite = configure_.getStrings("extract.white_list", new String[]{});
+		ActMinSize = configure_.getInt("extract.user_action_min", 3);
 		data = new ArrayList<String>();
 		flags = new BitSet();
 		userID = null;
 		userAction = null;
 		output = null; // 在使用前再生成。
 		outRest = null;
-		log.info("init: configure path=" + pconf + ", UserKey=" + Arrays.asList(UserKey)
+		log.info("init: configure path=" + pconf + "effect min action=" 
+				+ ActMinSize + ", UserKey=" + Arrays.asList(UserKey)
 				+ ", WordsBlack=" + Arrays.asList(WordsBlack) + ", WordsWrite="
 				+ Arrays.asList(WordsWhite));
 	}
@@ -196,33 +202,21 @@ public class ActionExtract {
 
 	/** 自定义单个用户数据的输出。 默认抽取字段并执行默认过滤 @FMT: uid\nAct1, Act2...。 */
 	public boolean format(int index) {
-		if (!this.parse(index) || !this.Filter(index)) {
+		if (!this.parse(index) 
+				|| !this.Filter(index)) {
 			this.data.set(index, NULL);
 			this.flags.clear(index);
 			return false;
 		}
-
-		JSONObject jObj, jTmp;
-		JSONArray jAction;
-		jAction = new JSONArray();
+		
+		// 过滤key 部分不变。
+		JSONObject jobj;
 		for (int i = 0; i < userAction.length(); ++i) {
-			try {
-				jObj = userAction.getJSONObject(i);
-				jTmp = new JSONObject();
-			} catch (JSONException e) {
-				log.error("userAction's " + i + "'th element is't json. [MSG]: "
-						+ e.getMessage());
-				continue;
-			}
-
-			for (String ukey : UserKey) {
-				if (jObj.has(ukey)) {
-					jTmp.put(ukey, jObj.get(ukey));
-				}
-			}
-			jAction.put(jTmp);
+			jobj = userAction.getJSONObject(i);
+			jobj.keySet().retainAll(keyRetain);
 		}
-		this.data.set(index, formatUserActions(userID, jAction));
+		
+		this.data.set(index, formatUserActions(userID, userAction));
 		this.flags.set(index);
 		
 		log.debug("one user default action, [data]=" + this.data.get(index));
@@ -238,17 +232,9 @@ public class ActionExtract {
 		return sbuf.toString();
 	}
 
-	/**  原始数据解析parse()后 的过滤, [默认]:通过  */
-	public boolean Filter(int index) {
-		log.debug("success finished.");
-		return true;
-	}
-
 	/** 默认用户数据解析方法 @FMT uid\t[ACT-arr] */
-	protected boolean parse(int index) {
+	public boolean parse(int index) {
 		userID = null;
-		userAction = new JSONArray();
-		JSONArray jArrs;
 		String[] atom = this.data.get(index).split(SEPA);
 		if (atom.length != 2) {
 			log.info("data not separate by TAB. [data]=" + this.data.get(index));
@@ -256,15 +242,50 @@ public class ActionExtract {
 		}
 
 		userID = atom[0];
-		try {
-			jArrs = new JSONArray(atom[1]);
-			for (int i = 0; i < jArrs.length(); ++i) 
-				userAction.put(new JSONObject(jArrs.getString(i)));
-		} catch (JSONException e) {
-			log.error("bad user JSON action str. [STR]: " + atom[1]
-					+ ", [MSG]: " + e.getMessage());
-			userAction = new JSONArray();
+		userAction = this.parseJSONArray(atom[1]);
+		
+		log.debug("success finished.");
+		return true;
+	}
+	/** 默认用户行为JSON 的解析方法  */
+	protected JSONArray parseJSONArray(String input) {
+		JSONArray jArrs = null;
+		JSONArray action = new JSONArray();
+		try {  // 解析JSON数组
+			jArrs = new JSONArray(input);
+			for (int i = 0; i < jArrs.length(); ++i) {  // 解析每个元素为JSONObject
+				try {
+					action.put(new JSONObject(jArrs.getString(i)));
+				} catch (JSONException e) { // 处理可能直接为object 的情况
+					if (e.getMessage().endsWith("not a string.")) {
+						action.put(jArrs.getJSONObject(i));
+					} else {
+						log.error("fail to parse json. [MSG]" + e.getMessage());
+					}
+				}
+			}
+		} catch (JSONException e1) { // 解析单个JSON对象
+			try {
+				JSONObject jObj = new JSONObject(input);
+				action.put(jObj);
+			} catch (JSONException e2) {
+				log.error("bad user JSON action str. [STR]: " + input
+						+ ", [MSG]: " + e2.getMessage());
+				return action;
+			}
 		}
+		return action;
+	}
+	
+	/**  原始数据解析parse()后 的过滤, [默认]:通过  */
+	public boolean Filter(int index) {
+		if (this.userID == null || this.userAction.length() < ActMinSize) {
+			return false;
+		}
+		if (!this.whiteFilter(index))
+			return false;
+		if (this.blackFilter(index))
+			return false;
 		
 		log.debug("success finished.");
 		return true;
@@ -279,7 +300,7 @@ public class ActionExtract {
 	/** 自定义黑名单过滤. 默认全不通过 */
 	protected boolean blackFilter(int index) {
 		log.debug("success finished.");
-		return true;
+		return false;
 	}
 
 	// 获取某个字符串

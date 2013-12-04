@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.emar.util.ConfigureTool;
 
@@ -15,7 +16,7 @@ import com.emar.util.ConfigureTool;
  */
 public class ActionFilterUtil {
 	
-	private static String DESC_SEPA = "@@@";
+	private static String DESC_SEPA = "@@@", F_REG = "REG_";
 	/**  URL的host与Query之间的空白字符数 */
 	private static int DEF_URL_DIS = 3;
 	
@@ -29,6 +30,15 @@ public class ActionFilterUtil {
 		Set<String> furls = new HashSet<String>(Arrays.asList(badUrls));
 		if (furls.contains(url))
 			return true;
+		String iurl = null;
+		// 增加正则匹配
+		for (int i = 0; i < badUrls.length; ++i) {
+			if (badUrls[i].startsWith(F_REG)) {
+				iurl = badUrls[i].substring(F_REG.length());
+				if (Pattern.matches(iurl, url)) 
+					return true;
+			}
+		}
 		return isBadUrl(url, urlDis);
 	}
 	
