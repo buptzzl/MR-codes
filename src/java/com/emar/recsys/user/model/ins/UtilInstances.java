@@ -68,7 +68,7 @@ public class UtilInstances {
 		return true;
 	}
 	
-	/** 合并多个同任务不同类别标签的 Arff 文件； 基于DataMerge.java 的配置     */
+	/** 合并多个同任务不同类别标签的 Arff 文件； 基于DataMerge.java 的配置；新增的属性替换样本中未值为0；     */
 	public static boolean mergeMultiArffIns(String... files) throws IOException {
 		if (files == null || files.length < 2)
 			return false;
@@ -97,6 +97,8 @@ public class UtilInstances {
 				}
 			}
 		}
+		// repalce missing with 0.
+		
 		enuIns = insArr[0].enumerateInstances();
 		while(enuIns.hasMoreElements()) {
 			ins = (Instance) enuIns.nextElement();
