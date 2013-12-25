@@ -151,13 +151,7 @@ public class MergeActionCache extends Configured implements Tool {
 					j_obj.put(PRIMARY_STR[i], tmp);
 
 					if (pclass == null) {
-						pclass = itemClassify.ClassifyGoods((String) tmp)
-								.split("\t");
-						if (pclass.length != 5
-								|| pclass[IdxClass].equals(UnuseClass)) {
-							pclass = null;
-							log.debug("classify empty. input=" + tmp);
-						}
+						pclass = itemToolProcess((String)tmp);
 					}
 				}
 			}
@@ -174,13 +168,7 @@ public class MergeActionCache extends Configured implements Tool {
 				j_obj.put(j_WP, tmp);
 
 				if (pclass == null) {
-					pclass = itemClassify.ClassifyGoods((String) tmp).split(
-							"\t");
-					if (pclass.length != 5
-							|| pclass[IdxClass].equals(UnuseClass)) {
-						pclass = null;
-						log.debug("classify empty. input=" + tmp);
-					}
+					pclass = itemToolProcess((String) tmp);
 				}
 			}
 			// 商品分类优先级第3
@@ -190,13 +178,7 @@ public class MergeActionCache extends Configured implements Tool {
 					j_obj.put(PRIMARY_URL[i], tmp);
 
 					if (pclass == null) {
-						pclass = itemClassify.ClassifyGoods((String) tmp)
-								.split("\t");
-						if (pclass.length != 5
-								|| pclass[IdxClass].equals(UnuseClass)) {
-							pclass = null;
-							log.debug("classify empty. input=" + tmp);
-						}
+						pclass = itemToolProcess((String) tmp);
 					}
 				}
 			}
@@ -233,6 +215,22 @@ public class MergeActionCache extends Configured implements Tool {
 				context.getCounter(CNT.ErrMo).increment(1);
 				log.error("map() write out failed. " + e.getMessage());
 			}
+		}
+		
+		private String[] itemToolProcess(String tmp) {
+			String[] pclass = null;
+			try {
+				pclass = itemClassify.ClassifyGoods((String) tmp)
+					.split("\t");
+				if (pclass.length != 5
+						|| pclass[IdxClass].equals(UnuseClass)) {
+					pclass = null;
+					log.debug("classify empty. input=" + tmp);
+				}
+			} catch (Exception e) {
+				log.error("item classify tool error. [MSG]" + e);
+			}
+			return pclass;
 		}
 
 		public void cleanup(Context context) {

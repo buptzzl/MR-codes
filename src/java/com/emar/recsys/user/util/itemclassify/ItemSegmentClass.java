@@ -1666,7 +1666,10 @@ public class ItemSegmentClass {
 				String catecode = GetCateRecordOfTaoBao(word);// 获得该词语的类目编号
 
 				String[] array = catecode.split("\t");
-				vec_catecode.add(array[1]);
+				if (array.length >= 1)  // @ADD 20131225. 
+					vec_catecode.add(array[1]);
+				else 
+					System.err.println("[ERR] ItemSegment::1672 " + catecode);
 			}
 
 		}
