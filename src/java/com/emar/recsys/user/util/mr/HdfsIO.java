@@ -13,12 +13,17 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import oracle.net.aso.p;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -31,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import com.emar.recsys.user.util.DateParse;
 import com.emar.util.Ip2AreaUDF;
+import com.google.common.io.Closeables;
 
 /**
  * 
@@ -38,6 +44,7 @@ import com.emar.util.Ip2AreaUDF;
  */
 public class HdfsIO {
 	private static Logger log = Logger.getLogger(HdfsIO.class);
+	private static final String S_MAP = "\t", S_NEWLINE = "\n";
 
 	/**
 	 * @param path
@@ -45,7 +52,7 @@ public class HdfsIO {
 	 *            input as this.getClass()
 	 * @return 读取 本地文件 or 包中的资源文件 or Global 文件的内容返回
 	 */
-	public static List<String> readFile(Class c, String path) {
+ 	public static List<String> readFile(Class c, String path) {
 		if (path == null) {
 			return null;
 		}
@@ -91,6 +98,25 @@ public class HdfsIO {
 		}
 
 		return lines;
+	}
+	
+ 	/**
+ 	 * 将Map对象写到HDFS 
+ 	 */
+	public static void writeMap(Map data, Path path, Configuration configuration) throws IOException {
+	    FileSystem fs = FileSystem.get(path.toUri(), configuration);
+	    FSDataOutputStream out = fs.create(path);
+	    try {
+	    	Set keys = data.keySet();
+	    	for (Object oi: keys) {
+	    		out.writeChars(oi.toString());
+	    		out.writeChars(S_MAP);
+	    		out.writeChars(data.get(oi).toString());
+	    		out.writeChars(S_NEWLINE);
+	    	}
+	    } finally {
+	    	Closeables.close(out, false);
+	    }
 	}
 
 	/**
@@ -192,16 +218,23 @@ public class HdfsIO {
 		// List<String> localData = HdfsIO.readFile(null, "d:/Data/.gitignore");
 		// System.out.print("[Info] local file read size: " + localData.size()
 		// + "\nfrom-args\t" + HdfsIO.readFile(null, args[0]).size());
-
-		String s = "resource/classify/firstcate";
-		List<String> lines = HdfsIO.readFile(HdfsIO.class, s);
-		System.out.println("[Info] resource file read size: " + lines.size()
-				+ "\nclass-load: " + HdfsIO.class.getResource(s) + "\ncload2： "
-				+ HdfsIO.class.getResource("/com/emar/util/" + s)
-				+ "\ncload3: "
-				+ Ip2AreaUDF.class.getResource("resource/ip_dstc_ne.dat"));
+		Configuration conf = new Configuration();
+		Map<Integer, String> data = new HashMap<Integer, String>();
+		data.put(1, "a");
+		String opath = "/recommend/user/zhouliaoming/output/write";
 
 		try {
+			writeMap((Map)data, new Path(opath), conf);
+			System.exit(0);
+			
+			String s = "resource/classify/firstcate";
+			List<String> lines = HdfsIO.readFile(HdfsIO.class, s);
+			System.out.println("[Info] resource file read size: " + lines.size()
+					+ "\nclass-load: " + HdfsIO.class.getResource(s) + "\ncload2： "
+					+ HdfsIO.class.getResource("/com/emar/util/" + s)
+					+ "\ncload3: "
+					+ Ip2AreaUDF.class.getResource("resource/ip_dstc_ne.dat"));
+			
 			String range = "2013061800_2013061900", tfmt = "yyyyMMdd", fmt = "/data/stg/s_order_log/%s/1/*.dat";
 			HdfsIO.setInput(range, tfmt, fmt, new Job());
 			System.out.println("from CMD");

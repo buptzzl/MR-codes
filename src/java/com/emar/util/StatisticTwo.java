@@ -7,17 +7,23 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.VIntWritable;
+import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
+import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 
 import com.emar.recsys.user.log.LogParse;
+import com.emar.recsys.user.util.mr.HdfsIO;
 
 /**
  * 基于MR 的共现key频率统计: A-B, A&B, B-A.
@@ -28,6 +34,7 @@ import com.emar.recsys.user.log.LogParse;
 public class StatisticTwo extends Configured implements Tool {
 
 	private static final String KEY = "classify";
+	private static String Part1 = "Part_1", Part2 = "Part_2", PartBoth="Part";
 	private static final int Value1 = 1, Value2 = 2;
 	
 	public static class MapStatic extends Mapper<LongWritable, Text, Text, VIntWritable> {
@@ -49,12 +56,7 @@ public class StatisticTwo extends Configured implements Tool {
 			if (index2 < 0) {
 				System.exit(index2);
 			}
-//			try {
-//				logparse = new LogParse();
-//			} catch (ParseException e) {
-//				e.printStackTrace();
-//				System.exit(e.getErrorOffset());
-//			}
+
 			okey = new Text();
 			oval = new VIntWritable();
 		}
@@ -101,7 +103,6 @@ public class StatisticTwo extends Configured implements Tool {
 	}
 	
 	public static class ReduceStatic extends Reducer<Text, VIntWritable, Text, NullWritable> {
-		private static String Part1 = "Part_1", Part2 = "Part_2", PartBoth="Part";  
 		
 		private MultipleOutputs<Text, NullWritable> mos;
 		private String path;
@@ -150,8 +151,37 @@ public class StatisticTwo extends Configured implements Tool {
 
 
 	@Override
-	public int run(String[] arg0) throws Exception {
-		// TODO Auto-generated method stub
+	public int run(String[] args) throws Exception {
+		Configuration conf = new Configuration();
+		String[] oargs = new GenericOptionsParser(conf, args)
+				.getRemainingArgs();
+		if (oargs.length < 8) {
+			System.out.println("Usage: <out> <1ClassifyFMT> <TimeRange> <TimeFMT> " +
+					" <2LogFMT> <TimeRange> <TimeFMT> <uidIndex>");
+			System.exit(7);
+		}
+		conf.setInt("mr.log2.index", Integer.parseInt(oargs[7]));
+		conf.set("mr.outpath", oargs[0]);
+		
+		Job job = new Job(conf, "[merge users action]");
+		job.setJarByClass(StatisticTwo.class);
+		job.setMapperClass(MapStatic.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(VIntWritable.class);
+		job.setReducerClass(ReduceStatic.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(NullWritable.class);
+		job.setNumReduceTasks(4);
+		
+		boolean setin = HdfsIO.setInput(oargs[2], oargs[3], oargs[1], job);
+		setin = HdfsIO.setInput(oargs[5], oargs[6], oargs[4], job);
+		HdfsIO.removeDir(oargs[0], job);
+//		FileOutputFormat.setOutputPath(job, new Path(args[0]));
+		MultipleOutputs.addNamedOutput(job, Part1, TextOutputFormat.class,
+				Text.class, NullWritable.class);
+		MultipleOutputs.addNamedOutput(job, Part2, TextOutputFormat.class, 
+				Text.class, NullWritable.class);
+		
 		return 0;
 	}
 	
@@ -159,8 +189,7 @@ public class StatisticTwo extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		
 	}
 	
 }

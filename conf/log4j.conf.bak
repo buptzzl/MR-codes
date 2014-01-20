@@ -1,0 +1,65 @@
+# 
+# configuration here is usually organized by module.
+# 
+
+#---------------------------- Appenders ---------------------------#
+###. 定义名为 stdout 的输出端的类型 
+# ConsoleAppender,FileAppender, LF5Appender, SMTPAppender, JDBCAppender,
+# WriterAppender 以流格式发送， 
+# DailyRollingFileAppender 每天回滚； RollingFileAppender 大小到达指定尺寸的时候产生新文件 
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.Threshold=INFO
+log4j.appender.stdout.Target=System.out
+# 布局。 灵活地指定模式。
+# 布局： HTMLLayout：HTML格式； SimpleLayout：级别+内容；PatternLayout：灵活；TTCCLayout：含时间、线程、类别等
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+# 输出格式： X 左对齐，p 级别，d时间，c类名，m信息串，n换行符
+log4j.appender.stdout.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSS} %5p %c{1}:%L - %m%n
+ 
+###. 定义名为 file 的输出端的类型为每天产生一个日志文件。 
+log4j.appender.ROLLING_FILE=org.apache.log4j.RollingFileAppender 
+log4j.appender.ROLLING_FILE.File=logs/roll.log
+og4j.appender.ROLLING_FILE.Append = true    
+# 文件大小 50MB
+log4j.appender.ROLLING_FILE.MaxFileSize=50MB
+# 文件的最大备份数
+log4j.appender.ROLLING_FILE.MaxBackupIndex=2 
+log4j.appender.ROLLING_FILE.layout=org.apache.log4j.PatternLayout 
+log4j.appender.ROLLING_FILE.layout.ConversionPattern=%d- %p %t %c - %m%n 
+
+### DS
+#log4j.logger.outfox.ead.dataserv2=INFO,DS
+
+#log4j.appender.DS=org.apache.log4j.DailyRollingFileAppender
+#log4j.appender.DS.File=logs/log.ds
+#log4j.appender.DS.DatePattern='.'yyyy-MM-dd
+#log4j.appender.DS.layout=org.apache.log4j.PatternLayout
+#log4j.appender.DS.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSS} %5p %c{1}:%L - %m%n
+
+## 输出端共同选项： 
+#Threshold=WARN #:指定日志消息的输出最低层次。 
+#ImmediateFlush=true #:默认值是true,意谓着所有的消息都会被立即输出。 
+##  ConsoleAppender选项： 
+#Target=System.err # ：默认情况下是：System.out,指定输出控制台   
+## 文件输出端共同选项： 
+#File=mylog.txt #:指定消息输出到mylog.txt文件。 
+#Append=false   #:默认值是true,即将消息增加到指定文件中，false指将消息覆盖指定的文件内容。 
+
+#--------------------------- Loggers --------------------------#
+# 配置根 Logger[OFF,FATAL,ERROR, WARN,INFO,DEBUG,ALL,自定义] 覆盖各子类的设置
+log4j.rootLogger=ALL, stdout, ROLLING_FILE
+# 根类的设置，子类默认继承该设置。
+# log4j.rootCategory=INFO, stdout,file 
+
+#--------------------------  REF  -----------------------------#
+## 日志级别 ##
+# ALL 打开所有级别；DEBUG 用于调试； INFO 用于运行时；WARN 用于潜在错误； ERROR 用于错误；FATAL 用于严重错误；
+## 日志输出格式 ##
+# %c{i} 类路径层次名, i指定从最里层(i=1)起输出的层次名称数
+# %3p 日志级别 3指定输出字符数
+# %d{yyyy-MM-dd HH:mm:ss.SSS} 日期
+# %m 输出日志内容
+# %n 系统下的换行符
+# %l 完整的事件发生位置（类路径 线程号 代码行）； L 仅输出代码行； M 调用的方法名； t 线程名；
+# %F 调用logger的源文件名
+# %r 从程序启动时到记录该条日志时已经经过的毫秒数

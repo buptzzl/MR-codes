@@ -128,6 +128,40 @@ public class UtilInstances {
 		return true;
 	}
 	
+	/** 按比例抽取样本。 numFolder 指抽取其中的第from-to 份数据，剩余的数据的存储文件名增加后缀_r.arff.*/
+	public static boolean sampleArff(String arff, String save,
+			int foldBeg, int foldEnd, int Folders) throws IOException {
+		Instances data;
+		data = loadArff(arff);
+		Instances dchoice = data.testCV(Folders, foldBeg), dtmp = null;
+		for (int i = (foldBeg + 1); i < foldEnd; ++i) {
+			dtmp = data.testCV(Folders, i);
+			for (int j = 0; j < dtmp.numInstances(); ++j) {
+				dchoice.add(dtmp.instance(j));
+			}
+		}
+		saveArff(save, dchoice);
+		// 保留剩余的数据
+		Instances drest = new Instances(data, data.numInstances() - dchoice.numInstances());
+		for (int i = 0; i < foldBeg; ++i) {
+			dtmp = data.testCV(Folders, i);
+			for (int j = 0; j < dtmp.numInstances(); ++j) {
+				drest.add(dtmp.instance(j));
+			}
+		}
+		for (int i = foldEnd; i < Folders; ++i) {
+			dtmp = data.testCV(Folders, i);
+			for (int j = 0; j < dtmp.numInstances(); ++j) {
+				drest.add(dtmp.instance(j));
+			}
+		}
+		saveArff(save+"_r.arff", drest);
+		log.info("input: " + arff + ", output:" + save 
+				+ "total data: " + data.numInstances() + ", choice data: " 
+				+ dchoice.numInstances() + ", rest data: " + drest.numInstances());
+		return true;
+	}
+	
 	/**
 	 * @param args
 	 */
@@ -138,7 +172,10 @@ public class UtilInstances {
 				"D:/Data/MR-codes/data/test/merge_template.arff"
 		};
 		try {
-			boolean bmerge = mergeMultiArffIns(arffs);
+//			boolean bmerge = mergeMultiArffIns(arffs);
+//			boolean fchoice = sampleArff(arffs[0], arffs[0]+".sample", 0, 3, 5);
+			sampleArff(args[0], args[1], Integer.parseInt(args[2]), 
+					Integer.parseInt(args[3]), Integer.parseInt(args[4]));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

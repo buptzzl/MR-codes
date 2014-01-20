@@ -156,7 +156,7 @@ public final class ActionFeatureExtract extends ActionExtract {
 	}
 
 	@Override
-	protected boolean parse(int index) {
+	public boolean parse(int index) {
 		// 执行分词， 使用固定分隔符。 
 		boolean succ = super.parse(index);
 		if (!succ)

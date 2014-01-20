@@ -6,7 +6,6 @@
 @attribute windy2 {1,0}
 @attribute play {yes,no}
 
-
 @data
 sunny,hot,high,0,no
 sunny,hot,high,1,no
@@ -17,8 +16,3 @@ rainy,cool,normal,1,no
 overcast,cool,normal,1,yes
 sunny,mild,high,0,no
 sunny,cool,normal,0,yes
-rainy,mild,normal,0,yes
-sunny,mild,normal,1,yes
-overcast,mild,high,1,yes
-overcast,hot,normal,0,yes
-rainy,mild,high,1,no
